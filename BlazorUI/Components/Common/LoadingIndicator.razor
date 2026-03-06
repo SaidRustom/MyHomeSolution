@@ -1,0 +1,21 @@
+@if (IsVisible)
+{
+    @if (Overlay)
+    {
+        <div style="position: relative; min-height: 200px;">
+            <div style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: var(--rz-base-background-color); opacity: 0.85; z-index: 1; border-radius: var(--rz-border-radius);">
+                <RadzenStack Orientation="Orientation.Vertical" AlignItems="AlignItems.Center" Gap="0.75rem">
+                    <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Medium" />
+                    <RadzenText TextStyle="TextStyle.Body2" class="rz-color-secondary">@Text</RadzenText>
+                </RadzenStack>
+            </div>
+        </div>
+    }
+    else
+    {
+        <RadzenStack Orientation="Orientation.Vertical" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.Center" Gap="0.75rem" class="rz-p-6">
+            <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Medium" />
+            <RadzenText TextStyle="TextStyle.Body2" class="rz-color-secondary">@Text</RadzenText>
+        </RadzenStack>
+    }
+}

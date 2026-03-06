@@ -1,0 +1,30 @@
+<RadzenCard Variant="Variant.Outlined" class="rz-p-4" Style="min-width: 180px;">
+    <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
+        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
+            <RadzenText TextStyle="TextStyle.Caption" class="rz-mb-0 rz-color-secondary" Style="text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">@Title</RadzenText>
+            @if (!string.IsNullOrEmpty(Icon))
+            {
+                <div style="width: 36px; height: 36px; border-radius: 50%; background: color-mix(in srgb, @IconColor 12%, transparent); display: flex; align-items: center; justify-content: center;">
+                    <RadzenIcon Icon="@Icon" Style="@($"font-size: 1.125rem; color: {IconColor};")" />
+                </div>
+            }
+        </RadzenStack>
+        <RadzenText TextStyle="TextStyle.H4" class="rz-mb-0" Style="font-variant-numeric: tabular-nums;"><strong>@Value</strong></RadzenText>
+        @if (!string.IsNullOrEmpty(Subtitle) || !string.IsNullOrEmpty(TrendText))
+        {
+            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.375rem">
+                @if (!string.IsNullOrEmpty(TrendText))
+                {
+                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.125rem" class="@TrendCss">
+                        <RadzenIcon Icon="@TrendIcon" Style="font-size: 0.875rem;" />
+                        <RadzenText TextStyle="TextStyle.Caption" class="rz-mb-0"><strong>@TrendText</strong></RadzenText>
+                    </RadzenStack>
+                }
+                @if (!string.IsNullOrEmpty(Subtitle))
+                {
+                    <RadzenText TextStyle="TextStyle.Caption" class="rz-mb-0 rz-color-secondary">@Subtitle</RadzenText>
+                }
+            </RadzenStack>
+        }
+    </RadzenStack>
+</RadzenCard>

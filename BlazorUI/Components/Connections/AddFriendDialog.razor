@@ -1,0 +1,37 @@
+<RadzenStack Orientation="Orientation.Vertical" Gap="1rem" class="rz-p-4">
+    <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0 rz-color-secondary">
+        Search for a user to send a connection request.
+    </RadzenText>
+
+    <RadzenStack Gap="0.25rem">
+        <RadzenLabel Text="User" />
+        <RadzenDropDown TValue="string"
+                        Data="@AvailableUsers"
+                        @bind-Value="_selectedUserId"
+                        TextProperty="FullName"
+                        ValueProperty="Id"
+                        AllowFiltering="true"
+                        FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                        FilterOperator="StringFilterOperator.Contains"
+                        AllowClear="true"
+                        Placeholder="Search by name…"
+                        Style="width: 100%;">
+            <Template Context="user">
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                    <RadzenGravatar Email="@((user as UserDto)?.Email)" Style="width: 28px; height: 28px; border-radius: 50%;" />
+                    <RadzenStack Orientation="Orientation.Vertical" Gap="0">
+                        <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0">@((user as UserDto)?.FullName)</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Caption" class="rz-mb-0 rz-color-secondary">@((user as UserDto)?.Email)</RadzenText>
+                    </RadzenStack>
+                </RadzenStack>
+            </Template>
+        </RadzenDropDown>
+    </RadzenStack>
+
+    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem" class="rz-pt-4"
+                 Style="border-top: 1px solid var(--rz-base-200);">
+        <RadzenButton Text="Cancel" Variant="Variant.Flat" ButtonStyle="ButtonStyle.Light" Click="Cancel" />
+        <RadzenButton Text="Send Request" Icon="person_add" ButtonStyle="ButtonStyle.Primary"
+                      Disabled="@string.IsNullOrWhiteSpace(_selectedUserId)" Click="Submit" />
+    </RadzenStack>
+</RadzenStack>

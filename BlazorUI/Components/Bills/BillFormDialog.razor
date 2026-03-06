@@ -1,0 +1,81 @@
+<RadzenTemplateForm TItem="BillFormModel" Data="@Model" Submit="OnSubmit">
+    <RadzenStack Orientation="Orientation.Vertical" Gap="1rem" class="rz-p-4">
+
+        @* Title *@
+        <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem">
+            <RadzenLabel Text="Title" Component="Title" />
+            <RadzenTextBox Name="Title" @bind-Value="@Model.Title" Placeholder="e.g. Grocery shopping" Style="width: 100%;" />
+            <RadzenRequiredValidator Component="Title" Text="Title is required" />
+        </RadzenStack>
+
+        @* Amount & Currency row *@
+        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.75rem" Wrap="FlexWrap.Wrap">
+            <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem" Style="flex: 1; min-width: 200px;">
+                <RadzenLabel Text="Amount" Component="Amount" />
+                <RadzenNumeric TValue="decimal" Name="Amount" @bind-Value="@Model.Amount" Placeholder="0.00" Style="width: 100%;" Min="0.01m" />
+                <RadzenNumericRangeValidator Component="Amount" Min="0.01" Text="Amount must be greater than 0" />
+            </RadzenStack>
+            <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem" Style="width: 120px;">
+                <RadzenLabel Text="Currency" Component="Currency" />
+                <RadzenTextBox Name="Currency" @bind-Value="@Model.Currency" Style="width: 100%;" />
+            </RadzenStack>
+        </RadzenStack>
+
+        @* Category & Date row *@
+        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.75rem" Wrap="FlexWrap.Wrap">
+            <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem" Style="flex: 1; min-width: 200px;">
+                <RadzenLabel Text="Category" Component="Category" />
+                <RadzenDropDown TValue="BillCategory" Name="Category" @bind-Value="@Model.Category" Data="@Categories" Style="width: 100%;" />
+            </RadzenStack>
+            <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem" Style="flex: 1; min-width: 200px;">
+                <RadzenLabel Text="Bill Date" Component="BillDate" />
+                <RadzenDatePicker TValue="DateTime" Name="BillDate" @bind-Value="@Model.BillDate" DateFormat="MMM dd, yyyy" Style="width: 100%;" />
+            </RadzenStack>
+        </RadzenStack>
+
+        @* Description *@
+        <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem">
+            <RadzenLabel Text="Description" Component="Description" />
+            <RadzenTextArea Name="Description" @bind-Value="@Model.Description" Placeholder="Optional description…" Rows="2" Style="width: 100%;" />
+        </RadzenStack>
+
+        @* Notes *@
+        <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem">
+            <RadzenLabel Text="Notes" Component="Notes" />
+            <RadzenTextArea Name="Notes" @bind-Value="@Model.Notes" Placeholder="Optional notes…" Rows="2" Style="width: 100%;" />
+        </RadzenStack>
+
+        @* Splits section *@
+        @if (!IsEdit)
+        {
+            <RadzenFieldset Text="Bill Splits" AllowCollapse="true">
+                <BillSplitEditor Splits="@Model.Splits" BillAmount="@Model.Amount" />
+            </RadzenFieldset>
+        }
+
+        @* Remaining Percentage indicator *@
+        @if (!IsEdit && Model.Splits.Count > 0)
+        {
+            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                <RadzenIcon Icon="pie_chart" Style="font-size: 1rem;" />
+                <RadzenText TextStyle="TextStyle.Caption" class="rz-mb-0">
+                    Remaining: <strong>@($"{RemainingPercentage:N2}%")</strong>
+                </RadzenText>
+                @if (RemainingPercentage < 0)
+                {
+                    <RadzenBadge BadgeStyle="BadgeStyle.Danger" IsPill="true" Text="Over-allocated!" Variant="Variant.Flat" />
+                }
+                else if (RemainingPercentage == 0)
+                {
+                    <RadzenBadge BadgeStyle="BadgeStyle.Success" IsPill="true" Text="Fully allocated" Variant="Variant.Flat" />
+                }
+            </RadzenStack>
+        }
+
+        @* Footer buttons *@
+        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem" class="rz-pt-4" Style="border-top: 1px solid var(--rz-base-200);">
+            <RadzenButton Text="Cancel" Variant="Variant.Flat" ButtonStyle="ButtonStyle.Light" Click="Cancel" ButtonType="ButtonType.Button" />
+            <RadzenButton Text="@SubmitText" Icon="save" ButtonStyle="ButtonStyle.Primary" ButtonType="ButtonType.Submit" IsBusy="@IsBusy" />
+        </RadzenStack>
+    </RadzenStack>
+</RadzenTemplateForm>

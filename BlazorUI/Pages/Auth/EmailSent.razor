@@ -1,0 +1,44 @@
+@page "/email-sent"
+@using BlazorUI.Services.Contracts
+@layout AuthLayout
+
+<PageTitle>Verify Your Email — MyHome</PageTitle>
+
+<RadzenCard class="auth-card" Style="width: 100%; max-width: 480px; margin: 0 auto;">
+    <RadzenStack Gap="1.5rem" Orientation="Orientation.Vertical" AlignItems="AlignItems.Center">
+
+        <RadzenIcon Icon="mark_email_unread" Style="font-size: 3rem; color: var(--rz-primary);" />
+        <RadzenText TextStyle="TextStyle.H4" Style="margin: 0;">Verify Your Email</RadzenText>
+        <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-text-secondary-color); text-align: center;">
+            We've sent a verification link to <strong>@Email</strong>.
+            Please check your inbox and click the link to activate your account.
+        </RadzenText>
+
+        <RadzenCard Style="background-color: var(--rz-base-200); width: 100%;">
+            <RadzenStack Gap="0.5rem" AlignItems="AlignItems.Center">
+                <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-text-secondary-color);">
+                    Didn't receive the email?
+                </RadzenText>
+                <RadzenButton Text="Resend Verification Email" Icon="refresh"
+                              ButtonStyle="ButtonStyle.Light" Variant="Variant.Outlined"
+                              IsBusy="@IsResending" BusyText="Sending…"
+                              Click="@HandleResendAsync" />
+            </RadzenStack>
+        </RadzenCard>
+
+        @if (ResendSuccess)
+        {
+            <RadzenAlert AlertStyle="AlertStyle.Success" Shade="Shade.Lighter" ShowIcon="true">
+                A new verification email has been sent!
+            </RadzenAlert>
+        }
+
+        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Center" Gap="0.25rem">
+            <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-text-secondary-color);">
+                Already verified?
+            </RadzenText>
+            <RadzenLink Path="/login" Text="Sign in" Style="font-weight: 500;" />
+        </RadzenStack>
+
+    </RadzenStack>
+</RadzenCard>

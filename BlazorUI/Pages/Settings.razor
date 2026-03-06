@@ -1,0 +1,240 @@
+﻿@page "/settings"
+@using BlazorUI.Models.Users
+@using BlazorUI.Components.Common
+
+<PageTitle>Settings — MyHome</PageTitle>
+
+<RadzenStack Gap="1.5rem" Style="max-width: 800px; margin: 0 auto; padding-bottom: 3rem;">
+
+    <!-- Page Header -->
+    <RadzenText TextStyle="TextStyle.H4" Style="margin: 0; font-weight: 600;">
+        <RadzenIcon Icon="settings" Style="vertical-align: middle; margin-right: 0.5rem;" />
+        Settings
+    </RadzenText>
+
+    <!-- Profile Section -->
+    <RadzenCard>
+        <RadzenStack Gap="1rem">
+            <RadzenText TextStyle="TextStyle.H6" Style="margin: 0; font-weight: 600;">
+                <RadzenIcon Icon="person" Style="vertical-align: middle; margin-right: 0.25rem;" />
+                Profile
+            </RadzenText>
+
+            @if (IsLoadingProfile)
+            {
+                <RadzenStack AlignItems="AlignItems.Center" Style="padding: 2rem;">
+                    <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+                </RadzenStack>
+            }
+            else if (ProfileError is not null)
+            {
+                <RadzenAlert AlertStyle="AlertStyle.Danger" Shade="Shade.Lighter" ShowIcon="true">
+                    @ProfileError
+                </RadzenAlert>
+            }
+            else
+            {
+                <RadzenRow Gap="2rem" AlignItems="AlignItems.Start">
+                    <!-- Avatar -->
+                    <RadzenColumn Size="12" SizeMD="3">
+                        <RadzenStack AlignItems="AlignItems.Center" Gap="0.75rem">
+                            @if (!string.IsNullOrWhiteSpace(AvatarPreviewUrl))
+                            {
+                                <RadzenImage Path="@AvatarPreviewUrl"
+                                             Style="width: 120px; height: 120px; border-radius: 50%; object-fit: cover; border: 3px solid var(--rz-primary);" />
+                            }
+                            else
+                            {
+                                <RadzenStack AlignItems="AlignItems.Center" JustifyContent="JustifyContent.Center"
+                                             Style="width: 120px; height: 120px; border-radius: 50%; background: linear-gradient(135deg, var(--rz-primary), var(--rz-primary-lighter)); color: white; font-size: 2.5rem; font-weight: 600;">
+                                    @GetInitials()
+                                </RadzenStack>
+                            }
+                            <ImageCapture Accept="image/jpeg,image/png,image/webp,image/gif"
+                                          MaxFileSizeBytes="@(5 * 1024 * 1024)"
+                                          UploadText="Upload Photo"
+                                          CameraText="Take Photo"
+                                          ShowPreview="false"
+                                          OnImageCaptured="OnAvatarCapturedAsync" />
+                            @if (IsUploadingAvatar)
+                            {
+                                <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate"
+                                                           Size="ProgressBarCircularSize.Small" />
+                            }
+                            @if (AvatarUploadMessage is not null)
+                            {
+                                <RadzenText TextStyle="TextStyle.Caption"
+                                            Style="color: var(--rz-success); text-align: center;">
+                                    @AvatarUploadMessage
+                                </RadzenText>
+                            }
+                        </RadzenStack>
+                    </RadzenColumn>
+
+                    <!-- Profile Info -->
+                    <RadzenColumn Size="12" SizeMD="9">
+                        <RadzenStack Gap="1rem">
+                            <!-- Email (read-only) -->
+                            <RadzenStack Gap="0.25rem">
+                                <RadzenLabel Text="Email" Style="font-weight: 500;" />
+                                <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center">
+                                    <RadzenTextBox Value="@ProfileModel.Email" ReadOnly="true" Style="width: 100%; opacity: 0.7;" />
+                                    @if (UserProfile?.EmailConfirmed == true)
+                                    {
+                                        <RadzenBadge BadgeStyle="BadgeStyle.Success" Text="Verified" />
+                                    }
+                                    else
+                                    {
+                                        <RadzenBadge BadgeStyle="BadgeStyle.Warning" Text="Unverified" />
+                                    }
+                                </RadzenStack>
+                            </RadzenStack>
+
+                            <RadzenTemplateForm TItem="UpdateProfileFormModel" Data="@ProfileModel" Submit="@HandleProfileUpdateAsync">
+                                <RadzenRow Gap="1rem">
+                                    <RadzenColumn Size="12" SizeMD="6">
+                                        <RadzenStack Gap="0.25rem">
+                                            <RadzenLabel Text="First Name" Component="SettingsFirstName" />
+                                            <RadzenTextBox Name="SettingsFirstName" @bind-Value="ProfileModel.FirstName"
+                                                           Style="width: 100%;" />
+                                            <RadzenRequiredValidator Component="SettingsFirstName" Text="First name is required." />
+                                        </RadzenStack>
+                                    </RadzenColumn>
+                                    <RadzenColumn Size="12" SizeMD="6">
+                                        <RadzenStack Gap="0.25rem">
+                                            <RadzenLabel Text="Last Name" Component="SettingsLastName" />
+                                            <RadzenTextBox Name="SettingsLastName" @bind-Value="ProfileModel.LastName"
+                                                           Style="width: 100%;" />
+                                            <RadzenRequiredValidator Component="SettingsLastName" Text="Last name is required." />
+                                        </RadzenStack>
+                                    </RadzenColumn>
+                                </RadzenRow>
+
+                                @if (ProfileUpdateMessage is not null)
+                                {
+                                    <RadzenAlert AlertStyle="@(ProfileUpdateSuccess ? AlertStyle.Success : AlertStyle.Danger)"
+                                                 Shade="Shade.Lighter" ShowIcon="true" AllowClose="true"
+                                                 Close="@(() => ProfileUpdateMessage = null)"
+                                                 Style="margin-top: 0.5rem;">
+                                        @ProfileUpdateMessage
+                                    </RadzenAlert>
+                                }
+
+                                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End"
+                                             Style="margin-top: 0.5rem;">
+                                    <RadzenButton ButtonType="ButtonType.Submit" Text="Save Changes" Icon="save"
+                                                  ButtonStyle="ButtonStyle.Primary" IsBusy="@IsSavingProfile"
+                                                  BusyText="Saving…" />
+                                </RadzenStack>
+                            </RadzenTemplateForm>
+
+                            <!-- Account Info -->
+                            <RadzenStack Orientation="Orientation.Horizontal" Gap="2rem" Style="margin-top: 0.5rem;">
+                                <RadzenStack Gap="0.1rem">
+                                    <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">
+                                        Member Since
+                                    </RadzenText>
+                                    <RadzenText TextStyle="TextStyle.Body2" Style="font-weight: 500;">
+                                        @UserProfile?.CreatedAt.ToString("MMMM dd, yyyy")
+                                    </RadzenText>
+                                </RadzenStack>
+                                @if (UserProfile?.LastLoginAt is not null)
+                                {
+                                    <RadzenStack Gap="0.1rem">
+                                        <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">
+                                            Last Login
+                                        </RadzenText>
+                                        <RadzenText TextStyle="TextStyle.Body2" Style="font-weight: 500;">
+                                            @UserProfile.LastLoginAt.Value.ToString("MMMM dd, yyyy 'at' h:mm tt")
+                                        </RadzenText>
+                                    </RadzenStack>
+                                }
+                                @if (UserProfile?.Roles.Count > 0)
+                                {
+                                    <RadzenStack Gap="0.1rem">
+                                        <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">
+                                            Roles
+                                        </RadzenText>
+                                        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem">
+                                            @foreach (var role in UserProfile.Roles)
+                                            {
+                                                <RadzenBadge BadgeStyle="BadgeStyle.Info" Text="@role" />
+                                            }
+                                        </RadzenStack>
+                                    </RadzenStack>
+                                }
+                            </RadzenStack>
+                        </RadzenStack>
+                    </RadzenColumn>
+                </RadzenRow>
+            }
+        </RadzenStack>
+    </RadzenCard>
+
+    <!-- Change Password Section -->
+    <RadzenCard>
+        <RadzenStack Gap="1rem">
+            <RadzenText TextStyle="TextStyle.H6" Style="margin: 0; font-weight: 600;">
+                <RadzenIcon Icon="lock" Style="vertical-align: middle; margin-right: 0.25rem;" />
+                Change Password
+            </RadzenText>
+
+            <RadzenTemplateForm TItem="ChangePasswordFormModel" Data="@PasswordModel" Submit="@HandleChangePasswordAsync">
+                <RadzenStack Gap="1rem" Style="max-width: 500px;">
+                    <RadzenStack Gap="0.25rem">
+                        <RadzenLabel Text="Current Password" Component="CurrentPassword" />
+                        <RadzenPassword Name="CurrentPassword" @bind-Value="PasswordModel.CurrentPassword"
+                                        Placeholder="Enter current password" Style="width: 100%;" />
+                        <RadzenRequiredValidator Component="CurrentPassword" Text="Current password is required." />
+                    </RadzenStack>
+
+                    <RadzenStack Gap="0.25rem">
+                        <RadzenLabel Text="New Password" Component="SettingsNewPassword" />
+                        <RadzenPassword Name="SettingsNewPassword" @bind-Value="PasswordModel.NewPassword"
+                                        Placeholder="Min. 8 characters" Style="width: 100%;" />
+                        <RadzenRequiredValidator Component="SettingsNewPassword" Text="New password is required." />
+                        <RadzenLengthValidator Component="SettingsNewPassword" Min="8"
+                                               Text="Password must be at least 8 characters." />
+                    </RadzenStack>
+
+                    <RadzenStack Gap="0.25rem">
+                        <RadzenLabel Text="Confirm New Password" Component="ConfirmNewPassword" />
+                        <RadzenPassword Name="ConfirmNewPassword" @bind-Value="PasswordModel.ConfirmNewPassword"
+                                        Placeholder="Re-enter new password" Style="width: 100%;" />
+                        <RadzenRequiredValidator Component="ConfirmNewPassword" Text="Please confirm your new password." />
+                        <RadzenCompareValidator Component="ConfirmNewPassword" Value="@PasswordModel.NewPassword"
+                                                Text="Passwords do not match." Operator="CompareOperator.Equal" />
+                    </RadzenStack>
+
+                    @if (PasswordChangeMessage is not null)
+                    {
+                        <RadzenAlert AlertStyle="@(PasswordChangeSuccess ? AlertStyle.Success : AlertStyle.Danger)"
+                                     Shade="Shade.Lighter" ShowIcon="true" AllowClose="true"
+                                     Close="@(() => PasswordChangeMessage = null)">
+                            @PasswordChangeMessage
+                        </RadzenAlert>
+                    }
+
+                    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End">
+                        <RadzenButton ButtonType="ButtonType.Submit" Text="Update Password" Icon="lock_reset"
+                                      ButtonStyle="ButtonStyle.Warning" IsBusy="@IsChangingPassword"
+                                      BusyText="Updating…" />
+                    </RadzenStack>
+                </RadzenStack>
+            </RadzenTemplateForm>
+        </RadzenStack>
+    </RadzenCard>
+
+    <!-- Appearance Section -->
+    <RadzenCard>
+        <RadzenStack Gap="1rem">
+            <RadzenText TextStyle="TextStyle.H6" Style="margin: 0; font-weight: 600;">
+                <RadzenIcon Icon="palette" Style="vertical-align: middle; margin-right: 0.25rem;" />
+                Appearance
+            </RadzenText>
+
+            <ThemeSelector />
+        </RadzenStack>
+    </RadzenCard>
+
+</RadzenStack>

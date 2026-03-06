@@ -1,0 +1,76 @@
+﻿@inherits LayoutComponentBase
+
+<HeadContent>
+    <RadzenTheme Theme="software" />
+</HeadContent>
+
+<AuthorizeView>
+    <Authorized>
+        <RadzenLayout style="position: relative;">
+            <RadzenHeader>
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween" Gap="0" Style="width: 100%; padding: 0 1rem;">
+                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0">
+                        <RadzenSidebarToggle Click="@(() => sidebarExpanded = !sidebarExpanded)" />
+                        <RadzenText TextStyle="TextStyle.H6" Style="margin: 0; white-space: nowrap;">MyHome</RadzenText>
+                    </RadzenStack>
+                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                        <RadzenAppearanceToggle />
+                        <RadzenProfileMenu>
+                            <Template>
+                                @if (!string.IsNullOrWhiteSpace(AvatarDataUrl))
+                                {
+                                    <img src="@AvatarDataUrl" alt="@UserDisplayName"
+                                         style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover;" />
+                                }
+                                else
+                                {
+                                    <span style="display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, var(--rz-primary), var(--rz-primary-lighter)); color: white; font-size: 0.8rem; font-weight: 600;">@UserInitials</span>
+                                }
+                            </Template>
+                            <ChildContent>
+                                <RadzenProfileMenuItem Text="@UserDisplayName" Icon="person" Path="/settings" />
+                                <RadzenProfileMenuItem Text="Settings" Icon="settings" Path="/settings" />
+                                <RadzenButton Text="Sign Out" Icon="logout" Click="@HandleLogoutAsync" />
+                            </ChildContent>
+                        </RadzenProfileMenu>
+                    </RadzenStack>
+                </RadzenStack>
+            </RadzenHeader>
+            <RadzenSidebar FullHeight="true" Responsive="false" @bind-Expanded="@sidebarExpanded" style="position: absolute; z-index: 3">
+                <RadzenStack AlignItems="AlignItems.End" class="rz-p-2">
+                    <RadzenButton Icon="west" Variant="Variant.Text" ButtonStyle="ButtonStyle.Secondary" Click="@(() => sidebarExpanded = false)" />
+                </RadzenStack>
+                <RadzenPanelMenu>
+                    <RadzenPanelMenuItem Click="@(()=>NavigateTo("/"))" Text="Home" Icon="home" />
+                    <RadzenPanelMenuItem Text="Bills" Icon="receipt_long">
+                        <RadzenPanelMenuItem Click="@(()=>NavigateTo("/bills/dashboard"))" Text="Dashboard" Icon="dashboard" />
+                        <RadzenPanelMenuItem Click="@(()=>NavigateTo("/bills"))" Text="All Bills" Icon="list" />
+                        </RadzenPanelMenuItem>
+                        <RadzenPanelMenuItem Click="@(()=>NavigateTo("/connections"))" Text="Connections" Icon="people" />
+                    <RadzenPanelMenuItem Click="@(()=>NavigateTo("/settings"))" Text="Settings" Icon="settings" />
+                    <AuthorizeView Roles="Administrator">
+                        <Authorized Context="adminCtx">
+                            <RadzenPanelMenuItem Text="Admin" Icon="admin_panel_settings">
+                                <RadzenPanelMenuItem Click="@(()=>NavigateTo("/admin/users"))" Text="Users" Icon="people" />
+                            </RadzenPanelMenuItem>
+                        </Authorized>
+                    </AuthorizeView>
+                </RadzenPanelMenu>
+            </RadzenSidebar>
+            <RadzenBody>
+                <div class="rz-p-4">
+                    @Body
+                </div>
+            </RadzenBody>
+            @if (sidebarExpanded)
+            {
+                <div @onclick="@(() => sidebarExpanded = false)" class="rz-dialog-mask" style="position: absolute; z-index: 2"></div>
+            }
+        </RadzenLayout>
+    </Authorized>
+    <NotAuthorized>
+        <RedirectToLogin />
+    </NotAuthorized>
+</AuthorizeView>
+
+<RadzenComponents />

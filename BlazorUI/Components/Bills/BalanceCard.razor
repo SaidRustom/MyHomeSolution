@@ -1,0 +1,45 @@
+<RadzenCard Variant="Variant.Outlined" class="rz-p-3" Style="min-width: 260px;">
+    <RadzenStack Orientation="Orientation.Vertical" Gap="0.75rem">
+        @* Header *@
+        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.625rem">
+            <div style="width: 40px; height: 40px; border-radius: 50%; background: var(--rz-base-200); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                <RadzenIcon Icon="person" Style="font-size: 1.25rem; color: var(--rz-text-secondary-color);" />
+            </div>
+            <RadzenStack Orientation="Orientation.Vertical" Gap="0">
+                <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0"><strong>@Balance.CounterpartyUserId</strong></RadzenText>
+                <RadzenText TextStyle="TextStyle.Caption" class="rz-mb-0" Style="@($"color: {StatusColor};")">
+                    <RadzenIcon Icon="@StatusIcon" Style="font-size: 0.75rem;" /> @StatusText
+                </RadzenText>
+            </RadzenStack>
+        </RadzenStack>
+
+        @* Net balance *@
+        <RadzenStack Orientation="Orientation.Vertical" AlignItems="AlignItems.Center" Gap="0.125rem" class="rz-py-1">
+            <RadzenText TextStyle="TextStyle.H5" class="rz-mb-0" Style="@($"color: {StatusColor}; font-variant-numeric: tabular-nums;")">
+                <strong><CurrencyDisplay Amount="@Math.Abs(Balance.NetBalance)" ShowSign="false" /></strong>
+            </RadzenText>
+        </RadzenStack>
+
+        @* Breakdown *@
+        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" class="rz-pt-2" Style="border-top: 1px solid var(--rz-base-200);">
+            <RadzenStack Orientation="Orientation.Vertical" Gap="0">
+                <RadzenText TextStyle="TextStyle.Caption" class="rz-color-secondary rz-mb-0">Owed to you</RadzenText>
+                <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0 rz-color-success" Style="font-variant-numeric: tabular-nums;">
+                    <CurrencyDisplay Amount="@Balance.TotalOwed" />
+                </RadzenText>
+            </RadzenStack>
+            <RadzenStack Orientation="Orientation.Vertical" AlignItems="AlignItems.End" Gap="0">
+                <RadzenText TextStyle="TextStyle.Caption" class="rz-color-secondary rz-mb-0">You owe</RadzenText>
+                <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0 rz-color-danger" Style="font-variant-numeric: tabular-nums;">
+                    <CurrencyDisplay Amount="@Balance.TotalOwing" />
+                </RadzenText>
+            </RadzenStack>
+        </RadzenStack>
+
+        @if (OnViewDetails.HasDelegate)
+        {
+            <RadzenButton Text="View Details" Variant="Variant.Text" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small"
+                          Icon="arrow_forward" Style="align-self: flex-end;" Click="ViewDetailsAsync" />
+        }
+    </RadzenStack>
+</RadzenCard>

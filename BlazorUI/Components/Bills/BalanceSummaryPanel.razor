@@ -1,0 +1,46 @@
+@if (IsLoading)
+{
+    <LoadingIndicator Text="Loading balances…" />
+}
+else if (Error is not null)
+{
+    <ErrorAlert Problem="@Error" OnRetry="LoadBalancesAsync" />
+}
+else
+{
+    <RadzenStack Orientation="Orientation.Vertical" Gap="1rem">
+        @* Summary row *@
+        <RadzenRow Gap="1rem" RowGap="1rem">
+            <RadzenColumn Size="12" SizeMD="4">
+                <StatCard Title="Owed to You" Value="@($"${TotalOwed:N2}")" Icon="arrow_downward" IconColor="var(--rz-success)" />
+            </RadzenColumn>
+            <RadzenColumn Size="12" SizeMD="4">
+                <StatCard Title="You Owe" Value="@($"${TotalOwing:N2}")" Icon="arrow_upward" IconColor="var(--rz-danger)" />
+            </RadzenColumn>
+            <RadzenColumn Size="12" SizeMD="4">
+                <StatCard Title="Net Balance"
+                          Value="@($"${Math.Abs(NetBalance):N2}")"
+                          Icon="@(NetBalance >= 0 ? "trending_up" : "trending_down")"
+                          IconColor="@(NetBalance >= 0 ? "var(--rz-success)" : "var(--rz-danger)")"
+                          Subtitle="@(NetBalance > 0 ? "in your favor" : NetBalance < 0 ? "you owe" : "all settled")" />
+            </RadzenColumn>
+        </RadzenRow>
+
+        @* Balance cards *@
+        @if (Balances.Count == 0)
+        {
+            <EmptyState Icon="account_balance" Title="No balances" Description="You don't have any outstanding balances with other users." />
+        }
+        else
+        {
+            <RadzenRow Gap="1rem" RowGap="1rem">
+                @foreach (var balance in Balances)
+                {
+                    <RadzenColumn Size="12" SizeSM="6" SizeLG="4">
+                        <BalanceCard Balance="@balance" />
+                    </RadzenColumn>
+                }
+            </RadzenRow>
+        }
+    </RadzenStack>
+}

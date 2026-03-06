@@ -1,0 +1,81 @@
+using BlazorUI.Components.Common;
+using BlazorUI.Models.Bills;
+using BlazorUI.Models.Enums;
+using BlazorUI.Services.Contracts;
+using Microsoft.AspNetCore.Components;
+using Radzen;
+
+namespace BlazorUI.Components.Bills;
+
+public partial class ReceiptScanDialog
+{
+    [Inject]
+    private IBillService BillService { get; set; } = default!;
+
+    [Inject]
+    private DialogService DialogService { get; set; } = default!;
+
+    private BillCategory SelectedCategory { get; set; } = BillCategory.Groceries;
+    private IEnumerable<string>? SelectedSplitUserIds { get; set; }
+    private ImageCaptureResult? CapturedImage { get; set; }
+    private string? PreviewUrl { get; set; }
+    private bool IsProcessing { get; set; }
+    private string? ErrorMessage { get; set; }
+
+    private IEnumerable<BillCategory> Categories => Enum.GetValues<BillCategory>();
+
+    private void OnImageCaptured(ImageCaptureResult result)
+    {
+        CapturedImage = result;
+        PreviewUrl = $"data:{result.ContentType};base64,{Convert.ToBase64String(result.Data)}";
+        ErrorMessage = null;
+    }
+
+    private async Task SubmitAsync()
+    {
+        if (CapturedImage is null)
+        {
+            ErrorMessage = "Please capture or upload a receipt image first.";
+            return;
+        }
+
+        IsProcessing = true;
+        ErrorMessage = null;
+        StateHasChanged();
+
+        try
+        {
+            using var stream = new MemoryStream(CapturedImage.Data);
+            var splitUserIds = SelectedSplitUserIds?.ToList();
+
+            var result = await BillService.CreateBillFromReceiptAsync(
+                stream,
+                CapturedImage.FileName,
+                CapturedImage.ContentType,
+                SelectedCategory,
+                splitUserIds);
+
+            if (result.IsSuccess)
+            {
+                DialogService.Close(result.Value);
+            }
+            else
+            {
+                ErrorMessage = result.Problem.Detail is { Length: > 0 }
+                    ? result.Problem.Detail
+                    : "Failed to process receipt. Please try again.";
+            }
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"An error occurred: {ex.Message}";
+        }
+        finally
+        {
+            IsProcessing = false;
+            StateHasChanged();
+        }
+    }
+
+    private void Cancel() => DialogService.Close(null);
+}

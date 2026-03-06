@@ -1,0 +1,19 @@
+<RadzenBadge BadgeStyle="@GetBadgeStyle()" IsPill="@IsPill" class="rz-display-inline-flex rz-align-items-center rz-gap-1">
+    @if (!string.IsNullOrEmpty(Icon))
+    {
+        <RadzenIcon Icon="@Icon" Style="font-size: 0.875rem;" />
+    }
+    @Text
+</RadzenBadge>
+
+@code {
+    BadgeStyle GetBadgeStyle() => BadgeStyle switch
+    {
+        "success" => Radzen.BadgeStyle.Success,
+        "warning" => Radzen.BadgeStyle.Warning,
+        "danger" => Radzen.BadgeStyle.Danger,
+        "info" => Radzen.BadgeStyle.Info,
+        "secondary" => Radzen.BadgeStyle.Secondary,
+        _ => Radzen.BadgeStyle.Light
+    };
+}

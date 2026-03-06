@@ -1,0 +1,12 @@
+<RadzenStack Orientation="Orientation.Vertical" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.Center" Gap="1rem" class="rz-p-8" Style="min-height: 200px;">
+    <RadzenIcon Icon="@Icon" Style="font-size: 3.5rem; color: var(--rz-text-disabled-color);" />
+    <RadzenText TextStyle="TextStyle.Subtitle1" class="rz-mb-0 rz-color-secondary">@Title</RadzenText>
+    @if (!string.IsNullOrEmpty(Description))
+    {
+        <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0 rz-color-secondary" Style="max-width: 400px; text-align: center;">@Description</RadzenText>
+    }
+    @if (HasAction)
+    {
+        <RadzenButton Text="@ActionText" Icon="add" ButtonStyle="ButtonStyle.Primary" Variant="Variant.Flat" Click="InvokeActionAsync" class="rz-mt-2" />
+    }
+</RadzenStack>

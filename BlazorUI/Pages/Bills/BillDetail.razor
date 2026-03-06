@@ -1,0 +1,25 @@
+@page "/bills/{Id:guid}"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize]
+
+<PageTitle>@(Bill?.Title ?? "Bill Detail")</PageTitle>
+
+<RadzenStack Orientation="Orientation.Vertical" Gap="1rem">
+
+    @if (IsLoading)
+    {
+        <LoadingIndicator Text="Loading bill details…" />
+    }
+    else if (Error is not null)
+    {
+        <ErrorAlert Problem="@Error" OnRetry="LoadBillAsync" />
+    }
+    else if (Bill is not null)
+    {
+        <BillDetailPanel Bill="@Bill"
+                         OnEdit="EditBillAsync"
+                         OnDelete="DeleteBillAsync"
+                         OnMarkSplitAsPaid="MarkSplitAsPaidAsync"
+                         IsProcessing="@IsProcessing"
+                         OnBack="GoBack" />
+    }
+</RadzenStack>

@@ -1,0 +1,60 @@
+@using BlazorUI.Components.Common
+
+<RadzenStack Gap="0.75rem">
+
+    @* Error message *@
+    @if (_errorMessage is not null)
+    {
+        <RadzenAlert AlertStyle="AlertStyle.Warning" Shade="Shade.Lighter" ShowIcon="true"
+                     AllowClose="true" Close="@(() => _errorMessage = null)">
+            @_errorMessage
+        </RadzenAlert>
+    }
+
+    @* Camera view *@
+    @if (_isCameraActive)
+    {
+        <RadzenStack Gap="0.5rem" AlignItems="AlignItems.Center">
+            <video id="@_videoElementId" autoplay playsinline muted
+                   style="width: 100%; max-height: 400px; border-radius: 8px; background: #000;"></video>
+            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" JustifyContent="JustifyContent.Center">
+                <RadzenButton Text="Capture" Icon="camera" ButtonStyle="ButtonStyle.Success"
+                              Click="CaptureFrameAsync" />
+                <RadzenButton Text="Cancel" Icon="close" ButtonStyle="ButtonStyle.Light"
+                              Variant="Variant.Flat" Click="StopCameraAsync" />
+            </RadzenStack>
+        </RadzenStack>
+    }
+    else
+    {
+        @* Preview *@
+        @if (ShowPreview && DisplayPreview is not null)
+        {
+            <RadzenStack AlignItems="AlignItems.Center" Gap="0.5rem">
+                <img src="@DisplayPreview" alt="Preview" style="@PreviewStyle" />
+                <RadzenButton Text="Clear" Icon="delete_outline" Variant="Variant.Text"
+                              ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small"
+                              Click="ClearPreview" />
+            </RadzenStack>
+        }
+
+        @* Action buttons *@
+        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem"
+                     JustifyContent="JustifyContent.Center" Wrap="FlexWrap.Wrap">
+            <label class="rz-button rz-button-md rz-variant-filled rz-info rz-shade-default"
+                   style="cursor: pointer; display: inline-flex; align-items: center; gap: 0.375rem;">
+                <RadzenIcon Icon="upload_file" Style="font-size: 1.125rem;" />
+                @UploadText
+                <InputFile OnChange="OnFileSelectedAsync" accept="@Accept"
+                           style="display: none;" />
+            </label>
+
+            @if (_isCameraAvailable)
+            {
+                <RadzenButton Text="@CameraText" Icon="photo_camera"
+                              ButtonStyle="ButtonStyle.Secondary" Variant="Variant.Outlined"
+                              Click="StartCameraAsync" />
+            }
+        </RadzenStack>
+    }
+</RadzenStack>

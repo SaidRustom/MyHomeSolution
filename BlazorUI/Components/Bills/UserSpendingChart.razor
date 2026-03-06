@@ -1,0 +1,58 @@
+@if (!HasData)
+{
+    <EmptyState Icon="bar_chart" Title="No user data" Description="No user spending data available for the selected period." />
+}
+else
+{
+    <RadzenStack Orientation="Orientation.Vertical" Gap="0.75rem">
+        <RadzenText TextStyle="TextStyle.Subtitle1" class="rz-mb-0"><strong>@Title</strong></RadzenText>
+
+        <RadzenChart Style="width: 100%; height: 280px;">
+            <RadzenBarSeries Data="@ChartItems" CategoryProperty="UserId" ValueProperty="TotalPaid" Title="Paid" />
+            <RadzenBarSeries Data="@ChartItems" CategoryProperty="UserId" ValueProperty="TotalOwed" Title="Owed" />
+            <RadzenBarSeries Data="@ChartItems" CategoryProperty="UserId" ValueProperty="TotalOwing" Title="Owing" />
+            <RadzenCategoryAxis />
+            <RadzenValueAxis>
+                <RadzenGridLines Visible="true" />
+            </RadzenValueAxis>
+            <RadzenLegend Position="LegendPosition.Bottom" />
+        </RadzenChart>
+
+        @* User breakdown table *@
+        <RadzenDataGrid Data="@ChartItems" TItem="UserSpendingChartItem" Density="Density.Compact"
+                        AllowPaging="false" AllowSorting="false" GridLines="DataGridGridLines.None">
+            <Columns>
+                <RadzenDataGridColumn TItem="UserSpendingChartItem" Title="User" Width="auto">
+                    <Template Context="item">
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                            <div style="width: 28px; height: 28px; border-radius: 50%; background: var(--rz-base-200); display: flex; align-items: center; justify-content: center;">
+                                <RadzenIcon Icon="person" Style="font-size: 0.875rem;" />
+                            </div>
+                            <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0">@item.UserId</RadzenText>
+                        </RadzenStack>
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="UserSpendingChartItem" Title="Paid" Width="110px" TextAlign="TextAlign.End">
+                    <Template Context="item">
+                        <CurrencyDisplay Amount="@item.TotalPaid" />
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="UserSpendingChartItem" Title="Owed" Width="110px" TextAlign="TextAlign.End">
+                    <Template Context="item">
+                        <span class="rz-color-success"><CurrencyDisplay Amount="@item.TotalOwed" /></span>
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="UserSpendingChartItem" Title="Owing" Width="110px" TextAlign="TextAlign.End">
+                    <Template Context="item">
+                        <span class="rz-color-danger"><CurrencyDisplay Amount="@item.TotalOwing" /></span>
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="UserSpendingChartItem" Title="Net" Width="110px" TextAlign="TextAlign.End">
+                    <Template Context="item">
+                        <CurrencyDisplay Amount="@item.NetBalance" ColorCoded="true" ShowSign="true" />
+                    </Template>
+                </RadzenDataGridColumn>
+            </Columns>
+        </RadzenDataGrid>
+    </RadzenStack>
+}

@@ -1,0 +1,58 @@
+@if (Multiple)
+{
+    <RadzenDropDown TValue="IEnumerable<string>"
+                    Data="@_users"
+                    Value="@SelectedUserIds"
+                    ValueChanged="OnMultiValueChanged"
+                    TextProperty="FullName"
+                    ValueProperty="Id"
+                    AllowFiltering="true"
+                    FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                    FilterOperator="StringFilterOperator.Contains"
+                    LoadData="OnLoadData"
+                    AllowClear="true"
+                    Multiple="true"
+                    Chips="true"
+                    Placeholder="@Placeholder"
+                    Style="@Style"
+                    Disabled="@Disabled"
+                    class="@Class">
+        <Template Context="user">
+            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                <RadzenGravatar Email="@((user as UserDto)?.Email)" Style="width: 24px; height: 24px; border-radius: 50%;" />
+                <RadzenStack Orientation="Orientation.Vertical" Gap="0">
+                    <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0">@((user as UserDto)?.FullName)</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Caption" class="rz-mb-0 rz-color-secondary">@((user as UserDto)?.Email)</RadzenText>
+                </RadzenStack>
+            </RadzenStack>
+        </Template>
+    </RadzenDropDown>
+}
+else
+{
+    <RadzenDropDown TValue="string"
+                    Data="@_users"
+                    Value="@SelectedUserId"
+                    ValueChanged="OnSingleValueChanged"
+                    TextProperty="FullName"
+                    ValueProperty="Id"
+                    AllowFiltering="true"
+                    FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                    FilterOperator="StringFilterOperator.Contains"
+                    LoadData="OnLoadData"
+                    AllowClear="true"
+                    Placeholder="@Placeholder"
+                    Style="@Style"
+                    Disabled="@Disabled"
+                    class="@Class">
+        <Template Context="user">
+            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                <RadzenGravatar Email="@((user as UserDto)?.Email)" Style="width: 24px; height: 24px; border-radius: 50%;" />
+                <RadzenStack Orientation="Orientation.Vertical" Gap="0">
+                    <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0">@((user as UserDto)?.FullName)</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Caption" class="rz-mb-0 rz-color-secondary">@((user as UserDto)?.Email)</RadzenText>
+                </RadzenStack>
+            </RadzenStack>
+        </Template>
+    </RadzenDropDown>
+}

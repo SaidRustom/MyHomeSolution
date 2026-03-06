@@ -1,0 +1,72 @@
+@page "/admin/users"
+@attribute [Authorize(Roles = "Administrator")]
+
+<PageTitle>User Management — MyHome</PageTitle>
+
+<RadzenStack Orientation="Orientation.Vertical" Gap="1rem">
+
+    @if (SelectedUser is not null)
+    {
+        @* Detail view *@
+        <UserDetailPanel User="@SelectedUser"
+                         IsProcessing="@IsProcessing"
+                         OnBack="BackToList"
+                         OnActivate="ActivateSelectedUserAsync"
+                         OnDeactivate="DeactivateSelectedUserAsync"
+                         OnAssignRole="AssignRoleToSelectedUserAsync"
+                         OnRemoveRole="RemoveRoleFromSelectedUserAsync" />
+    }
+    else
+    {
+        @* List view *@
+        <PageHeader Title="User Management" Subtitle="View, create, and manage user accounts" Icon="people">
+            <Actions>
+                <RadzenButton Text="New User" Icon="person_add" ButtonStyle="ButtonStyle.Primary" Click="CreateUserAsync" />
+            </Actions>
+        </PageHeader>
+
+        @if (Error is not null)
+        {
+            <ErrorAlert Problem="@Error" OnRetry="LoadUsersAsync" />
+        }
+
+        @* Search bar *@
+        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.75rem" AlignItems="AlignItems.End" Wrap="FlexWrap.Wrap">
+            <RadzenStack Gap="0.25rem" Style="flex: 1; min-width: 200px;">
+                <RadzenLabel Text="Search" />
+                <RadzenTextBox @bind-Value="SearchTerm" Placeholder="Search by name or email…" Style="width: 100%;" />
+            </RadzenStack>
+            <RadzenStack Gap="0.25rem" Style="width: 160px;">
+                <RadzenLabel Text="Status" />
+                <RadzenDropDown TValue="bool?" @bind-Value="ActiveFilter" Data="@StatusOptions"
+                                TextProperty="Text" ValueProperty="Value"
+                                Placeholder="All" AllowClear="true" Style="width: 100%;" />
+            </RadzenStack>
+            <RadzenButton Text="Search" Icon="search" ButtonStyle="ButtonStyle.Primary" Click="OnSearchAsync" />
+            <RadzenButton Text="Clear" Icon="clear" Variant="Variant.Outlined" ButtonStyle="ButtonStyle.Light" Click="OnClearFiltersAsync" />
+        </RadzenStack>
+
+        @* Data grid *@
+        @if (IsLoading && UserData.Items.Count == 0)
+        {
+            <LoadingIndicator Text="Loading users…" />
+        }
+        else if (!IsLoading && UserData.Items.Count == 0)
+        {
+            <EmptyState Icon="people"
+                        Title="No users found"
+                        Description="@(SearchTerm is not null || ActiveFilter.HasValue ? "Try adjusting your filters." : "Create the first user account.")"
+                        ActionText="@(SearchTerm is null && !ActiveFilter.HasValue ? "Create User" : null)"
+                        OnAction="CreateUserAsync" />
+        }
+        else
+        {
+            <UserDataGrid Data="@UserData"
+                          IsLoading="@IsLoading"
+                          PageSize="@PageSize"
+                          OnLoadData="OnLoadDataAsync"
+                          OnRowSelect="ViewUser"
+                          OnToggleActive="ToggleActiveAsync" />
+        }
+    }
+</RadzenStack>

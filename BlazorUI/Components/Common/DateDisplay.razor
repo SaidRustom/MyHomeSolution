@@ -1,0 +1,8 @@
+@if (Date.HasValue && ShowRelative)
+{
+    <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0" title="@Date.Value.LocalDateTime.ToString("f")">@FormattedDate</RadzenText>
+}
+else
+{
+    <span>@FormattedDate</span>
+}

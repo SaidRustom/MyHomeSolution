@@ -1,0 +1,66 @@
+<RadzenStack Orientation="Orientation.Vertical" Gap="0.75rem">
+    @* Header with actions *@
+    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
+        <RadzenText TextStyle="TextStyle.Subtitle2" class="rz-mb-0">Splits (@Splits.Count)</RadzenText>
+        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem">
+            @if (Splits.Count > 1)
+            {
+                <RadzenButton Text="Split Evenly" Icon="balance" Variant="Variant.Outlined" ButtonStyle="ButtonStyle.Secondary" Size="ButtonSize.ExtraSmall" Click="SplitEvenly" />
+            }
+            <RadzenButton Text="Add" Icon="person_add" Variant="Variant.Flat" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.ExtraSmall" Click="AddSplit" />
+        </RadzenStack>
+    </RadzenStack>
+
+    @* Allocation progress *@
+    @if (Splits.Count > 0)
+    {
+        <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem">
+            <RadzenProgressBar Value="@((double)AllocatedPercentage)" Max="100" ShowValue="false"
+                               ProgressBarStyle="@(IsOverAllocated ? ProgressBarStyle.Danger : IsFullyAllocated ? ProgressBarStyle.Success : ProgressBarStyle.Primary)"
+                               Style="height: 6px;" />
+            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween">
+                <RadzenText TextStyle="TextStyle.Caption" class="rz-mb-0 rz-color-secondary">
+                    Allocated: @($"{AllocatedPercentage:N1}%")
+                </RadzenText>
+                <RadzenText TextStyle="TextStyle.Caption" class="@($"rz-mb-0 {(IsOverAllocated ? "rz-color-danger" : "rz-color-secondary")}")">
+                    Remaining: @($"{RemainingPercentage:N1}%")
+                </RadzenText>
+            </RadzenStack>
+        </RadzenStack>
+    }
+
+    @* Split rows *@
+    @foreach (var split in Splits)
+    {
+        <RadzenCard Variant="Variant.Flat" class="rz-p-2" Style="background: var(--rz-base-100); border-radius: var(--rz-border-radius);">
+            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.End" Gap="0.5rem" Wrap="FlexWrap.Wrap">
+                <RadzenStack Orientation="Orientation.Vertical" Gap="0.125rem" Style="flex: 1; min-width: 160px;">
+                    <RadzenLabel Text="Friend" Style="font-size: 0.75rem;" />
+                    <FriendPicker @bind-SelectedUserId="@split.UserId" Placeholder="Select a friend…" Style="width: 100%;" />
+                </RadzenStack>
+                <RadzenStack Orientation="Orientation.Vertical" Gap="0.125rem" Style="width: 110px;">
+                    <RadzenLabel Text="Percentage" Style="font-size: 0.75rem;" />
+                    <RadzenNumeric TValue="decimal?" @bind-Value="@split.Percentage" Placeholder="%" Style="width: 100%;" Min="0" Max="100" />
+                </RadzenStack>
+                @if (BillAmount > 0 && split.Percentage.HasValue)
+                {
+                    <RadzenStack Orientation="Orientation.Vertical" Gap="0.125rem" Style="width: 90px;">
+                        <RadzenLabel Text="Est. Amount" Style="font-size: 0.75rem;" />
+                        <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0 rz-color-secondary" Style="line-height: 2rem; font-variant-numeric: tabular-nums;">
+                            $@($"{GetEstimatedAmount(split):N2}")
+                        </RadzenText>
+                    </RadzenStack>
+                }
+                <RadzenButton Icon="close" Variant="Variant.Text" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small"
+                              Click="@(() => RemoveSplit(split))" title="Remove split" Style="margin-bottom: 2px;" />
+            </RadzenStack>
+        </RadzenCard>
+    }
+
+    @if (Splits.Count == 0)
+    {
+        <RadzenText TextStyle="TextStyle.Caption" class="rz-color-secondary rz-mb-0 rz-text-align-center rz-p-4">
+            No splits added. Click "Add" to split this bill.
+        </RadzenText>
+    }
+</RadzenStack>

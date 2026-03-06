@@ -1,0 +1,76 @@
+@using BlazorUI.Components.Common
+@using BlazorUI.Components.Connections
+@using BlazorUI.Models.Enums
+
+<RadzenStack Orientation="Orientation.Vertical" Gap="1rem" class="rz-p-4" Style="min-width: 450px;">
+
+    <RadzenText TextStyle="TextStyle.H6" Style="margin: 0; font-weight: 600;">
+        <RadzenIcon Icon="document_scanner" Style="vertical-align: middle; margin-right: 0.25rem;" />
+        Scan Receipt
+    </RadzenText>
+
+    <RadzenText TextStyle="TextStyle.Body2" class="rz-color-secondary" Style="margin: 0;">
+        Take a photo or upload an image of your receipt. We'll automatically extract the details and create a bill.
+    </RadzenText>
+
+    @if (ErrorMessage is not null)
+    {
+        <RadzenAlert AlertStyle="AlertStyle.Danger" Shade="Shade.Lighter" ShowIcon="true"
+                     AllowClose="true" Close="@(() => ErrorMessage = null)">
+            @ErrorMessage
+        </RadzenAlert>
+    }
+
+    @* Receipt image capture *@
+    <RadzenFieldset Text="Receipt Image">
+        <ImageCapture Accept="image/jpeg,image/png,image/webp"
+                      MaxFileSizeBytes="@(20 * 1024 * 1024)"
+                      UploadText="Upload Receipt"
+                      CameraText="Scan Receipt"
+                      ShowPreview="true"
+                      PreviewStyle="max-width: 100%; max-height: 250px; border-radius: 8px; object-fit: contain;"
+                      OnImageCaptured="OnImageCaptured" />
+    </RadzenFieldset>
+
+    @* Category selection *@
+    <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem">
+        <RadzenLabel Text="Category" Component="ReceiptCategory" />
+        <RadzenDropDown TValue="BillCategory" Name="ReceiptCategory"
+                        @bind-Value="SelectedCategory"
+                        Data="@Categories"
+                        Style="width: 100%;"
+                        Disabled="@IsProcessing" />
+    </RadzenStack>
+
+    @* Split with friends *@
+    <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem">
+        <RadzenLabel Text="Split With (optional)" />
+        <FriendPicker Multiple="true"
+                      @bind-SelectedUserIds="SelectedSplitUserIds"
+                      Placeholder="Select friends to split with…"
+                      Disabled="@IsProcessing" />
+    </RadzenStack>
+
+    @* Processing indicator *@
+    @if (IsProcessing)
+    {
+        <RadzenStack AlignItems="AlignItems.Center" Gap="0.5rem" Style="padding: 1rem;">
+            <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+            <RadzenText TextStyle="TextStyle.Body2" class="rz-color-secondary">
+                Analyzing receipt… This may take a moment.
+            </RadzenText>
+        </RadzenStack>
+    }
+
+    @* Footer buttons *@
+    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End"
+                 Gap="0.5rem" class="rz-pt-4"
+                 Style="border-top: 1px solid var(--rz-base-200);">
+        <RadzenButton Text="Cancel" Variant="Variant.Flat" ButtonStyle="ButtonStyle.Light"
+                      Click="Cancel" ButtonType="ButtonType.Button" Disabled="@IsProcessing" />
+        <RadzenButton Text="Create Bill from Receipt" Icon="receipt_long"
+                      ButtonStyle="ButtonStyle.Primary" Click="SubmitAsync"
+                      IsBusy="@IsProcessing" BusyText="Processing…"
+                      Disabled="@(CapturedImage is null)" />
+    </RadzenStack>
+</RadzenStack>

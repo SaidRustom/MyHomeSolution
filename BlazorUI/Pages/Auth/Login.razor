@@ -1,0 +1,62 @@
+@page "/login"
+@using BlazorUI.Models.Auth
+@layout AuthLayout
+
+<PageTitle>Sign In — MyHome</PageTitle>
+
+<RadzenCard class="auth-card" Style="width: 100%; max-width: 440px; margin: 0 auto;">
+    <RadzenStack Gap="1.5rem" Orientation="Orientation.Vertical">
+
+        <RadzenStack AlignItems="AlignItems.Center" Gap="0.25rem">
+            <RadzenIcon Icon="home" Style="font-size: 2.5rem; color: var(--rz-primary);" />
+            <RadzenText TextStyle="TextStyle.H4" Style="margin: 0;">Welcome Back</RadzenText>
+            <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-text-secondary-color);">
+                Sign in to your MyHome account
+            </RadzenText>
+        </RadzenStack>
+
+        @if (!string.IsNullOrWhiteSpace(ErrorMessage))
+        {
+            <RadzenAlert AlertStyle="AlertStyle.Danger" Shade="Shade.Lighter" AllowClose="true"
+                         Close="@(() => ErrorMessage = null)" ShowIcon="true">
+                @ErrorMessage
+            </RadzenAlert>
+        }
+
+        <RadzenTemplateForm TItem="BlazorUI.Models.Auth.LoginRequest" Data="@Model" Submit="@HandleLoginAsync">
+            <RadzenStack Gap="1rem">
+                <RadzenStack Gap="0.25rem">
+                    <RadzenLabel Text="Email" Component="Email" />
+                    <RadzenTextBox Name="Email" @bind-Value="Model.Email" Placeholder="you@example.com"
+                                   Style="width: 100%;" AutoComplete="true" />
+                    <RadzenRequiredValidator Component="Email" Text="Email is required." />
+                    <RadzenEmailValidator Component="Email" Text="Please enter a valid email." />
+                </RadzenStack>
+
+                <RadzenStack Gap="0.25rem">
+                    <RadzenLabel Text="Password" Component="Password" />
+                    <RadzenPassword Name="Password" @bind-Value="Model.Password" Placeholder="••••••••"
+                                    Style="width: 100%;" />
+                    <RadzenRequiredValidator Component="Password" Text="Password is required." />
+                </RadzenStack>
+
+                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End">
+                    <RadzenLink Path="/forgot-password" Text="Forgot password?"
+                                Style="font-size: 0.85rem; font-weight: 500;" />
+                </RadzenStack>
+
+                <RadzenButton ButtonType="ButtonType.Submit" Text="Sign In" Icon="login"
+                              Style="width: 100%;" IsBusy="@IsLoading" BusyText="Signing in…"
+                              ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Large" />
+            </RadzenStack>
+        </RadzenTemplateForm>
+
+        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Center" Gap="0.25rem">
+            <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-text-secondary-color);">
+                Don't have an account?
+            </RadzenText>
+            <RadzenLink Path="/register" Text="Create one" Style="font-weight: 500;" />
+        </RadzenStack>
+
+    </RadzenStack>
+</RadzenCard>

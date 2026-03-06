@@ -1,0 +1,57 @@
+@page "/bills"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize]
+
+<PageTitle>Bills</PageTitle>
+
+<RadzenStack Orientation="Orientation.Vertical" Gap="1rem">
+
+    @* Page header *@
+    <PageHeader Title="Bills" Subtitle="Manage and track shared expenses" Icon="receipt_long">
+        <Actions>
+            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
+                <RadzenButton Text="Scan Receipt" Icon="document_scanner"
+                              ButtonStyle="ButtonStyle.Secondary" Variant="Variant.Outlined"
+                              Click="ScanReceiptAsync" />
+                <RadzenButton Text="New Bill" Icon="add" ButtonStyle="ButtonStyle.Primary"
+                              Click="CreateBillAsync" />
+            </RadzenStack>
+        </Actions>
+    </PageHeader>
+
+    @* Error state *@
+    @if (Error is not null)
+    {
+        <ErrorAlert Problem="@Error" OnRetry="LoadBillsAsync" />
+    }
+
+    @* Filter bar *@
+    <BillFilterBar @bind-SearchTerm="SearchTerm"
+                   @bind-SelectedCategory="SelectedCategory"
+                   @bind-FromDate="FromDate"
+                   @bind-ToDate="ToDate"
+                   OnSearch="OnSearchAsync"
+                   OnClear="OnClearFiltersAsync" />
+
+    @* Data grid *@
+    @if (IsLoading && BillData.Items.Count == 0)
+    {
+        <LoadingIndicator Text="Loading bills…" />
+    }
+    else if (!IsLoading && BillData.Items.Count == 0)
+    {
+        <EmptyState Icon="receipt_long"
+                    Title="No bills found"
+                    Description="@(SearchTerm is not null || SelectedCategory.HasValue ? "Try adjusting your filters." : "Create your first bill to start tracking expenses.")"
+                    ActionText="@(SearchTerm is null && !SelectedCategory.HasValue ? "Create Bill" : null)"
+                    OnAction="CreateBillAsync" />
+    }
+    else
+    {
+        <BillDataGrid Data="@BillData"
+                      IsLoading="@IsLoading"
+                      PageSize="@PageSize"
+                      OnLoadData="OnLoadDataAsync"
+                      OnRowSelect="ViewBill"
+                      OnDelete="DeleteBillAsync" />
+    }
+</RadzenStack>

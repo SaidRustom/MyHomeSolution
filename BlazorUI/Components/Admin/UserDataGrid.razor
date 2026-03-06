@@ -1,0 +1,72 @@
+<RadzenDataGrid Data="@Items"
+                Count="@Count"
+                TItem="UserDto"
+                IsLoading="@IsLoading"
+                AllowPaging="true"
+                PageSize="@PageSize"
+                PagerHorizontalAlign="HorizontalAlign.Center"
+                LoadData="@OnLoadData"
+                RowSelect="@RowSelectAsync"
+                AllowSorting="false"
+                GridLines="DataGridGridLines.None"
+                Density="Density.Compact"
+                class="rz-datatable-striped"
+                Style="cursor: pointer;">
+    <Columns>
+        <RadzenDataGridColumn TItem="UserDto" Title="" Width="52px" Sortable="false" Filterable="false">
+            <Template Context="user">
+                <RadzenGravatar Email="@user.Email" Style="width: 32px; height: 32px; border-radius: 50%;" />
+            </Template>
+        </RadzenDataGridColumn>
+
+        <RadzenDataGridColumn TItem="UserDto" Property="FullName" Title="Name">
+            <Template Context="user">
+                <RadzenStack Orientation="Orientation.Vertical" Gap="0">
+                    <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0"><strong>@user.FullName</strong></RadzenText>
+                    <RadzenText TextStyle="TextStyle.Caption" class="rz-color-secondary rz-mb-0">@user.Email</RadzenText>
+                </RadzenStack>
+            </Template>
+        </RadzenDataGridColumn>
+
+        <RadzenDataGridColumn TItem="UserDto" Title="Status" Width="120px" TextAlign="TextAlign.Center" Sortable="false">
+            <Template Context="user">
+                @if (user.IsActive)
+                {
+                    <RadzenBadge BadgeStyle="BadgeStyle.Success" IsPill="true" Variant="Variant.Flat" Text="Active" />
+                }
+                else
+                {
+                    <RadzenBadge BadgeStyle="BadgeStyle.Danger" IsPill="true" Variant="Variant.Flat" Text="Inactive" />
+                }
+            </Template>
+        </RadzenDataGridColumn>
+
+        <RadzenDataGridColumn TItem="UserDto" Property="CreatedAt" Title="Created" Width="160px">
+            <Template Context="user">
+                <DateDisplay Date="@user.CreatedAt" />
+            </Template>
+        </RadzenDataGridColumn>
+
+        <RadzenDataGridColumn TItem="UserDto" Title="" Width="120px" Sortable="false" Filterable="false" TextAlign="TextAlign.End">
+            <Template Context="user">
+                <RadzenStack Orientation="Orientation.Horizontal" Gap="0" JustifyContent="JustifyContent.End">
+                    @if (OnToggleActive.HasDelegate)
+                    {
+                        @if (user.IsActive)
+                        {
+                            <RadzenButton Icon="block" Variant="Variant.Text" ButtonStyle="ButtonStyle.Warning" Size="ButtonSize.Small"
+                                          Click="@(async () => await OnToggleActive.InvokeAsync(user))" title="Deactivate"
+                                          @onclick:stopPropagation="true" />
+                        }
+                        else
+                        {
+                            <RadzenButton Icon="check_circle" Variant="Variant.Text" ButtonStyle="ButtonStyle.Success" Size="ButtonSize.Small"
+                                          Click="@(async () => await OnToggleActive.InvokeAsync(user))" title="Activate"
+                                          @onclick:stopPropagation="true" />
+                        }
+                    }
+                </RadzenStack>
+            </Template>
+        </RadzenDataGridColumn>
+    </Columns>
+</RadzenDataGrid>

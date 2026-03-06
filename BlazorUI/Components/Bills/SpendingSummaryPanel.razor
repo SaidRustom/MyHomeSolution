@@ -1,0 +1,46 @@
+@if (IsLoading)
+{
+    <LoadingIndicator Text="Loading spending summary…" />
+}
+else if (Error is not null)
+{
+    <ErrorAlert Problem="@Error" OnRetry="LoadSummaryAsync" />
+}
+else if (Summary is not null)
+{
+    <RadzenStack Orientation="Orientation.Vertical" Gap="1.25rem">
+        @* Key metrics *@
+        <RadzenRow Gap="1rem" RowGap="1rem">
+            <RadzenColumn Size="12" SizeSM="6" SizeLG="3">
+                <StatCard Title="Total Spent" Value="@($"${Summary.TotalSpent:N2}")" Icon="payments" IconColor="var(--rz-primary)" />
+            </RadzenColumn>
+            <RadzenColumn Size="12" SizeSM="6" SizeLG="3">
+                <StatCard Title="Owed to You" Value="@($"${Summary.TotalOwed:N2}")" Icon="arrow_downward" IconColor="var(--rz-success)" />
+            </RadzenColumn>
+            <RadzenColumn Size="12" SizeSM="6" SizeLG="3">
+                <StatCard Title="You Owe" Value="@($"${Summary.TotalOwing:N2}")" Icon="arrow_upward" IconColor="var(--rz-danger)" />
+            </RadzenColumn>
+            <RadzenColumn Size="12" SizeSM="6" SizeLG="3">
+                <StatCard Title="Net Balance"
+                          Value="@($"${Math.Abs(Summary.NetBalance):N2}")"
+                          Icon="@(Summary.NetBalance >= 0 ? "trending_up" : "trending_down")"
+                          IconColor="@(Summary.NetBalance >= 0 ? "var(--rz-success)" : "var(--rz-danger)")"
+                          Subtitle="@(Summary.NetBalance > 0 ? "in your favor" : Summary.NetBalance < 0 ? "you owe" : "all settled")" />
+            </RadzenColumn>
+        </RadzenRow>
+
+        @* Charts *@
+        <RadzenRow Gap="1rem" RowGap="1rem">
+            <RadzenColumn Size="12" SizeLG="6">
+                <RadzenCard Variant="Variant.Outlined" class="rz-p-4">
+                    <CategoryBreakdownChart Data="@Summary.ByCategory" />
+                </RadzenCard>
+            </RadzenColumn>
+            <RadzenColumn Size="12" SizeLG="6">
+                <RadzenCard Variant="Variant.Outlined" class="rz-p-4">
+                    <UserSpendingChart Data="@Summary.ByUser" />
+                </RadzenCard>
+            </RadzenColumn>
+        </RadzenRow>
+    </RadzenStack>
+}

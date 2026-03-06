@@ -1,0 +1,64 @@
+@using BlazorUI.Models.Users
+
+<RadzenTemplateForm TItem="CreateUserFormModel" Data="@Model" Submit="OnSubmit">
+    <RadzenStack Orientation="Orientation.Vertical" Gap="1rem" class="rz-p-4">
+
+        @* Name row *@
+        <RadzenRow Gap="1rem">
+            <RadzenColumn Size="6">
+                <RadzenStack Gap="0.25rem">
+                    <RadzenLabel Text="First Name" Component="FirstName" />
+                    <RadzenTextBox Name="FirstName" @bind-Value="Model.FirstName"
+                                   Placeholder="John" Style="width: 100%;" />
+                    <RadzenRequiredValidator Component="FirstName" Text="First name is required." />
+                </RadzenStack>
+            </RadzenColumn>
+            <RadzenColumn Size="6">
+                <RadzenStack Gap="0.25rem">
+                    <RadzenLabel Text="Last Name" Component="LastName" />
+                    <RadzenTextBox Name="LastName" @bind-Value="Model.LastName"
+                                   Placeholder="Doe" Style="width: 100%;" />
+                    <RadzenRequiredValidator Component="LastName" Text="Last name is required." />
+                </RadzenStack>
+            </RadzenColumn>
+        </RadzenRow>
+
+        @* Email *@
+        <RadzenStack Gap="0.25rem">
+            <RadzenLabel Text="Email" Component="UserEmail" />
+            <RadzenTextBox Name="UserEmail" @bind-Value="Model.Email"
+                           Placeholder="user@example.com" Style="width: 100%;" />
+            <RadzenRequiredValidator Component="UserEmail" Text="Email is required." />
+            <RadzenEmailValidator Component="UserEmail" Text="Please enter a valid email." />
+        </RadzenStack>
+
+        @* Password *@
+        <RadzenStack Gap="0.25rem">
+            <RadzenLabel Text="Password" Component="UserPassword" />
+            <RadzenPassword Name="UserPassword" @bind-Value="Model.Password"
+                            Placeholder="Min. 8 characters" Style="width: 100%;" />
+            <RadzenRequiredValidator Component="UserPassword" Text="Password is required." />
+            <RadzenLengthValidator Component="UserPassword" Min="8"
+                                   Text="Password must be at least 8 characters." />
+        </RadzenStack>
+
+        @* Confirm Password *@
+        <RadzenStack Gap="0.25rem">
+            <RadzenLabel Text="Confirm Password" Component="UserConfirmPassword" />
+            <RadzenPassword Name="UserConfirmPassword" @bind-Value="Model.ConfirmPassword"
+                            Placeholder="Re-enter password" Style="width: 100%;" />
+            <RadzenRequiredValidator Component="UserConfirmPassword" Text="Please confirm the password." />
+            <RadzenCompareValidator Component="UserConfirmPassword" Value="@Model.Password"
+                                    Text="Passwords do not match." Operator="CompareOperator.Equal" />
+        </RadzenStack>
+
+        @* Footer buttons *@
+        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem" class="rz-pt-4"
+                     Style="border-top: 1px solid var(--rz-base-200);">
+            <RadzenButton Text="Cancel" Variant="Variant.Flat" ButtonStyle="ButtonStyle.Light"
+                          Click="Cancel" ButtonType="ButtonType.Button" />
+            <RadzenButton Text="Create User" Icon="person_add" ButtonStyle="ButtonStyle.Primary"
+                          ButtonType="ButtonType.Submit" IsBusy="@IsBusy" />
+        </RadzenStack>
+    </RadzenStack>
+</RadzenTemplateForm>

@@ -1,0 +1,204 @@
+<RadzenStack Orientation="Orientation.Vertical" Gap="1rem">
+
+    @* Back button + Actions header *@
+    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween" Wrap="FlexWrap.Wrap" Gap="0.5rem">
+        <RadzenButton Text="Back to Bills" Icon="arrow_back" Variant="Variant.Text" ButtonStyle="ButtonStyle.Secondary" Size="ButtonSize.Small" Click="GoBackAsync" />
+        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.375rem">
+            @if (OnEdit.HasDelegate)
+            {
+                <RadzenButton Text="Edit" Icon="edit" ButtonStyle="ButtonStyle.Primary" Variant="Variant.Outlined" Size="ButtonSize.Small" Click="EditAsync" />
+            }
+            @if (OnDelete.HasDelegate)
+            {
+                <RadzenButton Text="Delete" Icon="delete" ButtonStyle="ButtonStyle.Danger" Variant="Variant.Outlined" Size="ButtonSize.Small" Click="DeleteAsync" />
+            }
+        </RadzenStack>
+    </RadzenStack>
+
+    @* Main detail card *@
+    <RadzenCard Variant="Variant.Outlined">
+        <RadzenStack Orientation="Orientation.Vertical" Gap="1.25rem" class="rz-p-2">
+
+            @* Title row *@
+            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.875rem">
+                <CategoryIcon Category="@CategoryName" Size="48" />
+                <RadzenStack Orientation="Orientation.Vertical" Gap="0">
+                    <RadzenText TextStyle="TextStyle.H5" class="rz-mb-0"><strong>@Bill.Title</strong></RadzenText>
+                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                        <RadzenBadge BadgeStyle="BadgeStyle.Info" IsPill="true" Text="@CategoryName" Variant="Variant.Flat" />
+                        @if (HasReceipt)
+                        {
+                            <RadzenBadge BadgeStyle="BadgeStyle.Success" IsPill="true" Variant="Variant.Flat">
+                                <RadzenIcon Icon="receipt_long" Style="font-size: 0.8rem;" /> Receipt
+                            </RadzenBadge>
+                        }
+                    </RadzenStack>
+                </RadzenStack>
+            </RadzenStack>
+
+            @* Key metrics row *@
+            <RadzenRow Gap="1rem" RowGap="1rem">
+                <RadzenColumn Size="12" SizeMD="4">
+                    <RadzenStack Orientation="Orientation.Vertical" Gap="0.125rem">
+                        <RadzenText TextStyle="TextStyle.Caption" class="rz-color-secondary rz-mb-0">Total Amount</RadzenText>
+                        <RadzenText TextStyle="TextStyle.H4" class="rz-mb-0" Style="font-variant-numeric: tabular-nums;">
+                            <strong><CurrencyDisplay Amount="@Bill.Amount" Currency="@Bill.Currency" /></strong>
+                        </RadzenText>
+                    </RadzenStack>
+                </RadzenColumn>
+                <RadzenColumn Size="6" SizeMD="4">
+                    <RadzenStack Orientation="Orientation.Vertical" Gap="0.125rem">
+                        <RadzenText TextStyle="TextStyle.Caption" class="rz-color-secondary rz-mb-0">Bill Date</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Subtitle1" class="rz-mb-0">
+                            <DateDisplay Date="@Bill.BillDate" />
+                        </RadzenText>
+                    </RadzenStack>
+                </RadzenColumn>
+                <RadzenColumn Size="6" SizeMD="4">
+                    <RadzenStack Orientation="Orientation.Vertical" Gap="0.125rem">
+                        <RadzenText TextStyle="TextStyle.Caption" class="rz-color-secondary rz-mb-0">Paid By</RadzenText>
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.375rem">
+                            <RadzenIcon Icon="person" Style="font-size: 1.125rem;" />
+                            <RadzenText TextStyle="TextStyle.Body1" class="rz-mb-0">@Bill.PaidByUserId</RadzenText>
+                        </RadzenStack>
+                    </RadzenStack>
+                </RadzenColumn>
+            </RadzenRow>
+
+            @* Payment progress *@
+            @if (HasSplits)
+            {
+                <RadzenStack Orientation="Orientation.Vertical" Gap="0.375rem">
+                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
+                        <RadzenText TextStyle="TextStyle.Caption" class="rz-color-secondary rz-mb-0">Payment Progress</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Caption" class="rz-mb-0">
+                            <CurrencyDisplay Amount="@PaidAmount" /> / <CurrencyDisplay Amount="@Bill.Amount" Currency="@Bill.Currency" />
+                        </RadzenText>
+                    </RadzenStack>
+                    <RadzenProgressBar Value="@PaidPercentage" Max="100" ShowValue="false"
+                                       ProgressBarStyle="@(PaidPercentage >= 100 ? ProgressBarStyle.Success : ProgressBarStyle.Primary)"
+                                       Style="height: 8px;" />
+                </RadzenStack>
+            }
+
+            @* Description *@
+            @if (HasDescription)
+            {
+                <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem">
+                    <RadzenText TextStyle="TextStyle.Caption" class="rz-color-secondary rz-mb-0">Description</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0">@Bill.Description</RadzenText>
+                </RadzenStack>
+            }
+
+            @* Notes *@
+            @if (HasNotes)
+            {
+                <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem">
+                    <RadzenText TextStyle="TextStyle.Caption" class="rz-color-secondary rz-mb-0">Notes</RadzenText>
+                    <RadzenCard Variant="Variant.Flat" class="rz-p-3" Style="background: var(--rz-base-100); border-radius: var(--rz-border-radius);">
+                        <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0" Style="white-space: pre-wrap;">@Bill.Notes</RadzenText>
+                    </RadzenCard>
+                </RadzenStack>
+            }
+
+            @* Related entity *@
+            @if (HasRelatedEntity)
+            {
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                    <RadzenIcon Icon="link" Style="font-size: 1rem; color: var(--rz-text-secondary-color);" />
+                    <RadzenText TextStyle="TextStyle.Caption" class="rz-color-secondary rz-mb-0">
+                        Linked to <strong>@Bill.RelatedEntityType</strong> (@Bill.RelatedEntityId)
+                    </RadzenText>
+                </RadzenStack>
+            }
+
+            @* Audit info *@
+            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1.5rem" Wrap="FlexWrap.Wrap"
+                         class="rz-pt-3" Style="border-top: 1px solid var(--rz-base-200);">
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.375rem">
+                    <RadzenIcon Icon="schedule" Style="font-size: 0.875rem; color: var(--rz-text-secondary-color);" />
+                    <RadzenText TextStyle="TextStyle.Caption" class="rz-color-secondary rz-mb-0">
+                        Created <DateDisplay Date="@Bill.CreatedAt" ShowRelative="true" />
+                    </RadzenText>
+                </RadzenStack>
+                @if (Bill.LastModifiedAt.HasValue)
+                {
+                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.375rem">
+                        <RadzenIcon Icon="update" Style="font-size: 0.875rem; color: var(--rz-text-secondary-color);" />
+                        <RadzenText TextStyle="TextStyle.Caption" class="rz-color-secondary rz-mb-0">
+                            Modified <DateDisplay Date="@Bill.LastModifiedAt" ShowRelative="true" />
+                        </RadzenText>
+                    </RadzenStack>
+                }
+                @if (!string.IsNullOrEmpty(Bill.CreatedBy))
+                {
+                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.375rem">
+                        <RadzenIcon Icon="person_outline" Style="font-size: 0.875rem; color: var(--rz-text-secondary-color);" />
+                        <RadzenText TextStyle="TextStyle.Caption" class="rz-color-secondary rz-mb-0">by @Bill.CreatedBy</RadzenText>
+                    </RadzenStack>
+                }
+            </RadzenStack>
+        </RadzenStack>
+    </RadzenCard>
+
+    @* Splits section *@
+    @if (HasSplits)
+    {
+        <RadzenCard Variant="Variant.Outlined">
+            <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem" class="rz-p-2">
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                    <RadzenIcon Icon="call_split" Style="color: var(--rz-primary);" />
+                    <RadzenText TextStyle="TextStyle.Subtitle1" class="rz-mb-0"><strong>Splits</strong></RadzenText>
+                    <RadzenBadge BadgeStyle="BadgeStyle.Info" IsPill="true" Text="@($"{Bill.Splits.Count}")" />
+                </RadzenStack>
+                <BillSplitList Splits="@Bill.Splits"
+                               AllowMarkAsPaid="true"
+                               OnMarkAsPaid="MarkSplitAsPaidAsync"
+                               IsProcessing="@IsProcessing" />
+            </RadzenStack>
+        </RadzenCard>
+    }
+
+    @* Items section *@
+    @if (HasItems)
+    {
+        <RadzenCard Variant="Variant.Outlined">
+            <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem" class="rz-p-2">
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                    <RadzenIcon Icon="list_alt" Style="color: var(--rz-primary);" />
+                    <RadzenText TextStyle="TextStyle.Subtitle1" class="rz-mb-0"><strong>Line Items</strong></RadzenText>
+                    <RadzenBadge BadgeStyle="BadgeStyle.Info" IsPill="true" Text="@($"{Bill.Items.Count}")" />
+                </RadzenStack>
+                <BillItemList Items="@Bill.Items" />
+            </RadzenStack>
+        </RadzenCard>
+    }
+
+    @* Receipt link *@
+    @if (HasReceipt)
+    {
+        <RadzenCard Variant="Variant.Outlined">
+            <RadzenStack Orientation="Orientation.Vertical" Gap="0.75rem" class="rz-p-2">
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.75rem">
+                    <RadzenIcon Icon="receipt_long" Style="font-size: 1.5rem; color: var(--rz-success);" />
+                    <RadzenStack Orientation="Orientation.Vertical" Gap="0" Style="flex: 1;">
+                        <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0"><strong>Receipt Attached</strong></RadzenText>
+                        <RadzenText TextStyle="TextStyle.Caption" class="rz-color-secondary rz-mb-0">A receipt image is available for this bill.</RadzenText>
+                    </RadzenStack>
+                    <RadzenButton Text="@(ShowReceiptPreview ? "Hide Receipt" : "View Receipt")"
+                                  Icon="@(ShowReceiptPreview ? "visibility_off" : "open_in_new")"
+                                  Variant="Variant.Outlined" ButtonStyle="ButtonStyle.Success" Size="ButtonSize.Small"
+                                  IsBusy="@IsLoadingReceipt" BusyText="Loading…"
+                                  Click="ViewReceiptAsync" />
+                </RadzenStack>
+                @if (ShowReceiptPreview && ReceiptDataUrl is not null)
+                {
+                    <RadzenStack AlignItems="AlignItems.Center" Style="padding: 0.5rem;">
+                        <img src="@ReceiptDataUrl" alt="Receipt"
+                             style="max-width: 100%; max-height: 500px; border-radius: 8px; object-fit: contain;" />
+                    </RadzenStack>
+                }
+            </RadzenStack>
+        </RadzenCard>
+    }
+</RadzenStack>

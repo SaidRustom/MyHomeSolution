@@ -1,0 +1,96 @@
+@page "/connections"
+@attribute [Authorize]
+@using BlazorUI.Models.UserConnections
+@using BlazorUI.Components.Connections
+
+<PageTitle>My Connections — MyHome</PageTitle>
+
+<RadzenStack Orientation="Orientation.Vertical" Gap="1rem">
+
+    <PageHeader Title="Connections" Subtitle="Manage your friends and connection requests" Icon="people">
+        <Actions>
+            <RadzenButton Text="Add Friend" Icon="person_add" ButtonStyle="ButtonStyle.Primary" Click="ShowAddFriendAsync" />
+        </Actions>
+    </PageHeader>
+
+    @if (Error is not null)
+    {
+        <ErrorAlert Problem="@Error" OnRetry="LoadDataAsync" />
+    }
+
+    @* Pending Requests - Received *@
+    @if (_receivedRequests.Count > 0)
+    {
+        <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
+            <RadzenText TextStyle="TextStyle.Subtitle1" class="rz-mb-0">
+                <strong>Pending Requests (@_receivedRequests.Count)</strong>
+            </RadzenText>
+            @foreach (var request in _receivedRequests)
+            {
+                <PendingRequestCard Request="@request"
+                                    IsSent="false"
+                                    OnAccept="AcceptRequestAsync"
+                                    OnDecline="DeclineRequestAsync" />
+            }
+        </RadzenStack>
+    }
+
+    @* Pending Requests - Sent *@
+    @if (_sentRequests.Count > 0)
+    {
+        <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
+            <RadzenText TextStyle="TextStyle.Subtitle1" class="rz-mb-0">
+                <strong>Sent Requests (@_sentRequests.Count)</strong>
+            </RadzenText>
+            @foreach (var request in _sentRequests)
+            {
+                <PendingRequestCard Request="@request"
+                                    IsSent="true"
+                                    OnCancel="CancelRequestAsync" />
+            }
+        </RadzenStack>
+    }
+
+    @* Search bar *@
+    <RadzenStack Orientation="Orientation.Horizontal" Gap="0.75rem" AlignItems="AlignItems.End" Wrap="FlexWrap.Wrap">
+        <RadzenStack Gap="0.25rem" Style="flex: 1; min-width: 200px;">
+            <RadzenLabel Text="Search Connections" />
+            <RadzenTextBox @bind-Value="SearchTerm" Placeholder="Search by name or email…" Style="width: 100%;" />
+        </RadzenStack>
+        <RadzenButton Text="Search" Icon="search" ButtonStyle="ButtonStyle.Primary" Click="OnSearchAsync" />
+        <RadzenButton Text="Clear" Icon="clear" Variant="Variant.Outlined" ButtonStyle="ButtonStyle.Light" Click="OnClearAsync" />
+    </RadzenStack>
+
+    @* Connections list *@
+    @if (IsLoading)
+    {
+        <LoadingIndicator Text="Loading connections…" />
+    }
+    else if (_connections.Items.Count == 0)
+    {
+        <EmptyState Icon="people"
+                    Title="No connections yet"
+                    Description="Add friends to get started. You can split bills and share tasks with your connections."
+                    ActionText="Add Friend"
+                    OnAction="ShowAddFriendAsync" />
+    }
+    else
+    {
+        <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
+            <RadzenText TextStyle="TextStyle.Subtitle1" class="rz-mb-0">
+                <strong>Friends (@_connections.TotalCount)</strong>
+            </RadzenText>
+            @foreach (var connection in _connections.Items)
+            {
+                <ConnectionCard Connection="@connection" OnRemove="RemoveConnectionAsync" />
+            }
+            @if (_connections.HasNextPage)
+            {
+                <RadzenStack AlignItems="AlignItems.Center" class="rz-pt-2">
+                    <RadzenButton Text="Load More" Variant="Variant.Outlined" ButtonStyle="ButtonStyle.Secondary"
+                                  Click="LoadMoreAsync" IsBusy="@IsLoading" />
+                </RadzenStack>
+            }
+        </RadzenStack>
+    }
+</RadzenStack>

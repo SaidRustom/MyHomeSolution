@@ -1,0 +1,15 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Api/MyHomeSolution.Api.csproj" />
+    <Project Path="src/Application/MyHomeSolution.Application.csproj" />
+    <Project Path="src/Domain/MyHomeSolution.Domain.csproj" />
+    <Project Path="src/Infrastructure/MyHomeSolution.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/MyHomeSolution.Api.Tests/MyHomeSolution.Api.Tests.csproj" />
+    <Project Path="tests/MyHomeSolution.Application.Tests/MyHomeSolution.Application.Tests.csproj" />
+    <Project Path="tests/MyHomeSolution.Domain.Tests/MyHomeSolution.Domain.Tests.csproj" />
+    <Project Path="tests/MyHomeSolution.Infrastructure.Tests/MyHomeSolution.Infrastructure.Tests.csproj" />
+  </Folder>
+  <Project Path="BlazorUI/BlazorUI.csproj" Id="08d0ccfa-dbb7-4b09-93f0-82252b0b6804" />
+</Solution>

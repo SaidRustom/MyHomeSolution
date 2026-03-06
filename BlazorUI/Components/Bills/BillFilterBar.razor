@@ -1,0 +1,54 @@
+<RadzenCard Variant="Variant.Outlined" class="rz-p-3">
+    <RadzenStack Orientation="Orientation.Vertical" Gap="0.75rem">
+        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Wrap="FlexWrap.Wrap" Gap="0.5rem">
+            @* Search *@
+            <div style="flex: 1; min-width: 200px;">
+                <RadzenTextBox Placeholder="Search bills…"
+                               Value="@SearchTerm"
+                               Change="@OnSearchTermChanged"
+                               Style="width: 100%;"
+                               class="rz-border-radius-2" />
+            </div>
+
+            @* Category dropdown *@
+            <div style="min-width: 170px;">
+                <RadzenDropDown TValue="object"
+                                Data="@Categories"
+                                Value="@SelectedCategory"
+                                Change="@OnCategoryChanged"
+                                Placeholder="All Categories"
+                                AllowClear="true"
+                                Style="width: 100%;" />
+            </div>
+
+            @* From date *@
+            <div style="min-width: 160px;">
+                <RadzenDatePicker TValue="DateTimeOffset?"
+                                  Value="@FromDate"
+                                  ValueChanged="@OnFromDateChanged"
+                                  Placeholder="From date"
+                                  DateFormat="MMM dd, yyyy"
+                                  Style="width: 100%;" />
+            </div>
+
+            @* To date *@
+            <div style="min-width: 160px;">
+                <RadzenDatePicker TValue="DateTimeOffset?"
+                                  Value="@ToDate"
+                                  ValueChanged="@OnToDateChanged"
+                                  Placeholder="To date"
+                                  DateFormat="MMM dd, yyyy"
+                                  Style="width: 100%;" />
+            </div>
+
+            @* Action buttons *@
+            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.375rem">
+                <RadzenButton Text="Search" Icon="search" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Medium" Click="ApplyFiltersAsync" />
+                @if (HasActiveFilters)
+                {
+                    <RadzenButton Text="Clear" Icon="clear" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Medium" Click="ClearFiltersAsync" />
+                }
+            </RadzenStack>
+        </RadzenStack>
+    </RadzenStack>
+</RadzenCard>

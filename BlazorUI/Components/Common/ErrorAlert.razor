@@ -1,0 +1,35 @@
+@if (IsVisible && (Problem is not null || Message is not null))
+{
+    <RadzenAlert AlertStyle="AlertStyle.Danger" Variant="Variant.Flat" Shade="Shade.Lighter" AllowClose="@OnDismiss.HasDelegate" Close="DismissAsync" class="rz-my-2">
+        <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
+            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                <RadzenIcon Icon="error_outline" />
+                <RadzenText TextStyle="TextStyle.Subtitle1" class="rz-mb-0"><strong>@DisplayTitle</strong></RadzenText>
+            </RadzenStack>
+
+            <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0">@DisplayMessage</RadzenText>
+
+            @if (HasValidationErrors)
+            {
+                <ul class="rz-mt-1 rz-mb-0" style="padding-left: 1.25rem;">
+                    @foreach (var field in ValidationErrors!)
+                    {
+                        @foreach (var error in field.Value)
+                        {
+                            <li>
+                                <RadzenText TextStyle="TextStyle.Caption"><strong>@field.Key:</strong> @error</RadzenText>
+                            </li>
+                        }
+                    }
+                </ul>
+            }
+
+            @if (HasRetry)
+            {
+                <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" class="rz-mt-2">
+                    <RadzenButton Text="Try Again" Icon="refresh" ButtonStyle="ButtonStyle.Danger" Variant="Variant.Outlined" Size="ButtonSize.Small" Click="RetryAsync" />
+                </RadzenStack>
+            }
+        </RadzenStack>
+    </RadzenAlert>
+}

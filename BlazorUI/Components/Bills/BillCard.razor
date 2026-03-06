@@ -1,0 +1,55 @@
+<RadzenCard Variant="Variant.Outlined" class="rz-p-0" Style="overflow: hidden;">
+    <RadzenStack Orientation="Orientation.Vertical" Gap="0">
+        @* Card header *@
+        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween" class="rz-p-3" Style="border-bottom: 1px solid var(--rz-base-200);">
+            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.625rem">
+                <CategoryIcon Category="@CategoryName" Size="40" />
+                <RadzenStack Orientation="Orientation.Vertical" Gap="0">
+                    <RadzenText TextStyle="TextStyle.Subtitle2" class="rz-mb-0">@Bill.Title</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Caption" class="rz-color-secondary rz-mb-0">@CategoryName</RadzenText>
+                </RadzenStack>
+            </RadzenStack>
+            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.25rem">
+                @if (Bill.HasReceipt)
+                {
+                    <RadzenIcon Icon="receipt_long" Style="font-size: 1rem; color: var(--rz-success);" title="Has receipt" />
+                }
+                <RadzenButton Icon="more_vert" Variant="Variant.Text" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small" />
+            </RadzenStack>
+        </RadzenStack>
+
+        @* Card body *@
+        <div class="rz-p-3" style="cursor: pointer;" @onclick="ViewBillAsync">
+            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.End" JustifyContent="JustifyContent.SpaceBetween" class="rz-mb-3">
+                <RadzenStack Orientation="Orientation.Vertical" Gap="0">
+                    <RadzenText TextStyle="TextStyle.Caption" class="rz-color-secondary rz-mb-0">Amount</RadzenText>
+                    <RadzenText TextStyle="TextStyle.H5" class="rz-mb-0" Style="font-variant-numeric: tabular-nums;">
+                        <strong><CurrencyDisplay Amount="@Bill.Amount" Currency="@Bill.Currency" /></strong>
+                    </RadzenText>
+                </RadzenStack>
+                <RadzenStack Orientation="Orientation.Vertical" AlignItems="AlignItems.End" Gap="0">
+                    <RadzenText TextStyle="TextStyle.Caption" class="rz-color-secondary rz-mb-0">Date</RadzenText>
+                    <DateDisplay Date="@Bill.BillDate" />
+                </RadzenStack>
+            </RadzenStack>
+
+            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
+                <RadzenBadge BadgeStyle="BadgeStyle.Info" IsPill="true" Text="@($"{Bill.SplitCount} split(s)")" Variant="Variant.Flat" />
+                <DateDisplay Date="@Bill.CreatedAt" ShowRelative="true" />
+            </RadzenStack>
+        </div>
+
+        @* Card footer actions *@
+        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.25rem" class="rz-p-2" Style="border-top: 1px solid var(--rz-base-200);">
+            <RadzenButton Text="View" Icon="visibility" Variant="Variant.Text" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small" Click="ViewBillAsync" />
+            @if (OnEdit.HasDelegate)
+            {
+                <RadzenButton Text="Edit" Icon="edit" Variant="Variant.Text" ButtonStyle="ButtonStyle.Secondary" Size="ButtonSize.Small" Click="EditBillAsync" />
+            }
+            @if (OnDelete.HasDelegate)
+            {
+                <RadzenButton Icon="delete_outline" Variant="Variant.Text" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small" Click="DeleteBillAsync" />
+            }
+        </RadzenStack>
+    </RadzenStack>
+</RadzenCard>

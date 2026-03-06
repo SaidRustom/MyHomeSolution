@@ -1,0 +1,55 @@
+@if (!HasItems)
+{
+    <RadzenText TextStyle="TextStyle.Body2" class="rz-color-secondary rz-mb-0 rz-text-align-center rz-p-4">No line items for this bill.</RadzenText>
+}
+else
+{
+    <RadzenDataGrid Data="@Items" TItem="BillItemDto" Density="Density.Compact" AllowPaging="false"
+                    AllowSorting="false" GridLines="DataGridGridLines.None">
+        <Columns>
+            <RadzenDataGridColumn TItem="BillItemDto" Property="Name" Title="Item" />
+            <RadzenDataGridColumn TItem="BillItemDto" Property="Quantity" Title="Qty" Width="60px" TextAlign="TextAlign.Center" />
+            <RadzenDataGridColumn TItem="BillItemDto" Title="Unit Price" Width="110px" TextAlign="TextAlign.End">
+                <Template Context="item">
+                    <CurrencyDisplay Amount="@item.UnitPrice" />
+                </Template>
+            </RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="BillItemDto" Title="Discount" Width="100px" TextAlign="TextAlign.End">
+                <Template Context="item">
+                    @if (item.Discount > 0)
+                    {
+                        <span class="rz-color-success">-<CurrencyDisplay Amount="@item.Discount" /></span>
+                    }
+                    else
+                    {
+                        <span class="rz-color-secondary">—</span>
+                    }
+                </Template>
+            </RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="BillItemDto" Title="Price" Width="110px" TextAlign="TextAlign.End">
+                <Template Context="item">
+                    <strong><CurrencyDisplay Amount="@item.Price" /></strong>
+                </Template>
+            </RadzenDataGridColumn>
+        </Columns>
+    </RadzenDataGrid>
+
+    @* Totals row *@
+    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="1.5rem" class="rz-p-3" Style="border-top: 2px solid var(--rz-base-300);">
+        @if (TotalDiscount > 0)
+        {
+            <RadzenStack Orientation="Orientation.Vertical" AlignItems="AlignItems.End" Gap="0">
+                <RadzenText TextStyle="TextStyle.Caption" class="rz-color-secondary rz-mb-0">Total Discount</RadzenText>
+                <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0 rz-color-success">
+                    -<CurrencyDisplay Amount="@TotalDiscount" />
+                </RadzenText>
+            </RadzenStack>
+        }
+        <RadzenStack Orientation="Orientation.Vertical" AlignItems="AlignItems.End" Gap="0">
+            <RadzenText TextStyle="TextStyle.Caption" class="rz-color-secondary rz-mb-0">Items Total</RadzenText>
+            <RadzenText TextStyle="TextStyle.Subtitle1" class="rz-mb-0">
+                <strong><CurrencyDisplay Amount="@TotalItemsValue" /></strong>
+            </RadzenText>
+        </RadzenStack>
+    </RadzenStack>
+}
