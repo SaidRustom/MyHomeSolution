@@ -6,6 +6,7 @@ using BlazorUI.Services.Contracts;
 using Microsoft.AspNetCore.Components;
 using Radzen;
 
+
 namespace BlazorUI.Pages.Admin.Users;
 
 public partial class UserManagement : IDisposable
@@ -105,7 +106,7 @@ public partial class UserManagement : IDisposable
             {
                 Severity = NotificationSeverity.Error,
                 Summary = "Error",
-                Detail = result.Problem.Detail,
+                Detail = result.Problem.ToUserMessage(),
                 Duration = 6000
             });
         }
@@ -129,35 +130,13 @@ public partial class UserManagement : IDisposable
             new DialogOptions
             {
                 Width = "520px",
-                CloseDialogOnOverlayClick = false
+                CloseDialogOnOverlayClick = false,
+                ShowClose = false
             });
 
-        if (result is CreateUserFormModel formModel)
+        if (result is true)
         {
-            var request = formModel.ToRequest();
-            var createResult = await UserService.CreateUserAsync(request, _cts.Token);
-
-            if (createResult.IsSuccess)
-            {
-                NotificationService.Notify(new NotificationMessage
-                {
-                    Severity = NotificationSeverity.Success,
-                    Summary = "User Created",
-                    Detail = $"Account for '{formModel.Email}' has been created.",
-                    Duration = 4000
-                });
-                await LoadUsersAsync();
-            }
-            else
-            {
-                NotificationService.Notify(new NotificationMessage
-                {
-                    Severity = NotificationSeverity.Error,
-                    Summary = "Error",
-                    Detail = BuildErrorMessage(createResult.Problem),
-                    Duration = 6000
-                });
-            }
+            await LoadUsersAsync();
         }
     }
 
@@ -202,7 +181,7 @@ public partial class UserManagement : IDisposable
                 {
                     Severity = NotificationSeverity.Error,
                     Summary = "Error",
-                    Detail = result.Problem.Detail,
+                    Detail = result.Problem.ToUserMessage(),
                     Duration = 6000
                 });
             }
@@ -233,7 +212,7 @@ public partial class UserManagement : IDisposable
             {
                 Severity = NotificationSeverity.Error,
                 Summary = "Error",
-                Detail = result.Problem.Detail,
+                Detail = result.Problem.ToUserMessage(),
                 Duration = 6000
             });
         }
@@ -265,7 +244,7 @@ public partial class UserManagement : IDisposable
             {
                 Severity = NotificationSeverity.Error,
                 Summary = "Error",
-                Detail = result.Problem.Detail,
+                Detail = result.Problem.ToUserMessage(),
                 Duration = 6000
             });
         }
@@ -312,7 +291,7 @@ public partial class UserManagement : IDisposable
                 {
                     Severity = NotificationSeverity.Error,
                     Summary = "Error",
-                    Detail = result.Problem.Detail,
+                    Detail = result.Problem.ToUserMessage(),
                     Duration = 6000
                 });
             }
@@ -362,7 +341,7 @@ public partial class UserManagement : IDisposable
                 {
                     Severity = NotificationSeverity.Error,
                     Summary = "Error",
-                    Detail = result.Problem.Detail,
+                    Detail = result.Problem.ToUserMessage(),
                     Duration = 6000
                 });
             }
@@ -381,18 +360,6 @@ public partial class UserManagement : IDisposable
         {
             SelectedUser = result.Value;
         }
-    }
-
-    static string BuildErrorMessage(ApiProblemDetails problem)
-    {
-        if (problem.Errors is { Count: > 0 })
-        {
-            return string.Join(" ", problem.Errors.SelectMany(e => e.Value));
-        }
-
-        return problem.Detail is { Length: > 0 }
-            ? problem.Detail
-            : problem.Title;
     }
 
     public void Dispose()

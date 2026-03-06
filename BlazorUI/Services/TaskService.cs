@@ -39,6 +39,12 @@ public sealed class TaskService(HttpClient httpClient)
         return GetAsync<PaginatedList<TaskBriefDto>>($"{BasePath}{query}", cancellationToken);
     }
 
+    public Task<ApiResult<IReadOnlyCollection<TodayTaskDto>>> GetTodayTasksAsync(
+        CancellationToken cancellationToken = default)
+    {
+        return GetAsync<IReadOnlyCollection<TodayTaskDto>>($"{BasePath}/today", cancellationToken);
+    }
+
     public Task<ApiResult<TaskDetailDto>> GetTaskByIdAsync(
         Guid id, CancellationToken cancellationToken = default)
     {

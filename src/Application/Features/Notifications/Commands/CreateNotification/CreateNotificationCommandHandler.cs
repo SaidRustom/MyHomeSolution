@@ -33,7 +33,13 @@ public sealed class CreateNotificationCommandHandler(
         await dbContext.SaveChangesAsync(cancellationToken);
 
         await publisher.Publish(
-            new NotificationCreatedEvent(notification.Id, notification.Title, notification.ToUserId),
+            new NotificationCreatedEvent(
+                notification.Id,
+                notification.Title,
+                notification.Description,
+                notification.ToUserId,
+                notification.RelatedEntityId,
+                notification.RelatedEntityType),
             cancellationToken);
 
         return notification.Id;

@@ -237,4 +237,33 @@
         </RadzenStack>
     </RadzenCard>
 
+    <RadzenCard>
+        <RadzenStack Gap="1rem">
+            <RadzenText TextStyle="TextStyle.H6" Style="margin: 0; font-weight: 600;">
+                <RadzenIcon Icon="palette" Style="vertical-align: middle; margin-right: 0.25rem;" />
+                Install App
+            </RadzenText>
+
+            <RadzenButton Text="Install PWA" Icon="download" Click="@(() => JS.InvokeVoidAsync("installPWA"))" />
+        </RadzenStack>
+    </RadzenCard>
+
 </RadzenStack>
+
+
+<script>
+        let deferredPrompt;
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+    });
+
+    window.installPWA = async () => {
+        if (deferredPrompt) {
+            deferredPrompt.prompt();
+            await deferredPrompt.userChoice;
+            deferredPrompt = null;
+        }
+    };
+</script>

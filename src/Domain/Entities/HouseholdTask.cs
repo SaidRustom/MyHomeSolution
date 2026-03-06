@@ -15,6 +15,13 @@ public sealed class HouseholdTask : BaseAuditableEntity, IBillable
     public DateOnly? DueDate { get; set; }
     public string? AssignedToUserId { get; set; }
 
+    // Auto-bill configuration: when enabled, a Bill is created for each occurrence
+    public bool AutoCreateBill { get; set; }
+    public decimal? DefaultBillAmount { get; set; }
+    public string? DefaultBillCurrency { get; set; }
+    public BillCategory? DefaultBillCategory { get; set; }
+    public string? DefaultBillTitle { get; set; }
+
     public RecurrencePattern? RecurrencePattern { get; set; }
     public ICollection<TaskOccurrence> Occurrences { get; set; } = [];
     public ICollection<Bill> Bills { get; set; } = [];

@@ -21,7 +21,12 @@ public sealed class CreateTaskCommandHandler(
             EstimatedDurationMinutes = request.EstimatedDurationMinutes,
             IsRecurring = request.IsRecurring,
             DueDate = request.DueDate,
-            AssignedToUserId = request.AssignedToUserId
+            AssignedToUserId = request.AssignedToUserId,
+            AutoCreateBill = request.AutoCreateBill,
+            DefaultBillAmount = request.DefaultBillAmount,
+            DefaultBillCurrency = request.DefaultBillCurrency,
+            DefaultBillCategory = request.DefaultBillCategory,
+            DefaultBillTitle = request.DefaultBillTitle
         };
 
         if (request.IsRecurring && request.RecurrenceType.HasValue && request.RecurrenceStartDate.HasValue)

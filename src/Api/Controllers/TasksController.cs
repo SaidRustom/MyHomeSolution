@@ -7,6 +7,7 @@ using MyHomeSolution.Application.Features.Tasks.Commands.UpdateTask;
 using MyHomeSolution.Application.Features.Tasks.Common;
 using MyHomeSolution.Application.Features.Tasks.Queries.GetTaskById;
 using MyHomeSolution.Application.Features.Tasks.Queries.GetTasks;
+using MyHomeSolution.Application.Features.Tasks.Queries.GetTodayTasks;
 using MyHomeSolution.Application.Common.Models;
 using MyHomeSolution.Domain.Enums;
 
@@ -47,6 +48,14 @@ public sealed class TasksController(ISender sender) : ControllerBase
         };
 
         var result = await sender.Send(query, cancellationToken);
+        return Ok(result);
+    }
+
+    [HttpGet("today")]
+    [ProducesResponseType(typeof(IReadOnlyCollection<TodayTaskDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetTodayTasks(CancellationToken cancellationToken)
+    {
+        var result = await sender.Send(new GetTodayTasksQuery(), cancellationToken);
         return Ok(result);
     }
 

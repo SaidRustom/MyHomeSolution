@@ -22,5 +22,8 @@ public enum NotificationType
     ShoppingListDeleted = 17,
     ShoppingItemChecked = 18,
     ConnectionRequestReceived = 19,
-    ConnectionRequestAccepted = 20
+    ConnectionRequestAccepted = 20,
+    OccurrenceOverdue = 21,
+    OccurrenceStarted = 22,
+    OccurrenceRescheduled = 23
 }

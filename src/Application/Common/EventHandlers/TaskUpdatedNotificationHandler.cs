@@ -56,6 +56,9 @@ public sealed class TaskUpdatedNotificationHandler(
                     EventType = nameof(NotificationCreatedEvent),
                     NotificationId = entity.Id,
                     Title = entity.Title,
+                    Description = entity.Description,
+                    RelatedEntityId = entity.RelatedEntityId,
+                    RelatedEntityType = entity.RelatedEntityType,
                     OccurredAt = dateTimeProvider.UtcNow
                 },
                 cancellationToken);

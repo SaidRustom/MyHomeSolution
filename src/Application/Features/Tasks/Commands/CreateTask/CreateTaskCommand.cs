@@ -18,4 +18,9 @@ public sealed record CreateTaskCommand : IRequest<Guid>
     public DateOnly? RecurrenceStartDate { get; init; }
     public DateOnly? RecurrenceEndDate { get; init; }
     public List<string>? AssigneeUserIds { get; init; }
+    public bool AutoCreateBill { get; init; }
+    public decimal? DefaultBillAmount { get; init; }
+    public string? DefaultBillCurrency { get; init; }
+    public BillCategory? DefaultBillCategory { get; init; }
+    public string? DefaultBillTitle { get; init; }
 }

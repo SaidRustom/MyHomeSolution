@@ -9,7 +9,8 @@ namespace MyHomeSolution.Application.Features.Bills.Queries.GetBillById;
 
 public sealed class GetBillByIdQueryHandler(
     IApplicationDbContext dbContext,
-    ICurrentUserService currentUserService)
+    ICurrentUserService currentUserService,
+    IIdentityService identityService)
     : IRequestHandler<GetBillByIdQuery, BillDetailDto>
 {
     public async Task<BillDetailDto> Handle(GetBillByIdQuery request, CancellationToken cancellationToken)
@@ -28,6 +29,11 @@ public sealed class GetBillByIdQueryHandler(
         if (bill.CreatedBy != userId && !bill.Splits.Any(s => s.UserId == userId))
             throw new ForbiddenAccessException();
 
+        var allUserIds = bill.Splits.Select(s => s.UserId)
+            .Append(bill.PaidByUserId)
+            .Distinct();
+        var nameMap = await identityService.GetUserFullNamesByIdsAsync(allUserIds, cancellationToken);
+
         return new BillDetailDto
         {
             Id = bill.Id,
@@ -38,17 +44,19 @@ public sealed class GetBillByIdQueryHandler(
             Category = bill.Category,
             BillDate = bill.BillDate,
             PaidByUserId = bill.PaidByUserId,
+            PaidByUserFullName = nameMap.GetValueOrDefault(bill.PaidByUserId),
             ReceiptUrl = bill.ReceiptUrl,
             RelatedEntityId = bill.RelatedEntityId,
             RelatedEntityType = bill.RelatedEntityType,
             Notes = bill.Notes,
             CreatedAt = bill.CreatedAt,
-            CreatedBy = bill.CreatedBy,
+            CreatedBy = bill.CreatedBy == null ? null : nameMap.GetValueOrDefault(bill.CreatedBy),
             LastModifiedAt = bill.LastModifiedAt,
             Splits = bill.Splits.Select(s => new BillSplitDto
             {
                 Id = s.Id,
                 UserId = s.UserId,
+                UserFullName = nameMap.GetValueOrDefault(s.UserId),
                 Percentage = s.Percentage,
                 Amount = s.Amount,
                 Status = s.Status,

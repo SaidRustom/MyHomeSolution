@@ -4,19 +4,25 @@ using MyHomeSolution.Application.Common.Events;
 using MyHomeSolution.Application.Common.Exceptions;
 using MyHomeSolution.Application.Common.Interfaces;
 using MyHomeSolution.Domain.Entities;
+using MyHomeSolution.Domain.Enums;
 
 namespace MyHomeSolution.Application.Features.Tasks.Commands.UpdateTask;
 
 public sealed class UpdateTaskCommandHandler(
     IApplicationDbContext dbContext,
+    IOccurrenceScheduler occurrenceScheduler,
     IPublisher publisher)
     : IRequestHandler<UpdateTaskCommand>
 {
     public async Task Handle(UpdateTaskCommand request, CancellationToken cancellationToken)
     {
         var task = await dbContext.HouseholdTasks
+            .Include(t => t.RecurrencePattern!)
+                .ThenInclude(rp => rp.Assignees)
             .FirstOrDefaultAsync(t => t.Id == request.Id && !t.IsDeleted, cancellationToken)
             ?? throw new NotFoundException(nameof(HouseholdTask), request.Id);
+
+        var recurrenceChanged = DetectRecurrenceChange(task, request);
 
         task.Title = request.Title;
         task.Description = request.Description;
@@ -26,9 +32,109 @@ public sealed class UpdateTaskCommandHandler(
         task.IsActive = request.IsActive;
         task.DueDate = request.DueDate;
         task.AssignedToUserId = request.AssignedToUserId;
+        task.IsRecurring = request.IsRecurring;
+        task.AutoCreateBill = request.AutoCreateBill;
+        task.DefaultBillAmount = request.DefaultBillAmount;
+        task.DefaultBillCurrency = request.DefaultBillCurrency;
+        task.DefaultBillCategory = request.DefaultBillCategory;
+        task.DefaultBillTitle = request.DefaultBillTitle;
+
+        if (request.IsRecurring && request.RecurrenceType.HasValue && request.RecurrenceStartDate.HasValue)
+        {
+            if (task.RecurrencePattern is null)
+            {
+                var pattern = new RecurrencePattern
+                {
+                    HouseholdTaskId = task.Id,
+                    Type = request.RecurrenceType.Value,
+                    Interval = request.Interval ?? 1,
+                    StartDate = request.RecurrenceStartDate.Value,
+                    EndDate = request.RecurrenceEndDate
+                };
+                dbContext.RecurrencePatterns.Add(pattern);
+                task.RecurrencePattern = pattern;
+            }
+            else
+            {
+                task.RecurrencePattern.Type = request.RecurrenceType.Value;
+                task.RecurrencePattern.Interval = request.Interval ?? 1;
+                task.RecurrencePattern.StartDate = request.RecurrenceStartDate.Value;
+                task.RecurrencePattern.EndDate = request.RecurrenceEndDate;
+            }
+
+            SyncAssignees(dbContext, task.RecurrencePattern, request.AssigneeUserIds ?? []);
+        }
+        else if (!request.IsRecurring && task.RecurrencePattern is not null)
+        {
+            dbContext.RecurrenceAssignees.RemoveRange(task.RecurrencePattern.Assignees);
+            dbContext.RecurrencePatterns.Remove(task.RecurrencePattern);
+            task.RecurrencePattern = null;
+            recurrenceChanged = true;
+        }
 
         await dbContext.SaveChangesAsync(cancellationToken);
 
+        if (recurrenceChanged)
+        {
+            await occurrenceScheduler.RegenerateOccurrencesAsync(task.Id, cancellationToken);
+        }
+
         await publisher.Publish(new TaskUpdatedEvent(task.Id, task.Title), cancellationToken);
+    }
+
+    private static bool DetectRecurrenceChange(HouseholdTask task, UpdateTaskCommand request)
+    {
+        if (task.IsRecurring != request.IsRecurring)
+            return true;
+
+        if (!request.IsRecurring)
+            return false;
+
+        var pattern = task.RecurrencePattern;
+        if (pattern is null && request.RecurrenceType.HasValue)
+            return true;
+
+        if (pattern is null)
+            return false;
+
+        if (pattern.Type != request.RecurrenceType)
+            return true;
+        if (pattern.Interval != (request.Interval ?? 1))
+            return true;
+        if (pattern.StartDate != request.RecurrenceStartDate)
+            return true;
+        if (pattern.EndDate != request.RecurrenceEndDate)
+            return true;
+
+        var existingIds = pattern.Assignees.OrderBy(a => a.Order).Select(a => a.UserId).ToList();
+        var newIds = request.AssigneeUserIds ?? [];
+        if (!existingIds.SequenceEqual(newIds))
+            return true;
+
+        return false;
+    }
+
+    private static void SyncAssignees(IApplicationDbContext dbContext, RecurrencePattern pattern, List<string> newUserIds)
+    {
+        var existingIds = pattern.Assignees.OrderBy(a => a.Order).Select(a => a.UserId).ToList();
+        if (existingIds.SequenceEqual(newUserIds))
+            return;
+
+        foreach (var assignee in pattern.Assignees.ToList())
+        {
+            dbContext.RecurrenceAssignees.Remove(assignee);
+        }
+
+        for (var i = 0; i < newUserIds.Count; i++)
+        {
+            pattern.Assignees.Add(new RecurrenceAssignee
+            {
+                RecurrencePatternId = pattern.Id,
+                UserId = newUserIds[i],
+                Order = i
+            });
+        }
+
+        pattern.LastAssigneeIndex = -1;
     }
 }

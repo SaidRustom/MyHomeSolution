@@ -19,6 +19,9 @@ public interface ITaskService
         bool? notCompletedOnly = null,
         CancellationToken cancellationToken = default);
 
+    Task<ApiResult<IReadOnlyCollection<TodayTaskDto>>> GetTodayTasksAsync(
+        CancellationToken cancellationToken = default);
+
     Task<ApiResult<TaskDetailDto>> GetTaskByIdAsync(
         Guid id, CancellationToken cancellationToken = default);
 

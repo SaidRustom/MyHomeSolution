@@ -3,6 +3,13 @@
         Search for a user to send a connection request.
     </RadzenText>
 
+    @if (_errorMessage is not null)
+    {
+        <RadzenAlert AlertStyle="AlertStyle.Danger" Variant="Variant.Flat" Shade="Shade.Lighter" AllowClose="true" Close="@(() => _errorMessage = null)">
+            @_errorMessage
+        </RadzenAlert>
+    }
+
     <RadzenStack Gap="0.25rem">
         <RadzenLabel Text="User" />
         <RadzenDropDown TValue="string"
@@ -15,7 +22,8 @@
                         FilterOperator="StringFilterOperator.Contains"
                         AllowClear="true"
                         Placeholder="Search by name…"
-                        Style="width: 100%;">
+                        Style="width: 100%;"
+                        Disabled="@_isBusy">
             <Template Context="user">
                 <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
                     <RadzenGravatar Email="@((user as UserDto)?.Email)" Style="width: 28px; height: 28px; border-radius: 50%;" />
@@ -30,8 +38,8 @@
 
     <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem" class="rz-pt-4"
                  Style="border-top: 1px solid var(--rz-base-200);">
-        <RadzenButton Text="Cancel" Variant="Variant.Flat" ButtonStyle="ButtonStyle.Light" Click="Cancel" />
+        <RadzenButton Text="Cancel" Variant="Variant.Flat" ButtonStyle="ButtonStyle.Light" Click="Cancel" Disabled="@_isBusy" />
         <RadzenButton Text="Send Request" Icon="person_add" ButtonStyle="ButtonStyle.Primary"
-                      Disabled="@string.IsNullOrWhiteSpace(_selectedUserId)" Click="Submit" />
+                      Disabled="@(string.IsNullOrWhiteSpace(_selectedUserId) || _isBusy)" IsBusy="@_isBusy" Click="Submit" />
     </RadzenStack>
 </RadzenStack>

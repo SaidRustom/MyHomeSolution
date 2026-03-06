@@ -9,7 +9,8 @@ namespace MyHomeSolution.Application.Features.Bills.Queries.GetBills;
 
 public sealed class GetBillsQueryHandler(
     IApplicationDbContext dbContext,
-    ICurrentUserService currentUserService)
+    ICurrentUserService currentUserService,
+    IIdentityService identityService)
     : IRequestHandler<GetBillsQuery, PaginatedList<BillBriefDto>>
 {
     public async Task<PaginatedList<BillBriefDto>> Handle(
@@ -61,7 +62,17 @@ public sealed class GetBillsQueryHandler(
                 CreatedAt = b.CreatedAt
             });
 
-        return await PaginatedList<BillBriefDto>.CreateAsync(
+        var page = await PaginatedList<BillBriefDto>.CreateAsync(
             projected, request.PageNumber, request.PageSize, cancellationToken);
+
+        var payerIds = page.Items.Select(b => b.PaidByUserId).Distinct();
+        var nameMap = await identityService.GetUserFullNamesByIdsAsync(payerIds, cancellationToken);
+
+        var enriched = page.Items.Select(b => b with
+        {
+            PaidByUserFullName = nameMap.GetValueOrDefault(b.PaidByUserId)
+        }).ToList();
+
+        return new PaginatedList<BillBriefDto>(enriched, page.TotalCount, request.PageNumber, request.PageSize);
     }
 }

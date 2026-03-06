@@ -446,6 +446,9 @@ namespace MyHomeSolution.Infrastructure.Persistence.Migrations
                         .HasMaxLength(450)
                         .HasColumnType("nvarchar(450)");
 
+                    b.Property<bool>("AutoCreateBill")
+                        .HasColumnType("bit");
+
                     b.Property<int>("Category")
                         .HasColumnType("int");
 
@@ -453,6 +456,18 @@ namespace MyHomeSolution.Infrastructure.Persistence.Migrations
                         .HasColumnType("datetimeoffset");
 
                     b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<decimal?>("DefaultBillAmount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int?>("DefaultBillCategory")
+                        .HasColumnType("int");
+
+                    b.Property<string>("DefaultBillCurrency")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("DefaultBillTitle")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTimeOffset?>("DeletedAt")
@@ -763,6 +778,9 @@ namespace MyHomeSolution.Infrastructure.Persistence.Migrations
                         .HasMaxLength(450)
                         .HasColumnType("nvarchar(450)");
 
+                    b.Property<Guid?>("BillId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<DateTimeOffset?>("CompletedAt")
                         .HasColumnType("datetimeoffset");
 
@@ -805,6 +823,8 @@ namespace MyHomeSolution.Infrastructure.Persistence.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("BillId");
 
                     b.HasIndex("DueDate");
 
@@ -1125,11 +1145,17 @@ namespace MyHomeSolution.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("MyHomeSolution.Domain.Entities.TaskOccurrence", b =>
                 {
+                    b.HasOne("MyHomeSolution.Domain.Entities.Bill", "Bill")
+                        .WithMany()
+                        .HasForeignKey("BillId");
+
                     b.HasOne("MyHomeSolution.Domain.Entities.HouseholdTask", "HouseholdTask")
                         .WithMany("Occurrences")
                         .HasForeignKey("HouseholdTaskId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("Bill");
 
                     b.Navigation("HouseholdTask");
                 });

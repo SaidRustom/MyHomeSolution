@@ -9,7 +9,8 @@ namespace MyHomeSolution.Application.Features.Notifications.Queries.GetNotificat
 
 public sealed class GetNotificationsQueryHandler(
     IApplicationDbContext dbContext,
-    ICurrentUserService currentUserService)
+    ICurrentUserService currentUserService,
+    IIdentityService identityService)
     : IRequestHandler<GetNotificationsQuery, PaginatedList<NotificationBriefDto>>
 {
     public async Task<PaginatedList<NotificationBriefDto>> Handle(
@@ -36,11 +37,28 @@ public sealed class GetNotificationsQueryHandler(
                 Title = n.Title,
                 Type = n.Type,
                 FromUserId = n.FromUserId,
+                RelatedEntityId = n.RelatedEntityId,
+                RelatedEntityType = n.RelatedEntityType,
                 IsRead = n.IsRead,
                 CreatedAt = n.CreatedAt
             });
 
-        return await PaginatedList<NotificationBriefDto>.CreateAsync(
+        var page = await PaginatedList<NotificationBriefDto>.CreateAsync(
             projected, request.PageNumber, request.PageSize, cancellationToken);
+
+        var fromUserIds = page.Items
+            .Where(n => !string.IsNullOrWhiteSpace(n.FromUserId))
+            .Select(n => n.FromUserId!)
+            .Distinct();
+        var nameMap = await identityService.GetUserFullNamesByIdsAsync(fromUserIds, cancellationToken);
+
+        var enriched = page.Items.Select(n => n with
+        {
+            FromUserFullName = n.FromUserId is not null
+                ? nameMap.GetValueOrDefault(n.FromUserId)
+                : null
+        }).ToList();
+
+        return new PaginatedList<NotificationBriefDto>(enriched, page.TotalCount, request.PageNumber, request.PageSize);
     }
 }

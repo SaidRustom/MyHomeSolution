@@ -8,9 +8,9 @@ else
         <RadzenText TextStyle="TextStyle.Subtitle1" class="rz-mb-0"><strong>@Title</strong></RadzenText>
 
         <RadzenChart Style="width: 100%; height: 280px;">
-            <RadzenBarSeries Data="@ChartItems" CategoryProperty="UserId" ValueProperty="TotalPaid" Title="Paid" />
-            <RadzenBarSeries Data="@ChartItems" CategoryProperty="UserId" ValueProperty="TotalOwed" Title="Owed" />
-            <RadzenBarSeries Data="@ChartItems" CategoryProperty="UserId" ValueProperty="TotalOwing" Title="Owing" />
+            <RadzenBarSeries Data="@ChartItems" CategoryProperty="DisplayName" ValueProperty="TotalPaid" Title="Paid" />
+            <RadzenBarSeries Data="@ChartItems" CategoryProperty="DisplayName" ValueProperty="TotalOwed" Title="Owed" />
+            <RadzenBarSeries Data="@ChartItems" CategoryProperty="DisplayName" ValueProperty="TotalOwing" Title="Owing" />
             <RadzenCategoryAxis />
             <RadzenValueAxis>
                 <RadzenGridLines Visible="true" />
@@ -28,7 +28,7 @@ else
                             <div style="width: 28px; height: 28px; border-radius: 50%; background: var(--rz-base-200); display: flex; align-items: center; justify-content: center;">
                                 <RadzenIcon Icon="person" Style="font-size: 0.875rem;" />
                             </div>
-                            <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0">@item.UserId</RadzenText>
+                            <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0">@item.DisplayName</RadzenText>
                         </RadzenStack>
                     </Template>
                 </RadzenDataGridColumn>

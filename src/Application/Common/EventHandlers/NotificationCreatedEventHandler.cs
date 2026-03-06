@@ -19,6 +19,9 @@ public sealed class NotificationCreatedEventHandler(
                 EventType = nameof(NotificationCreatedEvent),
                 NotificationId = notification.NotificationId,
                 Title = notification.Title,
+                Description = notification.Description,
+                RelatedEntityId = notification.RelatedEntityId,
+                RelatedEntityType = notification.RelatedEntityType,
                 OccurredAt = dateTimeProvider.UtcNow
             },
             cancellationToken);

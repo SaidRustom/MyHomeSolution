@@ -24,7 +24,7 @@ public sealed class NotificationCreatedEventHandlerTests
     public async Task Handle_ShouldSendUserNotification_WithCorrectData()
     {
         var handler = new NotificationCreatedEventHandler(_notificationService, _dateTimeProvider);
-        var @event = new NotificationCreatedEvent(Guid.CreateVersion7(), "Task assigned", "target-user");
+        var @event = new NotificationCreatedEvent(Guid.CreateVersion7(), "Task assigned", null, "target-user", null, null);
 
         await handler.Handle(@event, CancellationToken.None);
 
@@ -46,7 +46,7 @@ public sealed class NotificationCreatedEventHandlerTests
         var token = cts.Token;
 
         await handler.Handle(
-            new NotificationCreatedEvent(Guid.CreateVersion7(), "Test", "user-1"), token);
+            new NotificationCreatedEvent(Guid.CreateVersion7(), "Test", null, "user-1", null, null), token);
 
         await _notificationService.Received(1).SendUserNotificationAsync(
             Arg.Any<string>(),
@@ -58,7 +58,7 @@ public sealed class NotificationCreatedEventHandlerTests
     public async Task Handle_ShouldSendToCorrectUserId()
     {
         var handler = new NotificationCreatedEventHandler(_notificationService, _dateTimeProvider);
-        var @event = new NotificationCreatedEvent(Guid.CreateVersion7(), "Notification", "specific-user-123");
+        var @event = new NotificationCreatedEvent(Guid.CreateVersion7(), "Notification", null, "specific-user-123", null, null);
 
         await handler.Handle(@event, CancellationToken.None);
 

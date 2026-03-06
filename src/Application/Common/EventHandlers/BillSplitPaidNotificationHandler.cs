@@ -12,7 +12,8 @@ namespace MyHomeSolution.Application.Common.EventHandlers;
 public sealed class BillSplitPaidNotificationHandler(
     IApplicationDbContext dbContext,
     IRealtimeNotificationService realtimeService,
-    IDateTimeProvider dateTimeProvider)
+    IDateTimeProvider dateTimeProvider,
+    IIdentityService identityService)
     : INotificationHandler<BillSplitPaidEvent>
 {
     public async Task Handle(BillSplitPaidEvent notification, CancellationToken cancellationToken)
@@ -27,10 +28,13 @@ public sealed class BillSplitPaidNotificationHandler(
         if (bill.PaidByUserId == notification.PaidByUserId)
             return;
 
+        var payerName = await identityService.GetUserNameByIdAsync(notification.PaidByUserId, cancellationToken)
+            ?? "Someone";
+
         var entity = new Notification
         {
             Title = $"Payment received: {bill.Title}",
-            Description = $"{notification.PaidByUserId} marked their share of {notification.Amount:C} as paid for '{bill.Title}'.",
+            Description = $"{payerName} marked their share of {notification.Amount:C} as paid for '{bill.Title}'.",
             Type = NotificationType.BillSplitPaid,
             FromUserId = notification.PaidByUserId,
             ToUserId = bill.PaidByUserId,
@@ -48,6 +52,9 @@ public sealed class BillSplitPaidNotificationHandler(
                 EventType = nameof(NotificationCreatedEvent),
                 NotificationId = entity.Id,
                 Title = entity.Title,
+                Description = entity.Description,
+                RelatedEntityId = entity.RelatedEntityId,
+                RelatedEntityType = entity.RelatedEntityType,
                 OccurredAt = dateTimeProvider.UtcNow
             },
             cancellationToken);

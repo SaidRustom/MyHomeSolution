@@ -3,6 +3,13 @@
 <RadzenTemplateForm TItem="CreateUserFormModel" Data="@Model" Submit="OnSubmit">
     <RadzenStack Orientation="Orientation.Vertical" Gap="1rem" class="rz-p-4">
 
+        @if (ErrorMessage is not null)
+        {
+            <RadzenAlert AlertStyle="AlertStyle.Danger" Variant="Variant.Flat" Shade="Shade.Lighter" AllowClose="true" Close="@(() => ErrorMessage = null)">
+                @ErrorMessage
+            </RadzenAlert>
+        }
+
         @* Name row *@
         <RadzenRow Gap="1rem">
             <RadzenColumn Size="6">
@@ -56,7 +63,7 @@
         <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem" class="rz-pt-4"
                      Style="border-top: 1px solid var(--rz-base-200);">
             <RadzenButton Text="Cancel" Variant="Variant.Flat" ButtonStyle="ButtonStyle.Light"
-                          Click="Cancel" ButtonType="ButtonType.Button" />
+                          Click="Cancel" ButtonType="ButtonType.Button" Disabled="@IsBusy" />
             <RadzenButton Text="Create User" Icon="person_add" ButtonStyle="ButtonStyle.Primary"
                           ButtonType="ButtonType.Submit" IsBusy="@IsBusy" />
         </RadzenStack>

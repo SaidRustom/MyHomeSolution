@@ -13,4 +13,15 @@ public sealed record UpdateTaskRequest
     public bool IsActive { get; init; }
     public DateOnly? DueDate { get; init; }
     public string? AssignedToUserId { get; init; }
+    public bool IsRecurring { get; init; }
+    public RecurrenceType? RecurrenceType { get; init; }
+    public int? Interval { get; init; }
+    public DateOnly? RecurrenceStartDate { get; init; }
+    public DateOnly? RecurrenceEndDate { get; init; }
+    public List<string>? AssigneeUserIds { get; init; }
+    public bool AutoCreateBill { get; init; }
+    public decimal? DefaultBillAmount { get; init; }
+    public string? DefaultBillCurrency { get; init; }
+    public BillCategory? DefaultBillCategory { get; init; }
+    public string? DefaultBillTitle { get; init; }
 }

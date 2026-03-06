@@ -37,6 +37,13 @@ public partial class FriendPicker
     [Parameter]
     public bool Disabled { get; set; }
 
+    /// <summary>
+    /// User IDs to exclude from the dropdown (e.g. already-selected split users).
+    /// </summary>
+    [Parameter]
+    public IEnumerable<string>? ExcludedUserIds { get; set; }
+
+    IEnumerable<UserDto> _allUsers = [];
     IEnumerable<UserDto> _users = [];
 
     protected override async Task OnInitializedAsync()
@@ -56,8 +63,28 @@ public partial class FriendPicker
 
         if (result.IsSuccess)
         {
-            _users = result.Value;
+            _allUsers = result.Value;
+            ApplyExclusions();
         }
+    }
+
+    void ApplyExclusions()
+    {
+        if (ExcludedUserIds is not null)
+        {
+            var excluded = ExcludedUserIds.ToHashSet();
+            // Keep the currently selected user visible so the dropdown can display the selection
+            _users = _allUsers.Where(u => !excluded.Contains(u.Id) || u.Id == SelectedUserId);
+        }
+        else
+        {
+            _users = _allUsers;
+        }
+    }
+
+    protected override void OnParametersSet()
+    {
+        ApplyExclusions();
     }
 
     async Task OnSingleValueChanged(string? value)

@@ -1,0 +1,114 @@
+@using Radzen.Blazor.Rendering
+
+<div style="position: relative; display: inline-flex;">
+    <RadzenButton Icon="notifications"
+                  Variant="Variant.Text"
+                  ButtonStyle="ButtonStyle.Light"
+                  Size="ButtonSize.Medium"
+                  Click="TogglePopoverAsync"
+                  Style="position: relative;" />
+
+    @if (UnreadCount > 0)
+    {
+        <span style="position: absolute; top: 2px; right: 2px; min-width: 18px; height: 18px; padding: 0 4px;
+                     border-radius: 9px; background: var(--rz-danger); color: white; font-size: 0.65rem;
+                     font-weight: 700; display: flex; align-items: center; justify-content: center;
+                     pointer-events: none; line-height: 1;">
+            @(UnreadCount > 99 ? "99+" : UnreadCount.ToString())
+        </span>
+    }
+</div>
+
+@if (_popoverOpen)
+{
+
+    <div style="position: fixed; top: 52px; right: 1rem;">
+        <RadzenCard Style="max-height: 440px; width: 360px; border: var(--rz-panel-border); background-color: var(--rz-panel-background-color);">
+            <RadzenStack Orientation="Orientation.Vertical" Gap="0">
+                @* Header *@
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween"
+                             class="rz-px-3 rz-py-2" Style="border-bottom: 1px solid var(--rz-base-200);">
+                    <RadzenText TextStyle="TextStyle.Subtitle1" class="rz-mb-0"><strong>Notifications</strong></RadzenText>
+                    @if (UnreadCount > 0)
+                    {
+                        <RadzenButton Text="Mark all read" Variant="Variant.Text" ButtonStyle="ButtonStyle.Primary"
+                                      Size="ButtonSize.ExtraSmall" Click="MarkAllAsReadAsync" />
+                    }
+                </RadzenStack>
+
+                @* Body *@
+                <div style="max-height: 360px; overflow-y: auto;">
+                    @if (IsLoading)
+                    {
+                        <RadzenStack AlignItems="AlignItems.Center" class="rz-p-4">
+                            <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate"
+                                                        Size="ProgressBarCircularSize.Small" />
+                        </RadzenStack>
+                    }
+                    else if (RecentNotifications.Count == 0)
+                    {
+                        <RadzenStack AlignItems="AlignItems.Center" class="rz-p-6" Gap="0.5rem">
+                            <RadzenIcon Icon="notifications_none" Style="font-size: 2.5rem; color: var(--rz-text-disabled-color);" />
+                            <RadzenText TextStyle="TextStyle.Body2" class="rz-color-secondary rz-mb-0">
+                                No notifications yet
+                            </RadzenText>
+                        </RadzenStack>
+                    }
+                    else
+                    {
+                        @foreach (var notification in RecentNotifications)
+                        {
+                            <div @onclick="@(() => OnNotificationClickedAsync(notification))"
+                                 @onclick:stopPropagation="true"
+                                 style="padding: 0.625rem 0.75rem; cursor: pointer; transition: background 0.15s;
+                                        border-bottom: 1px solid var(--rz-base-100);
+                                        @(notification.IsRead ? "" : "background: var(--rz-base-300);")">
+                                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Start" Gap="0.625rem">
+                                    <div style="width: 32px; height: 32px; border-radius: 50%;
+                                                background: @(notification.IsRead ? "var(--rz-base-200)" : "var(--rz-base-400)");
+                                                display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                        <RadzenIcon Icon="@GetNotificationIcon(notification)"
+                                                    Style="@($"font-size: 1rem; color: {(notification.IsRead ? "var(--rz-text-secondary-color)" : "var(--rz-primary)")};")"/>
+                                    </div>
+                                    <RadzenStack Orientation="Orientation.Vertical" Gap="0.125rem" Style="flex: 1; min-width: 0;">
+                                        <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0"
+                                                    Style="@($"{(notification.IsRead ? "" : "font-weight: 600;")} white-space: nowrap; overflow: hidden; text-overflow: ellipsis;")">
+                                            @notification.Title
+                                        </RadzenText>
+                                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.25rem">
+                                            @if (!string.IsNullOrEmpty(notification.FromUserFullName))
+                                            {
+                                                <RadzenText TextStyle="TextStyle.Caption" class="rz-color-secondary rz-mb-0">
+                                                    @notification.FromUserFullName
+                                                </RadzenText>
+                                                <span style="color: var(--rz-text-disabled-color); font-size: 0.5rem;">&bull;</span>
+                                            }
+                                            <RadzenText TextStyle="TextStyle.Caption" class="rz-color-secondary rz-mb-0">
+                                                @GetTimeAgo(notification.CreatedAt)
+                                            </RadzenText>
+                                        </RadzenStack>
+                                    </RadzenStack>
+                                    @if (!notification.IsRead)
+                                    {
+                                        <div style="width: 8px; height: 8px; border-radius: 50%; background: var(--rz-primary);
+                                                    flex-shrink: 0; margin-top: 6px;" />
+                                    }
+                                </RadzenStack>
+                            </div>
+                        }
+                    }
+                </div>
+
+                @* Footer *@
+                @if (RecentNotifications.Count > 0)
+                {
+                    <RadzenStack AlignItems="AlignItems.Center" class="rz-py-2"
+                                 Style="border-top: 1px solid var(--rz-base-200);">
+                        <RadzenButton Text="View All Notifications" Variant="Variant.Text" ButtonStyle="ButtonStyle.Primary"
+                                      Size="ButtonSize.Small" Click="@ViewAllNotifications" />
+                    </RadzenStack>
+                }
+            </RadzenStack>
+        </RadzenCard>
+    </div>
+}

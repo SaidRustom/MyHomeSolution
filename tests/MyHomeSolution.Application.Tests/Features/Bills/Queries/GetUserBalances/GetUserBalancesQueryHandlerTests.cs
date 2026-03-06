@@ -13,10 +13,13 @@ public sealed class GetUserBalancesQueryHandlerTests : IDisposable
 {
     private readonly TestDbContextFactory _factory = new();
     private readonly ICurrentUserService _currentUserService = Substitute.For<ICurrentUserService>();
+    private readonly IIdentityService _identityService = Substitute.For<IIdentityService>();
 
     public GetUserBalancesQueryHandlerTests()
     {
         _currentUserService.UserId.Returns("user-1");
+        _identityService.GetUserFullNamesByIdsAsync(Arg.Any<IEnumerable<string>>(), Arg.Any<CancellationToken>())
+            .Returns(new Dictionary<string, string>());
     }
 
     [Fact]
@@ -25,7 +28,7 @@ public sealed class GetUserBalancesQueryHandlerTests : IDisposable
         await SeedBills();
 
         using var context = _factory.CreateContext();
-        var handler = new GetUserBalancesQueryHandler(context, _currentUserService);
+        var handler = new GetUserBalancesQueryHandler(context, _currentUserService, _identityService);
 
         var result = await handler.Handle(new GetUserBalancesQuery(), CancellationToken.None);
 
@@ -43,7 +46,7 @@ public sealed class GetUserBalancesQueryHandlerTests : IDisposable
         await SeedBillsBothDirections();
 
         using var context = _factory.CreateContext();
-        var handler = new GetUserBalancesQueryHandler(context, _currentUserService);
+        var handler = new GetUserBalancesQueryHandler(context, _currentUserService, _identityService);
 
         var result = await handler.Handle(new GetUserBalancesQuery(), CancellationToken.None);
 
@@ -60,7 +63,7 @@ public sealed class GetUserBalancesQueryHandlerTests : IDisposable
         await SeedBillsMultipleCounterparties();
 
         using var context = _factory.CreateContext();
-        var handler = new GetUserBalancesQueryHandler(context, _currentUserService);
+        var handler = new GetUserBalancesQueryHandler(context, _currentUserService, _identityService);
 
         var result = await handler.Handle(
             new GetUserBalancesQuery { CounterpartyUserId = "user-2" },
@@ -74,7 +77,7 @@ public sealed class GetUserBalancesQueryHandlerTests : IDisposable
     public async Task Handle_ShouldReturnEmpty_WhenNoBalances()
     {
         using var context = _factory.CreateContext();
-        var handler = new GetUserBalancesQueryHandler(context, _currentUserService);
+        var handler = new GetUserBalancesQueryHandler(context, _currentUserService, _identityService);
 
         var result = await handler.Handle(new GetUserBalancesQuery(), CancellationToken.None);
 
@@ -87,7 +90,7 @@ public sealed class GetUserBalancesQueryHandlerTests : IDisposable
         await SeedBillWithPaidSplit();
 
         using var context = _factory.CreateContext();
-        var handler = new GetUserBalancesQueryHandler(context, _currentUserService);
+        var handler = new GetUserBalancesQueryHandler(context, _currentUserService, _identityService);
 
         var result = await handler.Handle(new GetUserBalancesQuery(), CancellationToken.None);
 

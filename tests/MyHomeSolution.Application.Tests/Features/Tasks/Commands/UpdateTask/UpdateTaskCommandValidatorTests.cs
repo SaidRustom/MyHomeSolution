@@ -107,4 +107,124 @@ public sealed class UpdateTaskCommandValidatorTests
             DueDate = new DateOnly(2025, 7, 1),
             AssignedToUserId = "user-1"
         };
+
+    private static UpdateTaskCommand CreateValidRecurringCommand() =>
+        new()
+        {
+            Id = Guid.CreateVersion7(),
+            Title = "Recurring Task",
+            Priority = TaskPriority.Medium,
+            Category = TaskCategory.Cleaning,
+            IsActive = true,
+            IsRecurring = true,
+            RecurrenceType = RecurrenceType.Weekly,
+            Interval = 1,
+            RecurrenceStartDate = new DateOnly(2025, 1, 1),
+            AssigneeUserIds = ["user-a"]
+        };
+
+    [Fact]
+    public void ShouldPass_WhenRecurringCommandIsValid()
+    {
+        var command = CreateValidRecurringCommand();
+
+        var result = _validator.TestValidate(command);
+
+        result.ShouldNotHaveAnyValidationErrors();
+    }
+
+    [Fact]
+    public void ShouldFail_WhenRecurringButMissingRecurrenceType()
+    {
+        var command = CreateValidRecurringCommand() with { RecurrenceType = null };
+
+        var result = _validator.TestValidate(command);
+
+        result.ShouldHaveValidationErrorFor(x => x.RecurrenceType);
+    }
+
+    [Fact]
+    public void ShouldFail_WhenRecurringButMissingInterval()
+    {
+        var command = CreateValidRecurringCommand() with { Interval = null };
+
+        var result = _validator.TestValidate(command);
+
+        result.ShouldHaveValidationErrorFor(x => x.Interval);
+    }
+
+    [Fact]
+    public void ShouldFail_WhenRecurringButMissingStartDate()
+    {
+        var command = CreateValidRecurringCommand() with { RecurrenceStartDate = null };
+
+        var result = _validator.TestValidate(command);
+
+        result.ShouldHaveValidationErrorFor(x => x.RecurrenceStartDate);
+    }
+
+    [Fact]
+    public void ShouldFail_WhenRecurringButNoAssignees()
+    {
+        var command = CreateValidRecurringCommand() with { AssigneeUserIds = [] };
+
+        var result = _validator.TestValidate(command);
+
+        result.ShouldHaveValidationErrorFor(x => x.AssigneeUserIds);
+    }
+
+    [Fact]
+    public void ShouldFail_WhenEndDateBeforeStartDate()
+    {
+        var command = CreateValidRecurringCommand() with
+        {
+            RecurrenceEndDate = new DateOnly(2024, 12, 31)
+        };
+
+        var result = _validator.TestValidate(command);
+
+        result.ShouldHaveValidationErrorFor(x => x.RecurrenceEndDate);
+    }
+
+    [Fact]
+    public void ShouldPass_WhenAutoBillWithValidConfig()
+    {
+        var command = CreateValidRecurringCommand() with
+        {
+            AutoCreateBill = true,
+            DefaultBillAmount = 100m
+        };
+
+        var result = _validator.TestValidate(command);
+
+        result.ShouldNotHaveAnyValidationErrors();
+    }
+
+    [Fact]
+    public void ShouldFail_WhenAutoBillButMissingAmount()
+    {
+        var command = CreateValidRecurringCommand() with
+        {
+            AutoCreateBill = true,
+            DefaultBillAmount = null
+        };
+
+        var result = _validator.TestValidate(command);
+
+        result.ShouldHaveValidationErrorFor(x => x.DefaultBillAmount);
+    }
+
+    [Fact]
+    public void ShouldFail_WhenAutoBillOnNonRecurringTask()
+    {
+        var command = CreateValidCommand() with
+        {
+            AutoCreateBill = true,
+            DefaultBillAmount = 50m
+        };
+
+        var result = _validator.TestValidate(command);
+
+        result.ShouldHaveValidationErrorFor(x => x.IsRecurring);
+    }
 }

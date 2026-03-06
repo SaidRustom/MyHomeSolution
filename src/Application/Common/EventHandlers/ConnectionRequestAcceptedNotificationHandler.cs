@@ -10,15 +10,19 @@ namespace MyHomeSolution.Application.Common.EventHandlers;
 public sealed class ConnectionRequestAcceptedNotificationHandler(
     IApplicationDbContext dbContext,
     IRealtimeNotificationService realtimeService,
-    IDateTimeProvider dateTimeProvider)
+    IDateTimeProvider dateTimeProvider,
+    IIdentityService identityService)
     : INotificationHandler<ConnectionRequestAcceptedEvent>
 {
     public async Task Handle(ConnectionRequestAcceptedEvent notification, CancellationToken cancellationToken)
     {
+        var acceptedByName = await identityService.GetUserNameByIdAsync(notification.AcceptedByUserId, cancellationToken)
+            ?? "Someone";
+
         var entity = new Notification
         {
-            Title = "Connection request accepted",
-            Description = "Your connection request has been accepted.",
+            Title = $"{acceptedByName} accepted your connection request",
+            Description = $"{acceptedByName} has accepted your connection request.",
             Type = NotificationType.ConnectionRequestAccepted,
             FromUserId = notification.AcceptedByUserId,
             ToUserId = notification.RequesterId,
@@ -36,6 +40,9 @@ public sealed class ConnectionRequestAcceptedNotificationHandler(
                 EventType = nameof(NotificationCreatedEvent),
                 NotificationId = entity.Id,
                 Title = entity.Title,
+                Description = entity.Description,
+                RelatedEntityId = entity.RelatedEntityId,
+                RelatedEntityType = entity.RelatedEntityType,
                 OccurredAt = dateTimeProvider.UtcNow
             },
             cancellationToken);

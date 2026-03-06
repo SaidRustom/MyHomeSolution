@@ -10,15 +10,19 @@ namespace MyHomeSolution.Application.Common.EventHandlers;
 public sealed class ConnectionRequestSentNotificationHandler(
     IApplicationDbContext dbContext,
     IRealtimeNotificationService realtimeService,
-    IDateTimeProvider dateTimeProvider)
+    IDateTimeProvider dateTimeProvider,
+    IIdentityService identityService)
     : INotificationHandler<ConnectionRequestSentEvent>
 {
     public async Task Handle(ConnectionRequestSentEvent notification, CancellationToken cancellationToken)
     {
+        var requesterName = await identityService.GetUserNameByIdAsync(notification.RequesterId, cancellationToken)
+            ?? "Someone";
+
         var entity = new Notification
         {
-            Title = "New connection request",
-            Description = "You have received a new connection request.",
+            Title = $"New connection request from {requesterName}",
+            Description = $"{requesterName} sent you a connection request.",
             Type = NotificationType.ConnectionRequestReceived,
             FromUserId = notification.RequesterId,
             ToUserId = notification.AddresseeId,
@@ -36,6 +40,9 @@ public sealed class ConnectionRequestSentNotificationHandler(
                 EventType = nameof(NotificationCreatedEvent),
                 NotificationId = entity.Id,
                 Title = entity.Title,
+                Description = entity.Description,
+                RelatedEntityId = entity.RelatedEntityId,
+                RelatedEntityType = entity.RelatedEntityType,
                 OccurredAt = dateTimeProvider.UtcNow
             },
             cancellationToken);

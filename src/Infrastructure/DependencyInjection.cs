@@ -125,7 +125,15 @@ public static class DependencyInjection
             .ValidateDataAnnotations()
             .ValidateOnStart();
 
+        services
+            .AddOptions<OverdueOccurrenceOptions>()
+            .Bind(configuration.GetSection(OverdueOccurrenceOptions.SectionName))
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
+
+        services.AddScoped<IOccurrenceScheduler, OccurrenceScheduler>();
         services.AddHostedService<OccurrenceGeneratorService>();
+        services.AddHostedService<OverdueOccurrenceService>();
     }
 
     private static void AddReceiptAnalysis(

@@ -86,6 +86,7 @@ public sealed class GetTasksQueryHandler(
                 IsActive = t.IsActive,
                 EstimatedDurationMinutes = t.EstimatedDurationMinutes,
                 AssignedToUserId = t.AssignedToUserId,
+                AutoCreateBill = t.AutoCreateBill,
                 NextDueDate = t.IsRecurring
                     ? t.Occurrences
                         .Where(o => o.Status == Domain.Enums.OccurrenceStatus.Pending)

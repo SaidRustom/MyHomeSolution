@@ -1,6 +1,10 @@
+using System.Security.Claims;
 using BlazorUI.Models.Bills;
+using BlazorUI.Models.Common;
 using BlazorUI.Models.Enums;
+using BlazorUI.Services.Contracts;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Authorization;
 using Radzen;
 
 namespace BlazorUI.Components.Bills;
@@ -10,14 +14,26 @@ public partial class BillFormDialog
     [Inject]
     DialogService DialogService { get; set; } = default!;
 
+    [Inject]
+    IBillService BillService { get; set; } = default!;
+
+    [Inject]
+    NotificationService Notifications { get; set; } = default!;
+
+    [CascadingParameter]
+    private Task<AuthenticationState> AuthState { get; set; } = default!;
+
     [Parameter]
     public BillFormModel Model { get; set; } = new();
 
     [Parameter]
     public bool IsEdit { get; set; }
 
-    [Parameter]
-    public bool IsBusy { get; set; }
+    bool IsBusy { get; set; }
+
+    string? ErrorMessage { get; set; }
+
+    string? CurrentUserId { get; set; }
 
     string DialogTitle => IsEdit ? "Edit Bill" : "Create Bill";
 
@@ -25,19 +41,74 @@ public partial class BillFormDialog
 
     IEnumerable<BillCategory> Categories => Enum.GetValues<BillCategory>();
 
-    void OnSubmit() => DialogService.Close(Model);
+    protected override async Task OnInitializedAsync()
+    {
+        var state = await AuthState;
+        CurrentUserId = state.User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+            ?? state.User.FindFirst("sub")?.Value;
+    }
+
+    async Task OnSubmit()
+    {
+        IsBusy = true;
+        ErrorMessage = null;
+
+        try
+        {
+            if (IsEdit)
+            {
+                var request = Model.ToUpdateRequest();
+                var result = await BillService.UpdateBillAsync(Model.Id ?? Guid.Empty, request);
+
+                if (result.IsSuccess)
+                {
+                    Notifications.Notify(new NotificationMessage
+                    {
+                        Severity = NotificationSeverity.Success,
+                        Summary = "Bill Updated",
+                        Detail = $"'{Model.Title}' has been updated successfully.",
+                        Duration = 4000
+                    });
+                    DialogService.Close(true);
+                }
+                else
+                {
+                    ErrorMessage = result.Problem.ToUserMessage();
+                }
+            }
+            else
+            {
+                var request = Model.ToCreateRequest();
+                var result = await BillService.CreateBillAsync(request);
+
+                if (result.IsSuccess)
+                {
+                    Notifications.Notify(new NotificationMessage
+                    {
+                        Severity = NotificationSeverity.Success,
+                        Summary = "Bill Created",
+                        Detail = $"'{Model.Title}' has been created successfully.",
+                        Duration = 4000
+                    });
+                    DialogService.Close(true);
+                }
+                else
+                {
+                    ErrorMessage = result.Problem.ToUserMessage();
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"An unexpected error occurred: {ex.Message}";
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
 
     void Cancel() => DialogService.Close(null);
-
-    void AddSplit()
-    {
-        Model.Splits.Add(new BillSplitFormModel());
-    }
-
-    void RemoveSplit(BillSplitFormModel split)
-    {
-        Model.Splits.Remove(split);
-    }
 
     decimal RemainingPercentage
     {
@@ -57,7 +128,7 @@ public sealed class BillFormModel
     public decimal Amount { get; set; }
     public string Currency { get; set; } = "$";
     public BillCategory Category { get; set; }
-    public DateTime BillDate { get; set; } = DateTime.Today;
+    public DateTimeOffset BillDate { get; set; } = DateTimeOffset.Now;
     public string? Notes { get; set; }
     public Guid? RelatedEntityId { get; set; }
     public string? RelatedEntityType { get; set; }
@@ -70,7 +141,7 @@ public sealed class BillFormModel
         Amount = Amount,
         Currency = Currency,
         Category = Category,
-        BillDate = new DateTimeOffset(BillDate, TimeSpan.Zero),
+        BillDate = BillDate,
         Notes = Notes,
         RelatedEntityId = RelatedEntityId,
         RelatedEntityType = RelatedEntityType,
@@ -89,7 +160,7 @@ public sealed class BillFormModel
         Amount = Amount,
         Currency = Currency,
         Category = Category,
-        BillDate = new DateTimeOffset(BillDate, TimeSpan.Zero),
+        BillDate = BillDate,
         Notes = Notes
     };
 
@@ -101,7 +172,7 @@ public sealed class BillFormModel
         Amount = detail.Amount,
         Currency = detail.Currency,
         Category = detail.Category,
-        BillDate = detail.BillDate.LocalDateTime.Date,
+        BillDate = detail.BillDate,
         Notes = detail.Notes,
         RelatedEntityId = detail.RelatedEntityId,
         RelatedEntityType = detail.RelatedEntityType,

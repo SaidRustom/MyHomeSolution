@@ -15,10 +15,13 @@ public sealed class ConnectionRequestAcceptedNotificationHandlerTests : IDisposa
     private readonly TestDbContextFactory _factory = new();
     private readonly IRealtimeNotificationService _realtimeService = Substitute.For<IRealtimeNotificationService>();
     private readonly IDateTimeProvider _dateTimeProvider = Substitute.For<IDateTimeProvider>();
+    private readonly IIdentityService _identityService = Substitute.For<IIdentityService>();
 
     public ConnectionRequestAcceptedNotificationHandlerTests()
     {
         _dateTimeProvider.UtcNow.Returns(new DateTimeOffset(2025, 6, 15, 12, 0, 0, TimeSpan.Zero));
+        _identityService.GetUserNameByIdAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns("Test User");
     }
 
     [Fact]
@@ -26,7 +29,7 @@ public sealed class ConnectionRequestAcceptedNotificationHandlerTests : IDisposa
     {
         using var context = _factory.CreateContext();
         var handler = new ConnectionRequestAcceptedNotificationHandler(
-            context, _realtimeService, _dateTimeProvider);
+            context, _realtimeService, _dateTimeProvider, _identityService);
         var connectionId = Guid.CreateVersion7();
 
         await handler.Handle(
@@ -50,7 +53,7 @@ public sealed class ConnectionRequestAcceptedNotificationHandlerTests : IDisposa
     {
         using var context = _factory.CreateContext();
         var handler = new ConnectionRequestAcceptedNotificationHandler(
-            context, _realtimeService, _dateTimeProvider);
+            context, _realtimeService, _dateTimeProvider, _identityService);
 
         await handler.Handle(
             new ConnectionRequestAcceptedEvent(Guid.CreateVersion7(), "requester", "accepter"),

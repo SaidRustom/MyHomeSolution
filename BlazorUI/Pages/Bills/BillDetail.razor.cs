@@ -77,35 +77,13 @@ public partial class BillDetail : IDisposable
                 Height = "600px",
                 Resizable = true,
                 Draggable = true,
-                CloseDialogOnOverlayClick = false
+                CloseDialogOnOverlayClick = false,
+                ShowClose = false
             });
 
-        if (result is BillFormModel formModel)
+        if (result is true)
         {
-            var request = formModel.ToUpdateRequest();
-            var updateResult = await BillService.UpdateBillAsync(Bill.Id, request, _cts.Token);
-
-            if (updateResult.IsSuccess)
-            {
-                NotificationService.Notify(new NotificationMessage
-                {
-                    Severity = NotificationSeverity.Success,
-                    Summary = "Bill Updated",
-                    Detail = $"'{formModel.Title}' has been updated successfully.",
-                    Duration = 4000
-                });
-                await LoadBillAsync();
-            }
-            else
-            {
-                NotificationService.Notify(new NotificationMessage
-                {
-                    Severity = NotificationSeverity.Error,
-                    Summary = "Error",
-                    Detail = updateResult.Problem.Detail,
-                    Duration = 6000
-                });
-            }
+            await LoadBillAsync();
         }
     }
 
@@ -148,7 +126,7 @@ public partial class BillDetail : IDisposable
                 {
                     Severity = NotificationSeverity.Error,
                     Summary = "Error",
-                    Detail = deleteResult.Problem.Detail,
+                    Detail = deleteResult.Problem.ToUserMessage(),
                     Duration = 6000
                 });
             }
@@ -179,7 +157,7 @@ public partial class BillDetail : IDisposable
             {
                 Severity = NotificationSeverity.Error,
                 Summary = "Error",
-                Detail = result.Problem.Detail,
+                Detail = result.Problem.ToUserMessage(),
                 Duration = 6000
             });
         }

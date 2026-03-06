@@ -12,6 +12,8 @@ public sealed class TaskOccurrence : BaseAuditableEntity
     public DateTimeOffset? CompletedAt { get; set; }
     public string? CompletedByUserId { get; set; }
     public string? Notes { get; set; }
+    public Guid? BillId { get; set; }
 
     public HouseholdTask HouseholdTask { get; set; } = default!;
+    public Bill? Bill { get; set; }
 }

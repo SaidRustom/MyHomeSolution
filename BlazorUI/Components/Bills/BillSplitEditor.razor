@@ -36,7 +36,14 @@
             <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.End" Gap="0.5rem" Wrap="FlexWrap.Wrap">
                 <RadzenStack Orientation="Orientation.Vertical" Gap="0.125rem" Style="flex: 1; min-width: 160px;">
                     <RadzenLabel Text="Friend" Style="font-size: 0.75rem;" />
-                    <FriendPicker @bind-SelectedUserId="@split.UserId" Placeholder="Select a friend…" Style="width: 100%;" />
+                    @if (split.UserId == CurrentUserId)
+                    {
+                        <RadzenTextBox Value="You (current user)" Disabled="true" Style="width: 100%;" />
+                    }
+                    else
+                    {
+                        <FriendPicker @bind-SelectedUserId="@split.UserId" Placeholder="Select a friend…" Style="width: 100%;" ExcludedUserIds="@SelectedUserIds" />
+                    }
                 </RadzenStack>
                 <RadzenStack Orientation="Orientation.Vertical" Gap="0.125rem" Style="width: 110px;">
                     <RadzenLabel Text="Percentage" Style="font-size: 0.75rem;" />

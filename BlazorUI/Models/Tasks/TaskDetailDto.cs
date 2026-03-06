@@ -15,6 +15,11 @@ public sealed record TaskDetailDto
     public DateOnly? DueDate { get; init; }
     public string? AssignedToUserId { get; init; }
     public DateTimeOffset CreatedAt { get; init; }
+    public bool AutoCreateBill { get; init; }
+    public decimal? DefaultBillAmount { get; init; }
+    public string? DefaultBillCurrency { get; init; }
+    public BillCategory? DefaultBillCategory { get; init; }
+    public string? DefaultBillTitle { get; init; }
     public RecurrencePatternDto? RecurrencePattern { get; init; }
     public IReadOnlyCollection<OccurrenceDto> Occurrences { get; init; } = [];
 }
@@ -36,5 +41,20 @@ public sealed record OccurrenceDto
     public OccurrenceStatus Status { get; init; }
     public string? AssignedToUserId { get; init; }
     public DateTimeOffset? CompletedAt { get; init; }
+    public string? CompletedByUserId { get; init; }
     public string? Notes { get; init; }
+    public Guid? BillId { get; init; }
+    public OccurrenceBillBriefDto? Bill { get; init; }
+}
+
+public sealed record OccurrenceBillBriefDto
+{
+    public Guid Id { get; init; }
+    public required string Title { get; init; }
+    public decimal Amount { get; init; }
+    public required string Currency { get; init; }
+    public BillCategory Category { get; init; }
+    public DateTimeOffset BillDate { get; init; }
+    public int TotalSplits { get; init; }
+    public int PaidSplits { get; init; }
 }

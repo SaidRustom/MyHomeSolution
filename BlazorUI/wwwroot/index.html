@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>BlazorUI</title>
+    <title>MyAssistant</title>
     <base href="/" />
     <link rel="preload" id="webassembly" />
     <link rel="stylesheet" href="css/app.css" />
@@ -34,6 +34,12 @@
     <script>navigator.serviceWorker.register('service-worker.js', { updateViaCache: 'none' });</script>
     <script src="_content/Radzen.Blazor/Radzen.Blazor.min.js"></script>
     <script src="js/camera-interop.js"></script>
+
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('service-worker.js');
+        }
+    </script>
 </body>
 
 </html>

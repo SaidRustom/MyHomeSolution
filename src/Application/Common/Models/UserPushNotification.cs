@@ -5,5 +5,8 @@ public sealed record UserPushNotification
     public required string EventType { get; init; }
     public Guid NotificationId { get; init; }
     public string? Title { get; init; }
+    public string? Description { get; init; }
+    public Guid? RelatedEntityId { get; init; }
+    public string? RelatedEntityType { get; init; }
     public DateTimeOffset OccurredAt { get; init; }
 }

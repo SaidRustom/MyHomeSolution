@@ -55,6 +55,9 @@ public interface IIdentityService
     Task<string?> GetUserNameByIdAsync(
         string userId, CancellationToken cancellationToken = default);
 
+    Task<Dictionary<string, string>> GetUserFullNamesByIdsAsync(
+        IEnumerable<string> userIds, CancellationToken cancellationToken = default);
+
     Task<bool> IsEmailConfirmedAsync(
         string userId, CancellationToken cancellationToken = default);
 }

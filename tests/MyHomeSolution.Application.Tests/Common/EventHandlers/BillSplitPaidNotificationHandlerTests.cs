@@ -16,10 +16,13 @@ public sealed class BillSplitPaidNotificationHandlerTests : IDisposable
     private readonly TestDbContextFactory _factory = new();
     private readonly IRealtimeNotificationService _realtimeService = Substitute.For<IRealtimeNotificationService>();
     private readonly IDateTimeProvider _dateTimeProvider = Substitute.For<IDateTimeProvider>();
+    private readonly IIdentityService _identityService = Substitute.For<IIdentityService>();
 
     public BillSplitPaidNotificationHandlerTests()
     {
         _dateTimeProvider.UtcNow.Returns(new DateTimeOffset(2025, 6, 1, 12, 0, 0, TimeSpan.Zero));
+        _identityService.GetUserNameByIdAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns("Test User");
     }
 
     [Fact]
@@ -28,7 +31,7 @@ public sealed class BillSplitPaidNotificationHandlerTests : IDisposable
         var (bill, split) = await SeedBillWithSplit();
 
         using var context = _factory.CreateContext();
-        var handler = new BillSplitPaidNotificationHandler(context, _realtimeService, _dateTimeProvider);
+        var handler = new BillSplitPaidNotificationHandler(context, _realtimeService, _dateTimeProvider, _identityService);
 
         await handler.Handle(
             new BillSplitPaidEvent(bill.Id, split.Id, bill.Title, "user-2", 50m),
@@ -49,7 +52,7 @@ public sealed class BillSplitPaidNotificationHandlerTests : IDisposable
         var (bill, _) = await SeedBillWithSplit();
 
         using var context = _factory.CreateContext();
-        var handler = new BillSplitPaidNotificationHandler(context, _realtimeService, _dateTimeProvider);
+        var handler = new BillSplitPaidNotificationHandler(context, _realtimeService, _dateTimeProvider, _identityService);
 
         await handler.Handle(
             new BillSplitPaidEvent(bill.Id, Guid.CreateVersion7(), bill.Title, "user-1", 50m),
@@ -66,7 +69,7 @@ public sealed class BillSplitPaidNotificationHandlerTests : IDisposable
         var (bill, split) = await SeedBillWithSplit();
 
         using var context = _factory.CreateContext();
-        var handler = new BillSplitPaidNotificationHandler(context, _realtimeService, _dateTimeProvider);
+        var handler = new BillSplitPaidNotificationHandler(context, _realtimeService, _dateTimeProvider, _identityService);
 
         await handler.Handle(
             new BillSplitPaidEvent(bill.Id, split.Id, bill.Title, "user-2", 50m),

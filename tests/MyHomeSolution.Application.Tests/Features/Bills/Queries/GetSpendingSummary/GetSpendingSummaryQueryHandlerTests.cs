@@ -13,10 +13,13 @@ public sealed class GetSpendingSummaryQueryHandlerTests : IDisposable
 {
     private readonly TestDbContextFactory _factory = new();
     private readonly ICurrentUserService _currentUserService = Substitute.For<ICurrentUserService>();
+    private readonly IIdentityService _identityService = Substitute.For<IIdentityService>();
 
     public GetSpendingSummaryQueryHandlerTests()
     {
         _currentUserService.UserId.Returns("user-1");
+        _identityService.GetUserFullNamesByIdsAsync(Arg.Any<IEnumerable<string>>(), Arg.Any<CancellationToken>())
+            .Returns(new Dictionary<string, string>());
     }
 
     [Fact]
@@ -25,7 +28,7 @@ public sealed class GetSpendingSummaryQueryHandlerTests : IDisposable
         await SeedBills();
 
         using var context = _factory.CreateContext();
-        var handler = new GetSpendingSummaryQueryHandler(context, _currentUserService);
+        var handler = new GetSpendingSummaryQueryHandler(context, _currentUserService, _identityService);
 
         var result = await handler.Handle(new GetSpendingSummaryQuery(), CancellationToken.None);
 
@@ -41,7 +44,7 @@ public sealed class GetSpendingSummaryQueryHandlerTests : IDisposable
         await SeedBills();
 
         using var context = _factory.CreateContext();
-        var handler = new GetSpendingSummaryQueryHandler(context, _currentUserService);
+        var handler = new GetSpendingSummaryQueryHandler(context, _currentUserService, _identityService);
 
         var result = await handler.Handle(new GetSpendingSummaryQuery(), CancellationToken.None);
 
@@ -56,7 +59,7 @@ public sealed class GetSpendingSummaryQueryHandlerTests : IDisposable
         await SeedBills();
 
         using var context = _factory.CreateContext();
-        var handler = new GetSpendingSummaryQueryHandler(context, _currentUserService);
+        var handler = new GetSpendingSummaryQueryHandler(context, _currentUserService, _identityService);
 
         var result = await handler.Handle(new GetSpendingSummaryQuery(), CancellationToken.None);
 
@@ -71,7 +74,7 @@ public sealed class GetSpendingSummaryQueryHandlerTests : IDisposable
         await SeedBills();
 
         using var context = _factory.CreateContext();
-        var handler = new GetSpendingSummaryQueryHandler(context, _currentUserService);
+        var handler = new GetSpendingSummaryQueryHandler(context, _currentUserService, _identityService);
 
         var result = await handler.Handle(
             new GetSpendingSummaryQuery
@@ -88,7 +91,7 @@ public sealed class GetSpendingSummaryQueryHandlerTests : IDisposable
     public async Task Handle_ShouldReturnZeros_WhenNoBills()
     {
         using var context = _factory.CreateContext();
-        var handler = new GetSpendingSummaryQueryHandler(context, _currentUserService);
+        var handler = new GetSpendingSummaryQueryHandler(context, _currentUserService, _identityService);
 
         var result = await handler.Handle(new GetSpendingSummaryQuery(), CancellationToken.None);
 

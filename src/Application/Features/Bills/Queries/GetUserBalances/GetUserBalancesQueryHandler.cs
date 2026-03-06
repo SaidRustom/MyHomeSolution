@@ -9,7 +9,8 @@ namespace MyHomeSolution.Application.Features.Bills.Queries.GetUserBalances;
 
 public sealed class GetUserBalancesQueryHandler(
     IApplicationDbContext dbContext,
-    ICurrentUserService currentUserService)
+    ICurrentUserService currentUserService,
+    IIdentityService identityService)
     : IRequestHandler<GetUserBalancesQuery, IReadOnlyList<UserBalanceDto>>
 {
     public async Task<IReadOnlyList<UserBalanceDto>> Handle(
@@ -52,7 +53,10 @@ public sealed class GetUserBalancesQueryHandler(
 
         var counterpartyIds = owedToMe.Select(o => o.CounterpartyId)
             .Union(iOwe.Select(o => o.CounterpartyId))
-            .Distinct();
+            .Distinct()
+            .ToList();
+
+        var nameMap = await identityService.GetUserFullNamesByIdsAsync(counterpartyIds, cancellationToken);
 
         var result = counterpartyIds.Select(cpId =>
         {
@@ -63,6 +67,7 @@ public sealed class GetUserBalancesQueryHandler(
             {
                 UserId = userId,
                 CounterpartyUserId = cpId,
+                CounterpartyFullName = nameMap.GetValueOrDefault(cpId),
                 TotalOwed = owed,
                 TotalOwing = owing,
                 NetBalance = owed - owing

@@ -13,4 +13,5 @@ public sealed record TaskBriefDto
     public DateOnly? NextDueDate { get; init; }
     public string? AssignedToUserId { get; init; }
     public int? EstimatedDurationMinutes { get; init; }
+    public bool AutoCreateBill { get; init; }
 }

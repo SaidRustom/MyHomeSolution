@@ -28,7 +28,9 @@ public sealed class GetOccurrencesByTaskQueryHandler(IApplicationDbContext dbCon
                 Status = o.Status,
                 AssignedToUserId = o.AssignedToUserId,
                 CompletedAt = o.CompletedAt,
-                Notes = o.Notes
+                CompletedByUserId = o.CompletedByUserId,
+                Notes = o.Notes,
+                BillId = o.BillId
             });
 
         return await PaginatedList<OccurrenceDto>.CreateAsync(

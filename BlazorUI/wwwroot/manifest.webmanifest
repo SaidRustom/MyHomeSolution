@@ -1,6 +1,6 @@
 {
-  "name": "BlazorUI",
-  "short_name": "BlazorUI",
+  "name": "MyAssistant",
+  "short_name": "MyAssistant",
   "id": "./",
   "start_url": "./",
   "display": "standalone",

@@ -9,7 +9,9 @@ public sealed record OccurrenceDto
     public OccurrenceStatus Status { get; init; }
     public string? AssignedToUserId { get; init; }
     public DateTimeOffset? CompletedAt { get; init; }
+    public string? CompletedByUserId { get; init; }
     public string? Notes { get; init; }
+    public Guid? BillId { get; init; }
 }
 
 public sealed record CompleteOccurrenceRequest
@@ -19,5 +21,16 @@ public sealed record CompleteOccurrenceRequest
 
 public sealed record SkipOccurrenceRequest
 {
+    public string? Notes { get; init; }
+}
+
+public sealed record StartOccurrenceRequest
+{
+    public string? Notes { get; init; }
+}
+
+public sealed record RescheduleOccurrenceRequest
+{
+    public DateOnly NewDueDate { get; init; }
     public string? Notes { get; init; }
 }

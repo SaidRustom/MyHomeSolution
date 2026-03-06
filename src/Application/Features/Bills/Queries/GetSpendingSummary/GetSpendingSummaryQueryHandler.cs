@@ -9,7 +9,8 @@ namespace MyHomeSolution.Application.Features.Bills.Queries.GetSpendingSummary;
 
 public sealed class GetSpendingSummaryQueryHandler(
     IApplicationDbContext dbContext,
-    ICurrentUserService currentUserService)
+    ICurrentUserService currentUserService,
+    IIdentityService identityService)
     : IRequestHandler<GetSpendingSummaryQuery, SpendingSummaryDto>
 {
     public async Task<SpendingSummaryDto> Handle(
@@ -70,7 +71,10 @@ public sealed class GetSpendingSummaryQueryHandler(
         var allUserIds = billList.SelectMany(b => b.Splits).Select(s => s.UserId)
             .Union(billList.Select(b => b.PaidByUserId))
             .Where(id => id != userId)
-            .Distinct();
+            .Distinct()
+            .ToList();
+
+        var nameMap = await identityService.GetUserFullNamesByIdsAsync(allUserIds, cancellationToken);
 
         var byUser = allUserIds.Select(otherUserId =>
         {
@@ -89,6 +93,7 @@ public sealed class GetSpendingSummaryQueryHandler(
             return new UserSpendingDto
             {
                 UserId = otherUserId,
+                UserFullName = nameMap.GetValueOrDefault(otherUserId),
                 TotalPaid = billList.Where(b => b.PaidByUserId == otherUserId).Sum(b => b.Amount),
                 TotalOwed = paidByMe,
                 TotalOwing = paidByThem,

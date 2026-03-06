@@ -6,7 +6,7 @@
                 <RadzenIcon Icon="person" Style="font-size: 1.25rem; color: var(--rz-text-secondary-color);" />
             </div>
             <RadzenStack Orientation="Orientation.Vertical" Gap="0">
-                <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0"><strong>@Balance.CounterpartyUserId</strong></RadzenText>
+                <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0"><strong>@(Balance.CounterpartyFullName ?? Balance.CounterpartyUserId)</strong></RadzenText>
                 <RadzenText TextStyle="TextStyle.Caption" class="rz-mb-0" Style="@($"color: {StatusColor};")">
                     <RadzenIcon Icon="@StatusIcon" Style="font-size: 0.75rem;" /> @StatusText
                 </RadzenText>

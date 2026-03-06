@@ -22,6 +22,7 @@ public sealed record CategorySpendingDto
 public sealed record UserSpendingDto
 {
     public required string UserId { get; init; }
+    public string? UserFullName { get; init; }
     public decimal TotalPaid { get; init; }
     public decimal TotalOwed { get; init; }
     public decimal TotalOwing { get; init; }

@@ -44,5 +44,16 @@ public sealed class CreateTaskCommandValidator : AbstractValidator<CreateTaskCom
             RuleFor(x => x.DueDate)
                 .NotNull().WithMessage("Due date is required for non-recurring tasks.");
         });
+
+        When(x => x.AutoCreateBill, () =>
+        {
+            RuleFor(x => x.DefaultBillAmount)
+                .NotNull().WithMessage("Bill amount is required when auto-create bill is enabled.")
+                .GreaterThan(0).When(x => x.DefaultBillAmount.HasValue)
+                .WithMessage("Bill amount must be positive.");
+
+            RuleFor(x => x.IsRecurring)
+                .Equal(true).WithMessage("Auto-create bill requires a recurring task.");
+        });
     }
 }

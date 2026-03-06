@@ -1,3 +1,4 @@
+using BlazorUI.Components.Bills;
 using Microsoft.AspNetCore.Components;
 
 namespace BlazorUI.Components.Bills;
@@ -11,6 +12,9 @@ public partial class BillSplitEditor
     public decimal BillAmount { get; set; }
 
     [Parameter]
+    public string? CurrentUserId { get; set; }
+
+    [Parameter]
     public EventCallback OnChanged { get; set; }
 
     decimal AllocatedPercentage => Splits.Sum(s => s.Percentage ?? 0m);
@@ -21,19 +25,71 @@ public partial class BillSplitEditor
 
     bool IsFullyAllocated => Math.Abs(AllocatedPercentage - 100m) < 0.01m;
 
+    /// <summary>
+    /// Returns the user IDs that are already assigned to a split,
+    /// so the FriendPicker can exclude them.
+    /// </summary>
+    IEnumerable<string> SelectedUserIds =>
+        Splits.Where(s => !string.IsNullOrEmpty(s.UserId)).Select(s => s.UserId);
+
     void AddSplit()
     {
-        Splits.Add(new BillSplitFormModel());
+        var wasEqual = IsSplitEqual();
+
+        if (Splits.Count == 0 && !string.IsNullOrEmpty(CurrentUserId))
+        {
+            // First split: auto-add current user + empty friend, split 50/50
+            Splits.Add(new BillSplitFormModel { UserId = CurrentUserId, Percentage = 50m });
+            Splits.Add(new BillSplitFormModel { Percentage = 50m });
+        }
+        else
+        {
+            Splits.Add(new BillSplitFormModel());
+
+            if (wasEqual)
+            {
+                DistributeEvenly();
+            }
+        }
+
         OnChanged.InvokeAsync();
     }
 
     void RemoveSplit(BillSplitFormModel split)
     {
+        var wasEqual = IsSplitEqual();
+
         Splits.Remove(split);
+
+        if (wasEqual && Splits.Count > 0)
+        {
+            DistributeEvenly();
+        }
+
         OnChanged.InvokeAsync();
     }
 
     void SplitEvenly()
+    {
+        if (Splits.Count == 0) return;
+
+        DistributeEvenly();
+        OnChanged.InvokeAsync();
+    }
+
+    /// <summary>
+    /// Checks whether all splits that have a percentage are evenly distributed.
+    /// </summary>
+    bool IsSplitEqual()
+    {
+        var withPercentage = Splits.Where(s => s.Percentage.HasValue).ToList();
+        if (withPercentage.Count < 2) return true;
+
+        var expected = Math.Round(100m / withPercentage.Count, 2);
+        return withPercentage.All(s => Math.Abs(s.Percentage!.Value - expected) < 0.02m);
+    }
+
+    void DistributeEvenly()
     {
         if (Splits.Count == 0) return;
 
@@ -49,8 +105,6 @@ public partial class BillSplitEditor
         {
             Splits[0].Percentage += diff;
         }
-
-        OnChanged.InvokeAsync();
     }
 
     decimal GetEstimatedAmount(BillSplitFormModel split)

@@ -7,6 +7,7 @@ using BlazorUI.Services.Contracts;
 using Microsoft.AspNetCore.Components;
 using Radzen;
 
+
 namespace BlazorUI.Pages.Connections;
 
 public partial class MyConnections : IDisposable
@@ -103,7 +104,7 @@ public partial class MyConnections : IDisposable
         var users = await UserService.GetUsersAsync(pageSize: 100, cancellationToken: _cts.Token);
         if (!users.IsSuccess) return;
 
-        var selectedUserId = await DialogService.OpenAsync<AddFriendDialog>(
+        var result = await DialogService.OpenAsync<AddFriendDialog>(
             "Add Friend",
             new Dictionary<string, object>
             {
@@ -112,37 +113,13 @@ public partial class MyConnections : IDisposable
             new DialogOptions
             {
                 Width = "480px",
-                CloseDialogOnOverlayClick = false
+                CloseDialogOnOverlayClick = false,
+                ShowClose = false
             });
 
-        if (selectedUserId is string userId && !string.IsNullOrWhiteSpace(userId))
+        if (result is true)
         {
-            var result = await ConnectionService.SendConnectionRequestAsync(
-                new SendConnectionRequestModel { AddresseeId = userId },
-                _cts.Token);
-
-            if (result.IsSuccess)
-            {
-                NotificationService.Notify(new NotificationMessage
-                {
-                    Severity = NotificationSeverity.Success,
-                    Summary = "Request Sent",
-                    Detail = "Connection request sent successfully.",
-                    Duration = 4000
-                });
-
-                await LoadDataAsync();
-            }
-            else
-            {
-                NotificationService.Notify(new NotificationMessage
-                {
-                    Severity = NotificationSeverity.Error,
-                    Summary = "Error",
-                    Detail = result.Problem.Detail ?? "Failed to send connection request.",
-                    Duration = 6000
-                });
-            }
+            await LoadDataAsync();
         }
     }
 
@@ -251,7 +228,7 @@ public partial class MyConnections : IDisposable
         {
             Severity = NotificationSeverity.Error,
             Summary = "Error",
-            Detail = problem?.Detail ?? "An unexpected error occurred.",
+            Detail = problem?.ToUserMessage() ?? "An unexpected error occurred.",
             Duration = 6000
         });
     }

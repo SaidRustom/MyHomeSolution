@@ -74,7 +74,7 @@ public sealed class OccurrenceGeneratorService(
 
             try
             {
-                generated += GenerateOccurrencesForTask(task, today);
+                generated += GenerateOccurrencesForTask(task, today, dbContext);
             }
             catch (Exception ex)
             {
@@ -91,7 +91,8 @@ public sealed class OccurrenceGeneratorService(
         }
     }
 
-    private int GenerateOccurrencesForTask(HouseholdTask task, DateOnly today)
+    internal static int GenerateOccurrencesForTask(
+        HouseholdTask task, DateOnly today, IApplicationDbContext dbContext, int requiredFutureOccurrences = 5)
     {
         var pattern = task.RecurrencePattern!;
 
@@ -99,10 +100,10 @@ public sealed class OccurrenceGeneratorService(
             .Count(o => o.DueDate >= today
                         && o.Status is OccurrenceStatus.Pending or OccurrenceStatus.InProgress);
 
-        if (pendingFutureCount >= _options.RequiredFutureOccurrences)
+        if (pendingFutureCount >= requiredFutureOccurrences)
             return 0;
 
-        var toGenerate = _options.RequiredFutureOccurrences - pendingFutureCount;
+        var toGenerate = requiredFutureOccurrences - pendingFutureCount;
 
         var lastOccurrenceDate = task.Occurrences
             .Select(o => (DateOnly?)o.DueDate)
@@ -115,6 +116,7 @@ public sealed class OccurrenceGeneratorService(
 
         var existingDueDates = task.Occurrences.Select(o => o.DueDate).ToHashSet();
         var created = 0;
+        var assignees = pattern.Assignees.OrderBy(a => a.Order).Select(a => a.UserId).ToList();
 
         for (var i = 0; i < toGenerate; i++)
         {
@@ -130,14 +132,22 @@ public sealed class OccurrenceGeneratorService(
             var assigneeUserId = pattern.GetNextAssigneeUserId();
             pattern.AdvanceAssigneeIndex();
 
-            task.Occurrences.Add(new TaskOccurrence
+            var occurrence = new TaskOccurrence
             {
                 HouseholdTaskId = task.Id,
                 DueDate = nextDate,
                 Status = OccurrenceStatus.Pending,
                 AssignedToUserId = assigneeUserId
-            });
+            };
 
+            if (task.AutoCreateBill && task.DefaultBillAmount.HasValue && assignees.Count > 0)
+            {
+                var bill = CreateBillForOccurrence(task, occurrence, assignees);
+                dbContext.Bills.Add(bill);
+                occurrence.BillId = bill.Id;
+            }
+
+            task.Occurrences.Add(occurrence);
             nextDate = pattern.GetNextOccurrenceDate(nextDate);
             created++;
         }
@@ -145,5 +155,48 @@ public sealed class OccurrenceGeneratorService(
         return created;
     }
 
-    private static DateOnly MaxDate(DateOnly a, DateOnly b) => a >= b ? a : b;
+    internal static Bill CreateBillForOccurrence(
+        HouseholdTask task, TaskOccurrence occurrence, List<string> assigneeUserIds)
+    {
+        var amount = task.DefaultBillAmount!.Value;
+        var currency = task.DefaultBillCurrency ?? "CAD";
+        var category = task.DefaultBillCategory ?? BillCategory.General;
+        var title = task.DefaultBillTitle ?? $"{task.Title} – {occurrence.DueDate:MMM dd, yyyy}";
+
+        var bill = new Bill
+        {
+            Title = title,
+            Amount = amount,
+            Currency = currency,
+            Category = category,
+            BillDate = new DateTimeOffset(occurrence.DueDate.ToDateTime(TimeOnly.MinValue), TimeSpan.Zero),
+            PaidByUserId = occurrence.AssignedToUserId ?? task.CreatedBy ?? assigneeUserIds[0],
+            RelatedEntityId = occurrence.Id,
+            RelatedEntityType = "TaskOccurrence"
+        };
+
+        var equalPercentage = Math.Round(100m / assigneeUserIds.Count, 2);
+
+        foreach (var userId in assigneeUserIds)
+        {
+            var splitAmount = Math.Round(amount * equalPercentage / 100m, 2);
+            bill.Splits.Add(new BillSplit
+            {
+                BillId = bill.Id,
+                UserId = userId,
+                Percentage = equalPercentage,
+                Amount = splitAmount,
+                Status = SplitStatus.Unpaid
+            });
+        }
+
+        return bill;
+    }
+
+    private int GenerateOccurrencesForTask(HouseholdTask task, DateOnly today, IApplicationDbContext dbContext)
+    {
+        return GenerateOccurrencesForTask(task, today, dbContext, _options.RequiredFutureOccurrences);
+    }
+
+    internal static DateOnly MaxDate(DateOnly a, DateOnly b) => a >= b ? a : b;
 }

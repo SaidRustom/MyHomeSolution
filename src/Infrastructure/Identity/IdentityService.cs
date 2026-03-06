@@ -236,7 +236,23 @@ public sealed class IdentityService(
         string userId, CancellationToken cancellationToken = default)
     {
         var user = await userManager.FindByIdAsync(userId);
-        return user?.FirstName;
+        return user?.FullName;
+    }
+
+    public async Task<Dictionary<string, string>> GetUserFullNamesByIdsAsync(
+        IEnumerable<string> userIds, CancellationToken cancellationToken = default)
+    {
+        var distinctIds = userIds.Where(id => !string.IsNullOrWhiteSpace(id)).Distinct().ToList();
+        if (distinctIds.Count == 0)
+            return [];
+
+        return await userManager.Users
+            .AsNoTracking()
+            .Where(u => distinctIds.Contains(u.Id))
+            .ToDictionaryAsync(
+                u => u.Id,
+                u => u.FirstName + " " + u.LastName,
+                cancellationToken);
     }
 
     public async Task<bool> IsEmailConfirmedAsync(

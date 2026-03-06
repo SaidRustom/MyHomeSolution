@@ -4,6 +4,7 @@ using MyHomeSolution.Application.Common.Exceptions;
 using MyHomeSolution.Application.Common.Interfaces;
 using MyHomeSolution.Application.Features.Tasks.Common;
 using MyHomeSolution.Domain.Entities;
+using MyHomeSolution.Domain.Enums;
 
 namespace MyHomeSolution.Application.Features.Tasks.Queries.GetTaskById;
 
@@ -14,9 +15,11 @@ public sealed class GetTaskByIdQueryHandler(IApplicationDbContext dbContext)
     {
         var task = await dbContext.HouseholdTasks
             .AsNoTracking()
-            .Include(t => t.RecurrencePattern)
-                .ThenInclude(rp => rp!.Assignees)
-            .Include(t => t.Occurrences.OrderBy(o => o.DueDate))
+            .Include(t => t.RecurrencePattern!)
+                .ThenInclude(rp => rp.Assignees)
+            .Include(t => t.Occurrences.Where(o => !o.IsDeleted).OrderBy(o => o.DueDate))
+                .ThenInclude(o => o.Bill!)
+                    .ThenInclude(b => b.Splits)
             .Where(t => !t.IsDeleted)
             .FirstOrDefaultAsync(t => t.Id == request.Id, cancellationToken)
             ?? throw new NotFoundException(nameof(HouseholdTask), request.Id);
@@ -34,6 +37,11 @@ public sealed class GetTaskByIdQueryHandler(IApplicationDbContext dbContext)
             DueDate = task.DueDate,
             AssignedToUserId = task.AssignedToUserId,
             CreatedAt = task.CreatedAt,
+            AutoCreateBill = task.AutoCreateBill,
+            DefaultBillAmount = task.DefaultBillAmount,
+            DefaultBillCurrency = task.DefaultBillCurrency,
+            DefaultBillCategory = task.DefaultBillCategory,
+            DefaultBillTitle = task.DefaultBillTitle,
             RecurrencePattern = task.RecurrencePattern is not null
                 ? new RecurrencePatternDto
                 {
@@ -55,7 +63,22 @@ public sealed class GetTaskByIdQueryHandler(IApplicationDbContext dbContext)
                 Status = o.Status,
                 AssignedToUserId = o.AssignedToUserId,
                 CompletedAt = o.CompletedAt,
-                Notes = o.Notes
+                CompletedByUserId = o.CompletedByUserId,
+                Notes = o.Notes,
+                BillId = o.BillId,
+                Bill = o.Bill is not null
+                    ? new OccurrenceBillBriefDto
+                    {
+                        Id = o.Bill.Id,
+                        Title = o.Bill.Title,
+                        Amount = o.Bill.Amount,
+                        Currency = o.Bill.Currency,
+                        Category = o.Bill.Category,
+                        BillDate = o.Bill.BillDate,
+                        TotalSplits = o.Bill.Splits.Count,
+                        PaidSplits = o.Bill.Splits.Count(s => s.Status == SplitStatus.Paid)
+                    }
+                    : null
             }).ToList()
         };
     }

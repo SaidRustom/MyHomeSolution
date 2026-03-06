@@ -14,10 +14,13 @@ public sealed class GetBillByIdQueryHandlerTests : IDisposable
 {
     private readonly TestDbContextFactory _factory = new();
     private readonly ICurrentUserService _currentUserService = Substitute.For<ICurrentUserService>();
+    private readonly IIdentityService _identityService = Substitute.For<IIdentityService>();
 
     public GetBillByIdQueryHandlerTests()
     {
         _currentUserService.UserId.Returns("user-1");
+        _identityService.GetUserFullNamesByIdsAsync(Arg.Any<IEnumerable<string>>(), Arg.Any<CancellationToken>())
+            .Returns(new Dictionary<string, string>());
     }
 
     [Fact]
@@ -26,7 +29,7 @@ public sealed class GetBillByIdQueryHandlerTests : IDisposable
         var bill = await SeedBill();
 
         using var context = _factory.CreateContext();
-        var handler = new GetBillByIdQueryHandler(context, _currentUserService);
+        var handler = new GetBillByIdQueryHandler(context, _currentUserService, _identityService);
 
         var result = await handler.Handle(new GetBillByIdQuery(bill.Id), CancellationToken.None);
 
@@ -42,7 +45,7 @@ public sealed class GetBillByIdQueryHandlerTests : IDisposable
     public async Task Handle_ShouldThrow_WhenBillNotFound()
     {
         using var context = _factory.CreateContext();
-        var handler = new GetBillByIdQueryHandler(context, _currentUserService);
+        var handler = new GetBillByIdQueryHandler(context, _currentUserService, _identityService);
 
         var act = () => handler.Handle(
             new GetBillByIdQuery(Guid.CreateVersion7()), CancellationToken.None);
@@ -56,7 +59,7 @@ public sealed class GetBillByIdQueryHandlerTests : IDisposable
         var bill = await SeedBill();
 
         using var context = _factory.CreateContext();
-        var handler = new GetBillByIdQueryHandler(context, _currentUserService);
+        var handler = new GetBillByIdQueryHandler(context, _currentUserService, _identityService);
 
         var act = () => handler.Handle(new GetBillByIdQuery(bill.Id), CancellationToken.None);
         await act.Should().ThrowAsync<ForbiddenAccessException>();
@@ -69,7 +72,7 @@ public sealed class GetBillByIdQueryHandlerTests : IDisposable
         var bill = await SeedBill();
 
         using var context = _factory.CreateContext();
-        var handler = new GetBillByIdQueryHandler(context, _currentUserService);
+        var handler = new GetBillByIdQueryHandler(context, _currentUserService, _identityService);
 
         var result = await handler.Handle(new GetBillByIdQuery(bill.Id), CancellationToken.None);
         result.Should().NotBeNull();

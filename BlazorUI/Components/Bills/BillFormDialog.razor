@@ -1,6 +1,13 @@
 <RadzenTemplateForm TItem="BillFormModel" Data="@Model" Submit="OnSubmit">
     <RadzenStack Orientation="Orientation.Vertical" Gap="1rem" class="rz-p-4">
 
+        @if (ErrorMessage is not null)
+        {
+            <RadzenAlert AlertStyle="AlertStyle.Danger" Variant="Variant.Flat" Shade="Shade.Lighter" AllowClose="true" Close="@(() => ErrorMessage = null)">
+                @ErrorMessage
+            </RadzenAlert>
+        }
+
         @* Title *@
         <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem">
             <RadzenLabel Text="Title" Component="Title" />
@@ -29,7 +36,7 @@
             </RadzenStack>
             <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem" Style="flex: 1; min-width: 200px;">
                 <RadzenLabel Text="Bill Date" Component="BillDate" />
-                <RadzenDatePicker TValue="DateTime" Name="BillDate" @bind-Value="@Model.BillDate" DateFormat="MMM dd, yyyy" Style="width: 100%;" />
+                <RadzenDatePicker TValue="DateTimeOffset" Name="BillDate" @bind-Value="@Model.BillDate" DateFormat="MMM dd, yyyy" Style="width: 100%;" />
             </RadzenStack>
         </RadzenStack>
 
@@ -49,7 +56,7 @@
         @if (!IsEdit)
         {
             <RadzenFieldset Text="Bill Splits" AllowCollapse="true">
-                <BillSplitEditor Splits="@Model.Splits" BillAmount="@Model.Amount" />
+                <BillSplitEditor Splits="@Model.Splits" BillAmount="@Model.Amount" CurrentUserId="@CurrentUserId" />
             </RadzenFieldset>
         }
 
@@ -74,7 +81,7 @@
 
         @* Footer buttons *@
         <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem" class="rz-pt-4" Style="border-top: 1px solid var(--rz-base-200);">
-            <RadzenButton Text="Cancel" Variant="Variant.Flat" ButtonStyle="ButtonStyle.Light" Click="Cancel" ButtonType="ButtonType.Button" />
+            <RadzenButton Text="Cancel" Variant="Variant.Flat" ButtonStyle="ButtonStyle.Light" Click="Cancel" ButtonType="ButtonType.Button" Disabled="@IsBusy" />
             <RadzenButton Text="@SubmitText" Icon="save" ButtonStyle="ButtonStyle.Primary" ButtonType="ButtonType.Submit" IsBusy="@IsBusy" />
         </RadzenStack>
     </RadzenStack>

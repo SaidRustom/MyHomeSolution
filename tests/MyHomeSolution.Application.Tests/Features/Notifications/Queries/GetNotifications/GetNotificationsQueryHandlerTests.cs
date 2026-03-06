@@ -13,10 +13,13 @@ public sealed class GetNotificationsQueryHandlerTests : IDisposable
 {
     private readonly TestDbContextFactory _factory = new();
     private readonly ICurrentUserService _currentUserService = Substitute.For<ICurrentUserService>();
+    private readonly IIdentityService _identityService = Substitute.For<IIdentityService>();
 
     public GetNotificationsQueryHandlerTests()
     {
         _currentUserService.UserId.Returns("user-1");
+        _identityService.GetUserFullNamesByIdsAsync(Arg.Any<IEnumerable<string>>(), Arg.Any<CancellationToken>())
+            .Returns(new Dictionary<string, string>());
     }
 
     [Fact]
@@ -26,7 +29,7 @@ public sealed class GetNotificationsQueryHandlerTests : IDisposable
         await SeedNotifications("other-user", 3);
 
         using var context = _factory.CreateContext();
-        var handler = new GetNotificationsQueryHandler(context, _currentUserService);
+        var handler = new GetNotificationsQueryHandler(context, _currentUserService, _identityService);
         var query = new GetNotificationsQuery { PageNumber = 1, PageSize = 10 };
 
         var result = await handler.Handle(query, CancellationToken.None);
@@ -41,7 +44,7 @@ public sealed class GetNotificationsQueryHandlerTests : IDisposable
         await SeedNotifications("user-1", 5);
 
         using var context = _factory.CreateContext();
-        var handler = new GetNotificationsQueryHandler(context, _currentUserService);
+        var handler = new GetNotificationsQueryHandler(context, _currentUserService, _identityService);
         var query = new GetNotificationsQuery { PageNumber = 1, PageSize = 2 };
 
         var result = await handler.Handle(query, CancellationToken.None);
@@ -58,7 +61,7 @@ public sealed class GetNotificationsQueryHandlerTests : IDisposable
         await SeedNotificationsWithReadState("user-1", unreadCount: 3, readCount: 2);
 
         using var context = _factory.CreateContext();
-        var handler = new GetNotificationsQueryHandler(context, _currentUserService);
+        var handler = new GetNotificationsQueryHandler(context, _currentUserService, _identityService);
         var query = new GetNotificationsQuery { PageNumber = 1, PageSize = 20, IsRead = false };
 
         var result = await handler.Handle(query, CancellationToken.None);
@@ -73,7 +76,7 @@ public sealed class GetNotificationsQueryHandlerTests : IDisposable
         await SeedNotificationsWithTypes("user-1");
 
         using var context = _factory.CreateContext();
-        var handler = new GetNotificationsQueryHandler(context, _currentUserService);
+        var handler = new GetNotificationsQueryHandler(context, _currentUserService, _identityService);
         var query = new GetNotificationsQuery
         {
             PageNumber = 1,
@@ -111,7 +114,7 @@ public sealed class GetNotificationsQueryHandlerTests : IDisposable
         await seedContext.SaveChangesAsync();
 
         using var context = _factory.CreateContext();
-        var handler = new GetNotificationsQueryHandler(context, _currentUserService);
+        var handler = new GetNotificationsQueryHandler(context, _currentUserService, _identityService);
         var query = new GetNotificationsQuery { PageNumber = 1, PageSize = 20 };
 
         var result = await handler.Handle(query, CancellationToken.None);
@@ -142,7 +145,7 @@ public sealed class GetNotificationsQueryHandlerTests : IDisposable
         await seedContext.SaveChangesAsync();
 
         using var context = _factory.CreateContext();
-        var handler = new GetNotificationsQueryHandler(context, _currentUserService);
+        var handler = new GetNotificationsQueryHandler(context, _currentUserService, _identityService);
         var query = new GetNotificationsQuery { PageNumber = 1, PageSize = 20 };
 
         var result = await handler.Handle(query, CancellationToken.None);
@@ -157,7 +160,7 @@ public sealed class GetNotificationsQueryHandlerTests : IDisposable
         _currentUserService.UserId.Returns((string?)null);
 
         using var context = _factory.CreateContext();
-        var handler = new GetNotificationsQueryHandler(context, _currentUserService);
+        var handler = new GetNotificationsQueryHandler(context, _currentUserService, _identityService);
 
         var act = () => handler.Handle(
             new GetNotificationsQuery { PageNumber = 1, PageSize = 20 }, CancellationToken.None);
@@ -169,7 +172,7 @@ public sealed class GetNotificationsQueryHandlerTests : IDisposable
     public async Task Handle_ShouldReturnEmptyList_WhenNoNotifications()
     {
         using var context = _factory.CreateContext();
-        var handler = new GetNotificationsQueryHandler(context, _currentUserService);
+        var handler = new GetNotificationsQueryHandler(context, _currentUserService, _identityService);
         var query = new GetNotificationsQuery { PageNumber = 1, PageSize = 20 };
 
         var result = await handler.Handle(query, CancellationToken.None);

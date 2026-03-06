@@ -3,6 +3,7 @@ using BlazorUI.Components.Common;
 using BlazorUI.Models.Users;
 using BlazorUI.Services.Contracts;
 using Microsoft.AspNetCore.Components;
+using Microsoft.JSInterop;
 using Radzen;
 
 namespace BlazorUI.Pages;
@@ -11,6 +12,7 @@ public partial class Settings
 {
     [Inject] private IUserService UserService { get; set; } = default!;
     [Inject] private NavigationManager Navigation { get; set; } = default!;
+    [Inject] private IJSRuntime JS { get; set; } = default!;
 
     private UserDetailDto? UserProfile { get; set; }
     private UpdateProfileFormModel ProfileModel { get; set; } = new();

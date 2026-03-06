@@ -12,6 +12,7 @@ public sealed record BillDetailDto
     public BillCategory Category { get; init; }
     public DateTimeOffset BillDate { get; init; }
     public required string PaidByUserId { get; init; }
+    public string? PaidByUserFullName { get; init; }
     public string? ReceiptUrl { get; init; }
     public Guid? RelatedEntityId { get; init; }
     public string? RelatedEntityType { get; init; }

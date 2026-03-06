@@ -11,6 +11,7 @@ public sealed record BillBriefDto
     public BillCategory Category { get; init; }
     public DateTimeOffset BillDate { get; init; }
     public required string PaidByUserId { get; init; }
+    public string? PaidByUserFullName { get; init; }
     public bool HasReceipt { get; init; }
     public int SplitCount { get; init; }
     public DateTimeOffset CreatedAt { get; init; }

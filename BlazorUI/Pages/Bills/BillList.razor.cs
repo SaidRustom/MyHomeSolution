@@ -6,6 +6,7 @@ using BlazorUI.Services.Contracts;
 using Microsoft.AspNetCore.Components;
 using Radzen;
 
+
 namespace BlazorUI.Pages.Bills;
 
 public partial class BillList : IDisposable
@@ -21,6 +22,16 @@ public partial class BillList : IDisposable
 
     [Inject]
     NotificationService NotificationService { get; set; } = default!;
+
+    static readonly DialogOptions BillDialogOptions = new()
+    {
+        Width = "700px",
+        Height = "600px",
+        Resizable = true,
+        Draggable = true,
+        CloseDialogOnOverlayClick = false,
+        ShowClose = false
+    };
 
     PaginatedList<BillBriefDto> BillData { get; set; } = new();
 
@@ -108,41 +119,11 @@ public partial class BillList : IDisposable
                 { nameof(BillFormDialog.Model), model },
                 { nameof(BillFormDialog.IsEdit), false }
             },
-            new DialogOptions
-            {
-                Width = "700px",
-                Height = "600px",
-                Resizable = true,
-                Draggable = true,
-                CloseDialogOnOverlayClick = false
-            });
+            BillDialogOptions);
 
-        if (result is BillFormModel formModel)
+        if (result is true)
         {
-            var request = formModel.ToCreateRequest();
-            var createResult = await BillService.CreateBillAsync(request, _cts.Token);
-
-            if (createResult.IsSuccess)
-            {
-                NotificationService.Notify(new NotificationMessage
-                {
-                    Severity = NotificationSeverity.Success,
-                    Summary = "Bill Created",
-                    Detail = $"'{formModel.Title}' has been created successfully.",
-                    Duration = 4000
-                });
-                await LoadBillsAsync();
-            }
-            else
-            {
-                NotificationService.Notify(new NotificationMessage
-                {
-                    Severity = NotificationSeverity.Error,
-                    Summary = "Error",
-                    Detail = createResult.Problem.Detail,
-                    Duration = 6000
-                });
-            }
+            await LoadBillsAsync();
         }
     }
 
@@ -211,7 +192,7 @@ public partial class BillList : IDisposable
                 {
                     Severity = NotificationSeverity.Error,
                     Summary = "Error",
-                    Detail = deleteResult.Problem.Detail,
+                    Detail = deleteResult.Problem.ToUserMessage(),
                     Duration = 6000
                 });
             }

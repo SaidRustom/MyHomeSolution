@@ -59,7 +59,7 @@
                         <RadzenText TextStyle="TextStyle.Caption" class="rz-color-secondary rz-mb-0">Paid By</RadzenText>
                         <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.375rem">
                             <RadzenIcon Icon="person" Style="font-size: 1.125rem;" />
-                            <RadzenText TextStyle="TextStyle.Body1" class="rz-mb-0">@Bill.PaidByUserId</RadzenText>
+                            <RadzenText TextStyle="TextStyle.Body1" class="rz-mb-0">@(Bill.PaidByUserFullName ?? Bill.PaidByUserId)</RadzenText>
                         </RadzenStack>
                     </RadzenStack>
                 </RadzenColumn>

@@ -50,6 +50,9 @@ public sealed class TestDbContext(DbContextOptions<TestDbContext> options)
             entity.Property(t => t.Title).HasMaxLength(200).IsRequired();
             entity.Property(t => t.Description).HasMaxLength(2000);
             entity.Property(t => t.AssignedToUserId).HasMaxLength(450);
+            entity.Property(t => t.DefaultBillAmount).HasColumnType("TEXT");
+            entity.Property(t => t.DefaultBillCurrency).HasMaxLength(3);
+            entity.Property(t => t.DefaultBillTitle).HasMaxLength(256);
             entity.Ignore(t => t.AuditLogs);
             entity.Ignore(t => t.Bills);
 
@@ -89,6 +92,11 @@ public sealed class TestDbContext(DbContextOptions<TestDbContext> options)
             entity.Property(o => o.CompletedByUserId).HasMaxLength(450);
             entity.Property(o => o.Notes).HasMaxLength(1000);
             entity.Ignore(o => o.AuditLogs);
+
+            entity.HasOne(o => o.Bill)
+                .WithMany()
+                .HasForeignKey(o => o.BillId)
+                .OnDelete(DeleteBehavior.SetNull);
         });
 
         modelBuilder.Entity<AuditLog>(entity =>
