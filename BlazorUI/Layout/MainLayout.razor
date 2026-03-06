@@ -43,6 +43,10 @@
                 </RadzenStack>
                 <RadzenPanelMenu>
                     <RadzenPanelMenuItem Click="@(()=>NavigateTo("/"))" Text="Home" Icon="home" />
+                    <RadzenPanelMenuItem Text="Tasks" Icon="task_alt">
+                        <RadzenPanelMenuItem Click="@(()=>NavigateTo("/scheduler"))" Text="Scheduler" Icon="calendar_month" />
+                        <RadzenPanelMenuItem Click="@(()=>NavigateTo("/tasks"))" Text="All Tasks" Icon="list" />
+                    </RadzenPanelMenuItem>
                     <RadzenPanelMenuItem Text="Bills" Icon="receipt_long">
                         <RadzenPanelMenuItem Click="@(()=>NavigateTo("/bills/dashboard"))" Text="Dashboard" Icon="dashboard" />
                         <RadzenPanelMenuItem Click="@(()=>NavigateTo("/bills"))" Text="All Bills" Icon="list" />

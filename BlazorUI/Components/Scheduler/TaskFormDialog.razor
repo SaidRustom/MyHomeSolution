@@ -1,0 +1,143 @@
+<RadzenTemplateForm TItem="TaskFormModel" Data="@Model" Submit="OnSubmitAsync">
+    <RadzenStack Orientation="Orientation.Vertical" Gap="1rem" class="rz-p-4">
+
+        @if (ErrorMessage is not null)
+        {
+            <RadzenAlert AlertStyle="AlertStyle.Danger" Variant="Variant.Flat" Shade="Shade.Lighter" AllowClose="true" Close="@(() => ErrorMessage = null)">
+                @ErrorMessage
+            </RadzenAlert>
+        }
+
+        @* Title *@
+        <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem">
+            <RadzenLabel Text="Title" Component="Title" />
+            <RadzenTextBox Name="Title" @bind-Value="@Model.Title" Placeholder="e.g. Clean kitchen" Style="width: 100%;" />
+            <RadzenRequiredValidator Component="Title" Text="Title is required" />
+        </RadzenStack>
+
+        @* Description *@
+        <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem">
+            <RadzenLabel Text="Description" Component="Description" />
+            <RadzenTextArea Name="Description" @bind-Value="@Model.Description" Placeholder="Optional description…" Rows="2" Style="width: 100%;" />
+        </RadzenStack>
+
+        @* Category & Priority row *@
+        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.75rem" Wrap="FlexWrap.Wrap">
+            <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem" Style="flex: 1; min-width: 200px;">
+                <RadzenLabel Text="Category" Component="Category" />
+                <RadzenDropDown TValue="TaskCategory" Name="Category" @bind-Value="@Model.Category" Data="@Categories" Style="width: 100%;" />
+            </RadzenStack>
+            <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem" Style="flex: 1; min-width: 200px;">
+                <RadzenLabel Text="Priority" Component="Priority" />
+                <RadzenDropDown TValue="TaskPriority" Name="Priority" @bind-Value="@Model.Priority" Data="@Priorities" Style="width: 100%;" />
+            </RadzenStack>
+        </RadzenStack>
+
+        @* Due Date & Duration row *@
+        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.75rem" Wrap="FlexWrap.Wrap">
+            <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem" Style="flex: 1; min-width: 200px;">
+                <RadzenLabel Text="Due Date" Component="DueDate" />
+                <RadzenDatePicker TValue="DateOnly?" Name="DueDate" @bind-Value="@Model.DueDate" DateFormat="MMM dd, yyyy" Style="width: 100%;" />
+            </RadzenStack>
+            <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem" Style="width: 160px;">
+                <RadzenLabel Text="Duration (min)" Component="Duration" />
+                <RadzenNumeric TValue="int?" Name="Duration" @bind-Value="@Model.EstimatedDurationMinutes" Placeholder="60" Style="width: 100%;" Min="1" />
+            </RadzenStack>
+        </RadzenStack>
+
+        @* Assignee *@
+        <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem">
+            <RadzenLabel Text="Assign to" />
+            <FriendPicker @bind-SelectedUserId="@Model.AssignedToUserId" Placeholder="Select assignee…" />
+        </RadzenStack>
+
+        @* Recurrence toggle *@
+        <RadzenStack Orientation="Orientation.Vertical" Gap="0.75rem">
+            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                <RadzenSwitch @bind-Value="@Model.IsRecurring" />
+                <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0">Recurring task</RadzenText>
+            </RadzenStack>
+
+            @if (Model.IsRecurring)
+            {
+                <RadzenFieldset Text="Recurrence Pattern">
+                    <RadzenStack Orientation="Orientation.Vertical" Gap="0.75rem">
+                        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.75rem" Wrap="FlexWrap.Wrap">
+                            <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem" Style="flex: 1; min-width: 160px;">
+                                <RadzenLabel Text="Frequency" Component="RecurrenceType" />
+                                <RadzenDropDown TValue="RecurrenceType?" Name="RecurrenceType" @bind-Value="@Model.RecurrenceType" Data="@RecurrenceTypes" Style="width: 100%;" />
+                            </RadzenStack>
+                            <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem" Style="width: 120px;">
+                                <RadzenLabel Text="Interval" Component="Interval" />
+                                <RadzenNumeric TValue="int?" Name="Interval" @bind-Value="@Model.Interval" Min="1" Placeholder="1" Style="width: 100%;" />
+                            </RadzenStack>
+                        </RadzenStack>
+                        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.75rem" Wrap="FlexWrap.Wrap">
+                            <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem" Style="flex: 1; min-width: 200px;">
+                                <RadzenLabel Text="Start Date" Component="RecurrenceStart" />
+                                <RadzenDatePicker TValue="DateOnly?" Name="RecurrenceStart" @bind-Value="@Model.RecurrenceStartDate" DateFormat="MMM dd, yyyy" Style="width: 100%;" />
+                            </RadzenStack>
+                            <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem" Style="flex: 1; min-width: 200px;">
+                                <RadzenLabel Text="End Date" Component="RecurrenceEnd" />
+                                <RadzenDatePicker TValue="DateOnly?" Name="RecurrenceEnd" @bind-Value="@Model.RecurrenceEndDate" DateFormat="MMM dd, yyyy" Style="width: 100%;" />
+                            </RadzenStack>
+                        </RadzenStack>
+                        <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem">
+                            <RadzenLabel Text="Rotation Assignees" />
+                            <FriendPicker Multiple="true" @bind-SelectedUserIds="@Model.AssigneeUserIds" Placeholder="Select rotation members…" />
+                        </RadzenStack>
+                    </RadzenStack>
+                </RadzenFieldset>
+            }
+        </RadzenStack>
+
+        @* Bill auto-creation toggle *@
+        <RadzenStack Orientation="Orientation.Vertical" Gap="0.75rem">
+            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                <RadzenSwitch @bind-Value="@Model.AutoCreateBill" />
+                <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0">Auto-create bill on completion</RadzenText>
+            </RadzenStack>
+
+            @if (Model.AutoCreateBill)
+            {
+                <RadzenFieldset Text="Bill Settings">
+                    <RadzenStack Orientation="Orientation.Vertical" Gap="0.75rem">
+                        <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem">
+                            <RadzenLabel Text="Bill Title" Component="BillTitle" />
+                            <RadzenTextBox Name="BillTitle" @bind-Value="@Model.DefaultBillTitle" Placeholder="e.g. Cleaning supplies" Style="width: 100%;" />
+                        </RadzenStack>
+                        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.75rem" Wrap="FlexWrap.Wrap">
+                            <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem" Style="flex: 1; min-width: 160px;">
+                                <RadzenLabel Text="Amount" Component="BillAmount" />
+                                <RadzenNumeric TValue="decimal?" Name="BillAmount" @bind-Value="@Model.DefaultBillAmount" Placeholder="0.00" Style="width: 100%;" Min="0.01m" />
+                            </RadzenStack>
+                            <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem" Style="width: 100px;">
+                                <RadzenLabel Text="Currency" Component="BillCurrency" />
+                                <RadzenTextBox Name="BillCurrency" @bind-Value="@Model.DefaultBillCurrency" Style="width: 100%;" />
+                            </RadzenStack>
+                            <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem" Style="flex: 1; min-width: 160px;">
+                                <RadzenLabel Text="Bill Category" Component="BillCategory" />
+                                <RadzenDropDown TValue="BillCategory?" Name="BillCategory" @bind-Value="@Model.DefaultBillCategory" Data="@BillCategories" Style="width: 100%;" AllowClear="true" />
+                            </RadzenStack>
+                        </RadzenStack>
+                    </RadzenStack>
+                </RadzenFieldset>
+            }
+        </RadzenStack>
+
+        @* Active toggle (edit only) *@
+        @if (IsEdit)
+        {
+            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                <RadzenSwitch @bind-Value="@Model.IsActive" />
+                <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0">Active</RadzenText>
+            </RadzenStack>
+        }
+
+        @* Footer buttons *@
+        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem" class="rz-pt-4" Style="border-top: 1px solid var(--rz-base-200);">
+            <RadzenButton Text="Cancel" Variant="Variant.Flat" ButtonStyle="ButtonStyle.Light" Click="Cancel" ButtonType="ButtonType.Button" Disabled="@IsBusy" />
+            <RadzenButton Text="@SubmitText" Icon="save" ButtonStyle="ButtonStyle.Primary" ButtonType="ButtonType.Submit" IsBusy="@IsBusy" />
+        </RadzenStack>
+    </RadzenStack>
+</RadzenTemplateForm>

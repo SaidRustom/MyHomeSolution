@@ -1,0 +1,81 @@
+@page "/scheduler"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize]
+
+<PageTitle>Scheduler</PageTitle>
+
+<RadzenStack Orientation="Orientation.Vertical" Gap="1.25rem">
+
+    @* Page header *@
+    <PageHeader Title="Scheduler" Subtitle="Manage and visualize your household tasks" Icon="calendar_month">
+        <Actions>
+            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.375rem">
+                <RadzenButton Text="New Task" Icon="add" ButtonStyle="ButtonStyle.Primary" Click="@(() => OpenCreateTaskDialogAsync())" />
+                <RadzenButton Text="All Tasks" Icon="list" Variant="Variant.Outlined" ButtonStyle="ButtonStyle.Secondary" Click="NavigateToTaskList" />
+            </RadzenStack>
+        </Actions>
+    </PageHeader>
+
+    @if (IsLoading)
+    {
+        <LoadingIndicator Text="Loading scheduler…" />
+    }
+    else if (Error is not null)
+    {
+        <ErrorAlert Problem="@Error" OnRetry="LoadDataAsync" />
+    }
+    else
+    {
+        @* Today summary stat cards *@
+        <RadzenRow Gap="1rem" RowGap="1rem">
+            <RadzenColumn Size="12" SizeSM="6" SizeLG="3">
+                <StatCard Title="Overdue" Value="@OverdueCount.ToString()" Icon="warning" IconColor="var(--rz-danger)" />
+            </RadzenColumn>
+            <RadzenColumn Size="12" SizeSM="6" SizeLG="3">
+                <StatCard Title="Pending Today" Value="@PendingTodayCount.ToString()" Icon="schedule" IconColor="var(--rz-warning)" />
+            </RadzenColumn>
+            <RadzenColumn Size="12" SizeSM="6" SizeLG="3">
+                <StatCard Title="In Progress" Value="@InProgressCount.ToString()" Icon="play_circle" IconColor="var(--rz-info)" />
+            </RadzenColumn>
+            <RadzenColumn Size="12" SizeSM="6" SizeLG="3">
+                <StatCard Title="Completed Today" Value="@CompletedTodayCount.ToString()" Icon="check_circle" IconColor="var(--rz-success)" />
+            </RadzenColumn>
+        </RadzenRow>
+
+        @* Filters *@
+        <SchedulerFilterBar Category="@_filterCategory"
+                            CategoryChanged="OnCategoryFilterChanged"
+                            Priority="@_filterPriority"
+                            PriorityChanged="OnPriorityFilterChanged"
+                            AssignedToUserId="@_filterAssignee"
+                            AssignedToUserIdChanged="OnAssigneeFilterChanged"
+                            Status="@_filterStatus"
+                            StatusChanged="OnStatusFilterChanged"
+                            OnReset="ResetFiltersAsync" />
+
+        @* Main content: scheduler + upcoming panel *@
+        <RadzenRow Gap="1rem" RowGap="1rem">
+            <RadzenColumn Size="12" SizeLG="9">
+                <RadzenCard Variant="Variant.Outlined" class="rz-p-0" Style="overflow: hidden;">
+                    <RadzenScheduler @ref="_scheduler"
+                                     TItem="SchedulerAppointment"
+                                     Data="@_appointments"
+                                     StartProperty="Start"
+                                     EndProperty="End"
+                                     TextProperty="Text"
+                                     LoadData="OnSchedulerLoadData"
+                                     SlotSelect="OnSlotSelectAsync"
+                                     AppointmentSelect="OnAppointmentSelectAsync"
+                                     AppointmentRender="OnAppointmentRender"
+                                     Style="height: 640px;">
+                        <RadzenMonthView />
+                        <RadzenWeekView />
+                        <RadzenDayView />
+                    </RadzenScheduler>
+                </RadzenCard>
+            </RadzenColumn>
+            <RadzenColumn Size="12" SizeLG="3">
+                <UpcomingTasksPanel OnOccurrenceAction="OnUpcomingActionAsync" />
+            </RadzenColumn>
+        </RadzenRow>
+    }
+</RadzenStack>

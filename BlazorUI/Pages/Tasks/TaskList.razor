@@ -1,0 +1,118 @@
+@page "/tasks"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize]
+
+<PageTitle>Tasks</PageTitle>
+
+<RadzenStack Orientation="Orientation.Vertical" Gap="1.25rem">
+
+    @* Page header *@
+    <PageHeader Title="Tasks" Subtitle="Manage your household tasks" Icon="task_alt">
+        <Actions>
+            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.375rem">
+                <RadzenButton Text="New Task" Icon="add" ButtonStyle="ButtonStyle.Primary" Click="OpenCreateDialogAsync" />
+                <RadzenButton Text="Scheduler" Icon="calendar_month" Variant="Variant.Outlined" ButtonStyle="ButtonStyle.Secondary" Click="NavigateToScheduler" />
+            </RadzenStack>
+        </Actions>
+    </PageHeader>
+
+    @if (IsLoading && Tasks is null)
+    {
+        <LoadingIndicator Text="Loading tasks…" />
+    }
+    else if (Error is not null)
+    {
+        <ErrorAlert Problem="@Error" OnRetry="LoadTasksAsync" />
+    }
+    else
+    {
+        @* Filter bar *@
+        <RadzenCard Variant="Variant.Outlined" class="rz-p-3">
+            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.75rem" Wrap="FlexWrap.Wrap">
+                <RadzenIcon Icon="search" Style="color: var(--rz-primary);" />
+                <RadzenTextBox @bind-Value="@_searchTerm" Placeholder="Search tasks…" Style="width: 220px;" />
+                <RadzenDropDown TValue="TaskCategory?" @bind-Value="@_categoryFilter" Data="@CategoriesList" Placeholder="Category" AllowClear="true" Style="width: 160px;" />
+                <RadzenDropDown TValue="TaskPriority?" @bind-Value="@_priorityFilter" Data="@PrioritiesList" Placeholder="Priority" AllowClear="true" Style="width: 140px;" />
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.25rem">
+                    <RadzenCheckBox TValue="bool" @bind-Value="@_activeOnly" />
+                    <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0">Active only</RadzenText>
+                </RadzenStack>
+                <RadzenButton Text="Search" Icon="search" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small" Click="LoadTasksAsync" />
+            </RadzenStack>
+        </RadzenCard>
+
+        @* Data grid *@
+        <RadzenDataGrid TItem="TaskBriefDto"
+                        Data="@(Tasks?.Items ?? [])"
+                        Count="@(Tasks?.TotalCount ?? 0)"
+                        AllowSorting="true"
+                        AllowPaging="true"
+                        PageSize="@_pageSize"
+                        PagerHorizontalAlign="HorizontalAlign.Center"
+                        LoadData="OnGridLoadData"
+                        IsLoading="@IsLoading"
+                        RowSelect="OnRowSelectAsync"
+                        Style="cursor: pointer;">
+            <Columns>
+                <RadzenDataGridColumn TItem="TaskBriefDto" Property="Title" Title="Title" Width="250px">
+                    <Template Context="task">
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                            <RadzenIcon Icon="@GetCategoryIcon(task.Category)" Style="font-size: 1.125rem; color: var(--rz-primary);" />
+                            <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0" Style="font-weight: 600;">@task.Title</RadzenText>
+                            @if (task.IsRecurring)
+                            {
+                                <RadzenBadge BadgeStyle="BadgeStyle.Info" IsPill="true" Text="↻" Variant="Variant.Flat" Style="font-size: 0.65rem;" />
+                            }
+                        </RadzenStack>
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="TaskBriefDto" Property="Priority" Title="Priority" Width="120px">
+                    <Template Context="task">
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.25rem">
+                            <div style="width: 8px; height: 8px; border-radius: 50%; background: @GetPriorityColor(task.Priority);" />
+                            <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0">@task.Priority</RadzenText>
+                        </RadzenStack>
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="TaskBriefDto" Property="Category" Title="Category" Width="130px" />
+                <RadzenDataGridColumn TItem="TaskBriefDto" Property="NextDueDate" Title="Next Due" Width="130px">
+                    <Template Context="task">
+                        @if (task.NextDueDate.HasValue)
+                        {
+                            <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0"
+                                        Style="@(task.NextDueDate.Value < DateOnly.FromDateTime(DateTime.Today) ? "color: var(--rz-danger); font-weight: 600;" : "")">
+                                @task.NextDueDate.Value.ToString("MMM dd, yyyy")
+                            </RadzenText>
+                        }
+                        else
+                        {
+                            <RadzenText TextStyle="TextStyle.Caption" class="rz-mb-0 rz-color-secondary">—</RadzenText>
+                        }
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="TaskBriefDto" Property="IsActive" Title="Status" Width="100px">
+                    <Template Context="task">
+                        <StatusBadge Text="@(task.IsActive ? "Active" : "Inactive")" Severity="@(task.IsActive ? StatusSeverity.Success : StatusSeverity.Secondary)" />
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="TaskBriefDto" Property="AutoCreateBill" Title="Bill" Width="80px">
+                    <Template Context="task">
+                        @if (task.AutoCreateBill)
+                        {
+                            <RadzenIcon Icon="receipt" Style="color: var(--rz-warning); font-size: 1.125rem;" />
+                        }
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="TaskBriefDto" Title="Actions" Width="140px" Sortable="false" TextAlign="TextAlign.End">
+                    <Template Context="task">
+                        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem" JustifyContent="JustifyContent.End">
+                            <RadzenButton Icon="edit" Variant="Variant.Text" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small"
+                                          Click="@(async () => await EditTaskAsync(task.Id))" @onclick:stopPropagation="true" />
+                            <RadzenButton Icon="delete" Variant="Variant.Text" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small"
+                                          Click="@(async () => await DeleteTaskAsync(task))" @onclick:stopPropagation="true" />
+                        </RadzenStack>
+                    </Template>
+                </RadzenDataGridColumn>
+            </Columns>
+        </RadzenDataGrid>
+    }
+</RadzenStack>

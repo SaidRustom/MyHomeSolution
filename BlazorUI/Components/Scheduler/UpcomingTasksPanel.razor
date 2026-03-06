@@ -1,0 +1,74 @@
+<RadzenCard Variant="Variant.Outlined" class="rz-p-0" Style="height: 640px; display: flex; flex-direction: column;">
+    @* Header *@
+    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween"
+                 class="rz-px-4 rz-py-3" Style="border-bottom: 1px solid var(--rz-base-200); flex-shrink: 0;">
+        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+            <RadzenIcon Icon="upcoming" Style="color: var(--rz-primary);" />
+            <RadzenText TextStyle="TextStyle.Subtitle2" class="rz-mb-0"><strong>Upcoming</strong></RadzenText>
+        </RadzenStack>
+        @if (!IsLoading)
+        {
+            <RadzenButton Icon="refresh" Variant="Variant.Text" ButtonStyle="ButtonStyle.Secondary" Size="ButtonSize.ExtraSmall" Click="LoadDataAsync" />
+        }
+    </RadzenStack>
+
+    @* Body *@
+    <div style="flex: 1; overflow-y: auto;">
+        @if (IsLoading)
+        {
+            <RadzenStack AlignItems="AlignItems.Center" class="rz-p-4">
+                <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Small" />
+            </RadzenStack>
+        }
+        else if (_occurrences.Count == 0)
+        {
+            <RadzenStack AlignItems="AlignItems.Center" class="rz-p-6" Gap="0.5rem">
+                <RadzenIcon Icon="event_available" Style="font-size: 2.5rem; color: var(--rz-text-disabled-color);" />
+                <RadzenText TextStyle="TextStyle.Body2" class="rz-color-secondary rz-mb-0">No upcoming tasks</RadzenText>
+            </RadzenStack>
+        }
+        else
+        {
+            @foreach (var occ in _occurrences)
+            {
+                <div style="padding: 0.625rem 0.75rem; border-bottom: 1px solid var(--rz-base-100);">
+                    <RadzenStack Orientation="Orientation.Vertical" Gap="0.375rem">
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Start" JustifyContent="JustifyContent.SpaceBetween">
+                            <RadzenStack Orientation="Orientation.Vertical" Gap="0.125rem" Style="flex: 1; min-width: 0;">
+                                <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0" Style="font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                    @occ.TaskTitle
+                                </RadzenText>
+                                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.25rem">
+                                    <RadzenIcon Icon="event" Style="font-size: 0.75rem; color: var(--rz-text-secondary-color);" />
+                                    <RadzenText TextStyle="TextStyle.Caption" class="rz-mb-0 rz-color-secondary">
+                                        @occ.DueDate.ToString("MMM dd")
+                                    </RadzenText>
+                                    <span style="color: var(--rz-text-disabled-color); font-size: 0.5rem;">&bull;</span>
+                                    <div style="width: 8px; height: 8px; border-radius: 50%; background: @GetPriorityColor(occ.TaskPriority); flex-shrink: 0;" />
+                                    <RadzenText TextStyle="TextStyle.Caption" class="rz-mb-0 rz-color-secondary">@occ.TaskPriority</RadzenText>
+                                </RadzenStack>
+                            </RadzenStack>
+                            <StatusBadge Text="@occ.Status.ToString()" Severity="@GetStatusSeverity(occ.Status)" />
+                        </RadzenStack>
+
+                        @* Quick actions *@
+                        @if (occ.Status is OccurrenceStatus.Pending or OccurrenceStatus.Overdue or OccurrenceStatus.InProgress)
+                        {
+                            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem">
+                                @if (occ.Status is OccurrenceStatus.Pending or OccurrenceStatus.Overdue)
+                                {
+                                    <RadzenButton Text="Start" Icon="play_arrow" Variant="Variant.Text" ButtonStyle="ButtonStyle.Info"
+                                                  Size="ButtonSize.ExtraSmall" Click="@(() => StartOccurrenceAsync(occ.Id))" IsBusy="@(_busyId == occ.Id)" />
+                                }
+                                <RadzenButton Text="Complete" Icon="check" Variant="Variant.Text" ButtonStyle="ButtonStyle.Success"
+                                              Size="ButtonSize.ExtraSmall" Click="@(() => CompleteOccurrenceAsync(occ.Id))" IsBusy="@(_busyId == occ.Id)" />
+                                <RadzenButton Text="Skip" Icon="skip_next" Variant="Variant.Text" ButtonStyle="ButtonStyle.Light"
+                                              Size="ButtonSize.ExtraSmall" Click="@(() => SkipOccurrenceAsync(occ.Id))" IsBusy="@(_busyId == occ.Id)" />
+                            </RadzenStack>
+                        }
+                    </RadzenStack>
+                </div>
+            }
+        }
+    </div>
+</RadzenCard>
