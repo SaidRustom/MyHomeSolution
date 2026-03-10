@@ -8,8 +8,15 @@ namespace MyHomeSolution.Infrastructure.Services;
 public sealed class EmailBackgroundService(
     IEmailBackgroundQueue queue,
     IServiceScopeFactory scopeFactory,
-    ILogger<EmailBackgroundService> logger) : BackgroundService
+    ILogger<EmailBackgroundService> logger)
+    : MonitoredBackgroundService<EmailBackgroundService>(scopeFactory, logger),
+      IMonitoredBackgroundService
 {
+    public static Guid ServiceId => BackgroundServiceSeeder.ServiceIds.EmailBackground;
+    public static string ServiceName => "Email Sender";
+    public static string ServiceDescription =>
+        "Processes the background email queue and sends emails via the configured email provider.";
+
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         logger.LogInformation("Email background service started.");
@@ -18,17 +25,22 @@ public sealed class EmailBackgroundService(
         {
             try
             {
-                using var scope = scopeFactory.CreateScope();
-                var emailService = scope.ServiceProvider.GetRequiredService<IEmailService>();
+                await RunMonitoredCycleAsync(async ct =>
+                {
+                    using var scope = ScopeFactory.CreateScope();
+                    var emailService = scope.ServiceProvider.GetRequiredService<IEmailService>();
 
-                await emailService.SendEmailAsync(
-                    message.ToEmail,
-                    message.ToName,
-                    message.Subject,
-                    message.HtmlBody,
-                    stoppingToken);
+                    await emailService.SendEmailAsync(
+                        message.ToEmail,
+                        message.ToName,
+                        message.Subject,
+                        message.HtmlBody,
+                        ct);
+
+                    return $"Sent email to {message.ToEmail}: {message.Subject}";
+                }, stoppingToken);
             }
-            catch (Exception ex)
+            catch (Exception ex) when (ex is not OperationCanceledException)
             {
                 logger.LogError(ex,
                     "Failed to send email to {ToEmail} with subject '{Subject}'",

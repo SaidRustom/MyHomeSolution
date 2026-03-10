@@ -108,6 +108,12 @@ public sealed class UserService(HttpClient httpClient)
             statusCode);
     }
 
+    public Task<ApiResult> DeleteAccountAsync(
+        CancellationToken cancellationToken = default)
+    {
+        return DeleteAsync($"{BasePath}/me", cancellationToken);
+    }
+
     public async Task<string?> GetAvatarDataUrlAsync(
         CancellationToken cancellationToken = default)
     {

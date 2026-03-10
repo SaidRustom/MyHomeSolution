@@ -19,5 +19,7 @@ public sealed class RecurrenceAssigneeConfiguration : IEntityTypeConfiguration<R
 
         builder.HasIndex(a => new { a.RecurrencePatternId, a.UserId })
             .IsUnique();
+
+        builder.HasQueryFilter(a => !a.RecurrencePattern.HouseholdTask.IsDeleted);
     }
 }

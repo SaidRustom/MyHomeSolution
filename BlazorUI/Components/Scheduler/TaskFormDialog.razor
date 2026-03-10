@@ -33,28 +33,43 @@
             </RadzenStack>
         </RadzenStack>
 
-        @* Due Date & Duration row *@
-        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.75rem" Wrap="FlexWrap.Wrap">
-            <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem" Style="flex: 1; min-width: 200px;">
-                <RadzenLabel Text="Due Date" Component="DueDate" />
-                <RadzenDatePicker TValue="DateOnly?" Name="DueDate" @bind-Value="@Model.DueDate" DateFormat="MMM dd, yyyy" Style="width: 100%;" />
+        @* Due Date & Duration row — hidden when recurring (occurrences have their own dates) *@
+        @if (!Model.IsRecurring)
+        {
+            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.75rem" Wrap="FlexWrap.Wrap">
+                <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem" Style="flex: 1; min-width: 200px;">
+                    <RadzenLabel Text="Due Date" Component="DueDate" />
+                    <RadzenDatePicker TValue="DateOnly?" Name="DueDate" @bind-Value="@Model.DueDate" DateFormat="MMM dd, yyyy" Style="width: 100%;" />
+                </RadzenStack>
+                <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem" Style="width: 160px;">
+                    <RadzenLabel Text="Duration (min)" Component="Duration" />
+                    <RadzenNumeric TValue="int?" Name="Duration" @bind-Value="@Model.EstimatedDurationMinutes" Placeholder="60" Style="width: 100%;" Min="1" />
+                </RadzenStack>
             </RadzenStack>
-            <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem" Style="width: 160px;">
-                <RadzenLabel Text="Duration (min)" Component="Duration" />
-                <RadzenNumeric TValue="int?" Name="Duration" @bind-Value="@Model.EstimatedDurationMinutes" Placeholder="60" Style="width: 100%;" Min="1" />
+        }
+        else
+        {
+            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.75rem" Wrap="FlexWrap.Wrap">
+                <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem" Style="width: 160px;">
+                    <RadzenLabel Text="Duration (min)" Component="Duration" />
+                    <RadzenNumeric TValue="int?" Name="Duration" @bind-Value="@Model.EstimatedDurationMinutes" Placeholder="60" Style="width: 100%;" Min="1" />
+                </RadzenStack>
             </RadzenStack>
-        </RadzenStack>
+        }
 
-        @* Assignee *@
-        <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem">
-            <RadzenLabel Text="Assign to" />
-            <FriendPicker @bind-SelectedUserId="@Model.AssignedToUserId" Placeholder="Select assignee…" />
-        </RadzenStack>
+        @* Assignee — hidden when recurring (rotation assignees are used instead) *@
+        @if (!Model.IsRecurring)
+        {
+            <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem">
+                <RadzenLabel Text="Assign to" />
+                <FriendPicker @bind-SelectedUserId="@Model.AssignedToUserId" Placeholder="Select assignee…" />
+            </RadzenStack>
+        }
 
         @* Recurrence toggle *@
         <RadzenStack Orientation="Orientation.Vertical" Gap="0.75rem">
             <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
-                <RadzenSwitch @bind-Value="@Model.IsRecurring" />
+                <RadzenSwitch Value="@Model.IsRecurring" ValueChanged="@((bool v) => OnRecurrenceToggled(v))" />
                 <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0">Recurring task</RadzenText>
             </RadzenStack>
 
@@ -84,7 +99,7 @@
                         </RadzenStack>
                         <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem">
                             <RadzenLabel Text="Rotation Assignees" />
-                            <FriendPicker Multiple="true" @bind-SelectedUserIds="@Model.AssigneeUserIds" Placeholder="Select rotation members…" />
+                            <FriendPicker Multiple="true" @bind-SelectedUserIds="@Model.AssigneeUserIds" Placeholder="Select rotation members…" CurrentUser="@CurrentUserDto" />
                         </RadzenStack>
                     </RadzenStack>
                 </RadzenFieldset>
@@ -94,7 +109,7 @@
         @* Bill auto-creation toggle *@
         <RadzenStack Orientation="Orientation.Vertical" Gap="0.75rem">
             <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
-                <RadzenSwitch @bind-Value="@Model.AutoCreateBill" />
+                <RadzenSwitch Value="@Model.AutoCreateBill" ValueChanged="@((bool v) => OnAutoBillToggled(v))" />
                 <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0">Auto-create bill on completion</RadzenText>
             </RadzenStack>
 
@@ -120,6 +135,39 @@
                                 <RadzenDropDown TValue="BillCategory?" Name="BillCategory" @bind-Value="@Model.DefaultBillCategory" Data="@BillCategories" Style="width: 100%;" AllowClear="true" />
                             </RadzenStack>
                         </RadzenStack>
+                        <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem">
+                            <RadzenLabel Text="Default Paid By" />
+                            <FriendPicker @bind-SelectedUserId="@Model.DefaultBillPaidByUserId" Placeholder="Select who pays (leave blank for unpaid)…" CurrentUser="@CurrentUserDto" />
+                            <RadzenText TextStyle="TextStyle.Caption" class="rz-mb-0 rz-color-secondary">Must be a user the task is shared with. If left blank, bills will be created unpaid.</RadzenText>
+                        </RadzenStack>
+
+                        @* Bill split editor — shown when task is shared with other users *@
+                        @if (ShowBillSplitSection)
+                        {
+                            <RadzenFieldset Text="Bill Splits" AllowCollapse="true">
+                                <BillSplitEditor Splits="@Model.BillSplits"
+                                                 BillAmount="@(Model.DefaultBillAmount ?? 0m)"
+                                                 CurrentUserId="@CurrentUserId" />
+                            </RadzenFieldset>
+
+                            @if (Model.BillSplits.Count > 0)
+                            {
+                                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                                    <RadzenIcon Icon="pie_chart" Style="font-size: 1rem;" />
+                                    <RadzenText TextStyle="TextStyle.Caption" class="rz-mb-0">
+                                        Remaining: <strong>@($"{RemainingPercentage:N2}%")</strong>
+                                    </RadzenText>
+                                    @if (RemainingPercentage < 0)
+                                    {
+                                        <RadzenBadge BadgeStyle="BadgeStyle.Danger" IsPill="true" Text="Over-allocated!" Variant="Variant.Flat" />
+                                    }
+                                    else if (RemainingPercentage == 0)
+                                    {
+                                        <RadzenBadge BadgeStyle="BadgeStyle.Success" IsPill="true" Text="Fully allocated" Variant="Variant.Flat" />
+                                    }
+                                </RadzenStack>
+                            }
+                        }
                     </RadzenStack>
                 </RadzenFieldset>
             }

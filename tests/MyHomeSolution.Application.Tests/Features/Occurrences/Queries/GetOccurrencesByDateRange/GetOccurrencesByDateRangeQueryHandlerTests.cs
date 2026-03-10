@@ -12,10 +12,15 @@ public sealed class GetOccurrencesByDateRangeQueryHandlerTests : IDisposable
 {
     private readonly TestDbContextFactory _factory = new();
     private readonly ICurrentUserService _currentUserService = Substitute.For<ICurrentUserService>();
+    private readonly IDateTimeProvider _dateTimeProvider = Substitute.For<IDateTimeProvider>();
+    private readonly IIdentityService _identityService = Substitute.For<IIdentityService>();
 
     public GetOccurrencesByDateRangeQueryHandlerTests()
     {
         _currentUserService.UserId.Returns("user-1");
+        _dateTimeProvider.Today.Returns(new DateOnly(2025, 6, 10));
+        _identityService.GetUserFullNamesByIdsAsync(Arg.Any<IEnumerable<string>>(), Arg.Any<CancellationToken>())
+            .Returns(new Dictionary<string, string>());
     }
 
     [Fact]
@@ -24,7 +29,7 @@ public sealed class GetOccurrencesByDateRangeQueryHandlerTests : IDisposable
         await SeedOccurrences();
 
         using var context = _factory.CreateContext();
-        var handler = new GetOccurrencesByDateRangeQueryHandler(context, _currentUserService);
+        var handler = new GetOccurrencesByDateRangeQueryHandler(context, _currentUserService, _dateTimeProvider, _identityService);
         var query = new GetOccurrencesByDateRangeQuery
         {
             StartDate = new DateOnly(2025, 6, 1),
@@ -47,7 +52,7 @@ public sealed class GetOccurrencesByDateRangeQueryHandlerTests : IDisposable
         await SeedOccurrences();
 
         using var context = _factory.CreateContext();
-        var handler = new GetOccurrencesByDateRangeQueryHandler(context, _currentUserService);
+        var handler = new GetOccurrencesByDateRangeQueryHandler(context, _currentUserService, _dateTimeProvider, _identityService);
         var query = new GetOccurrencesByDateRangeQuery
         {
             StartDate = new DateOnly(2025, 7, 1),
@@ -66,7 +71,7 @@ public sealed class GetOccurrencesByDateRangeQueryHandlerTests : IDisposable
         await SeedOccurrences();
 
         using var context = _factory.CreateContext();
-        var handler = new GetOccurrencesByDateRangeQueryHandler(context, _currentUserService);
+        var handler = new GetOccurrencesByDateRangeQueryHandler(context, _currentUserService, _dateTimeProvider, _identityService);
         var query = new GetOccurrencesByDateRangeQuery
         {
             StartDate = new DateOnly(2025, 1, 1),
@@ -86,7 +91,7 @@ public sealed class GetOccurrencesByDateRangeQueryHandlerTests : IDisposable
         await SeedOccurrences();
 
         using var context = _factory.CreateContext();
-        var handler = new GetOccurrencesByDateRangeQueryHandler(context, _currentUserService);
+        var handler = new GetOccurrencesByDateRangeQueryHandler(context, _currentUserService, _dateTimeProvider, _identityService);
         var query = new GetOccurrencesByDateRangeQuery
         {
             StartDate = new DateOnly(2025, 1, 1),
@@ -105,7 +110,7 @@ public sealed class GetOccurrencesByDateRangeQueryHandlerTests : IDisposable
         await SeedOccurrences();
 
         using var context = _factory.CreateContext();
-        var handler = new GetOccurrencesByDateRangeQueryHandler(context, _currentUserService);
+        var handler = new GetOccurrencesByDateRangeQueryHandler(context, _currentUserService, _dateTimeProvider, _identityService);
         var query = new GetOccurrencesByDateRangeQuery
         {
             StartDate = new DateOnly(2025, 6, 1),
@@ -127,7 +132,7 @@ public sealed class GetOccurrencesByDateRangeQueryHandlerTests : IDisposable
         await SeedOccurrences();
 
         using var context = _factory.CreateContext();
-        var handler = new GetOccurrencesByDateRangeQueryHandler(context, _currentUserService);
+        var handler = new GetOccurrencesByDateRangeQueryHandler(context, _currentUserService, _dateTimeProvider, _identityService);
         var query = new GetOccurrencesByDateRangeQuery
         {
             StartDate = new DateOnly(2025, 1, 1),

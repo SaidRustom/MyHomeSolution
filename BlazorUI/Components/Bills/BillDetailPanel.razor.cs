@@ -64,6 +64,16 @@ public partial class BillDetailPanel
     async Task MarkSplitAsPaidAsync(BillSplitDto split) =>
         await OnMarkSplitAsPaid.InvokeAsync(split);
 
+    string GetTaskLink()
+    {
+        var url = $"/tasks/{Bill.RelatedTaskId}";
+        if (Bill.RelatedOccurrenceId.HasValue)
+        {
+            url += $"?occurrenceId={Bill.RelatedOccurrenceId}";
+        }
+        return url;
+    }
+
     async Task ViewReceiptAsync()
     {
         if (ReceiptDataUrl is not null)

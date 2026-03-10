@@ -133,4 +133,31 @@ public static class EmailTemplates
 
         return WrapInLayout("Password Changed - MyHome", body);
     }
+
+    public static string AccountDeleted(string userName)
+    {
+        var body = $$"""
+        <h2 style="margin:0 0 16px;color:#1a1a2e;font-size:22px;font-weight:600;">We're Sorry to See You Go</h2>
+        <p style="margin:0 0 12px;color:#495057;font-size:15px;line-height:1.6;">
+          Hi {{userName}},
+        </p>
+        <p style="margin:0 0 24px;color:#495057;font-size:15px;line-height:1.6;">
+          Your MyHome account and all associated data have been permanently deleted as requested. This action cannot be undone.
+        </p>
+        <p style="margin:0 0 24px;color:#495057;font-size:15px;line-height:1.6;">
+          We truly appreciate the time you spent with us. If you ever decide to come back, we'd love to welcome you again — just create a new account anytime.
+        </p>
+        <div style="background-color:#e8f4fd;border:1px solid #1a73e8;border-radius:6px;padding:16px;margin-bottom:24px;">
+          <p style="margin:0;color:#0d47a1;font-size:14px;line-height:1.5;">
+            <strong>What was deleted:</strong><br />
+            Your profile, tasks, bills, shopping lists, notifications, connections, and all shared data have been permanently removed from our systems.
+          </p>
+        </div>
+        <p style="margin:0;color:#6c757d;font-size:13px;line-height:1.5;">
+          If you did not request this deletion or believe this was done in error, please contact us immediately.
+        </p>
+        """;
+
+        return WrapInLayout("Account Deleted - MyHome", body);
+    }
 }

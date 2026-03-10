@@ -12,11 +12,15 @@ public sealed class TaskDeletedEventHandler(
 {
     public Task Handle(TaskDeletedEvent notification, CancellationToken cancellationToken)
     {
+        var detail = notification.DeletedBillCount > 0
+            ? $"Task '{notification.Title}' deleted along with {notification.DeletedOccurrenceCount} occurrence(s) and {notification.DeletedBillCount} unpaid bill(s)."
+            : null;
+
         return notificationService.SendTaskNotificationAsync(new TaskNotification
         {
             EventType = nameof(TaskDeletedEvent),
             TaskId = notification.TaskId,
-            Title = null,
+            Title = detail ?? notification.Title,
             OccurredAt = dateTimeProvider.UtcNow
         }, cancellationToken);
     }

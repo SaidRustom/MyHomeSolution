@@ -6,4 +6,5 @@ public sealed record SkipOccurrenceCommand : IRequest
 {
     public Guid OccurrenceId { get; init; }
     public string? Notes { get; init; }
+    public bool ZeroLinkedBillBalance { get; init; }
 }

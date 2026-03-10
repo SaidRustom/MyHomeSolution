@@ -1,39 +1,79 @@
 <RadzenCard Variant="Variant.Outlined" class="rz-p-3">
-    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.75rem" Wrap="FlexWrap.Wrap">
-        <RadzenIcon Icon="filter_list" Style="color: var(--rz-primary);" />
+    <RadzenStack Orientation="Orientation.Vertical" Gap="0.75rem">
+        @* Primary filter row — View mode + Assignee *@
+        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.75rem" Wrap="FlexWrap.Wrap">
+            <RadzenIcon Icon="filter_list" Style="color: var(--rz-primary);" />
 
-        <RadzenDropDown TValue="TaskCategory?"
-                        Value="@Category"
-                        ValueChanged="OnCategoryChanged"
-                        Data="@Categories"
-                        Placeholder="Category"
-                        AllowClear="true"
-                        Style="width: 160px;" />
+            <RadzenDropDown TValue="SchedulerViewMode"
+                            Value="@ViewMode"
+                            ValueChanged="OnViewModeChanged"
+                            Data="@ViewModes"
+                            TextProperty=""
+                            Style="width: 180px;">
+                <Template Context="mode">
+                    @GetViewModeLabel(mode)
+                </Template>
+                <ValueTemplate Context="mode">
+                    @GetViewModeLabel(mode)
+                </ValueTemplate>
+            </RadzenDropDown>
 
-        <RadzenDropDown TValue="TaskPriority?"
-                        Value="@Priority"
-                        ValueChanged="OnPriorityChanged"
-                        Data="@Priorities"
-                        Placeholder="Priority"
-                        AllowClear="true"
-                        Style="width: 140px;" />
+            <FriendPicker SelectedUserId="@AssignedToUserId"
+                          SelectedUserIdChanged="OnAssigneeChanged"
+                          Placeholder="Assignee"
+                          Style="width: 200px;" />
 
-        <RadzenDropDown TValue="OccurrenceStatus?"
-                        Value="@Status"
-                        ValueChanged="OnStatusChanged"
-                        Data="@Statuses"
-                        Placeholder="Status"
-                        AllowClear="true"
-                        Style="width: 150px;" />
+            <RadzenDropDown TValue="OccurrenceStatus?"
+                            Value="@Status"
+                            ValueChanged="OnStatusChanged"
+                            Data="@Statuses"
+                            Placeholder="Status"
+                            AllowClear="true"
+                            Style="width: 150px;" />
+        </RadzenStack>
 
-        <FriendPicker SelectedUserId="@AssignedToUserId"
-                      SelectedUserIdChanged="OnAssigneeChanged"
-                      Placeholder="Assignee"
-                      Style="width: 200px;" />
+        @* Secondary filter row — Category, Priority, Type, Bills *@
+        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.75rem" Wrap="FlexWrap.Wrap">
+            <RadzenDropDown TValue="TaskCategory?"
+                            Value="@Category"
+                            ValueChanged="OnCategoryChanged"
+                            Data="@Categories"
+                            Placeholder="Category"
+                            AllowClear="true"
+                            Style="width: 160px;" />
 
-        @if (HasActiveFilters)
-        {
-            <RadzenButton Text="Reset" Icon="clear" Variant="Variant.Text" ButtonStyle="ButtonStyle.Secondary" Size="ButtonSize.Small" Click="ResetAsync" />
-        }
+            <RadzenDropDown TValue="TaskPriority?"
+                            Value="@Priority"
+                            ValueChanged="OnPriorityChanged"
+                            Data="@Priorities"
+                            Placeholder="Priority"
+                            AllowClear="true"
+                            Style="width: 140px;" />
+
+            <RadzenDropDown TValue="bool?"
+                            Value="@IsRecurring"
+                            ValueChanged="OnIsRecurringChanged"
+                            Data="@TaskTypeOptions"
+                            ValueProperty="Key"
+                            TextProperty="Value"
+                            Placeholder="Task Type"
+                            AllowClear="true"
+                            Style="width: 150px;" />
+
+            <RadzenDropDown TValue="bool?"
+                            Value="@HasBill"
+                            ValueChanged="OnHasBillChanged"
+                            Data="@BillOptions"
+                            ValueProperty="Key"
+                            TextProperty="Value"
+                            Placeholder="Bills"
+                            AllowClear="true"
+                            Style="width: 150px;" />
+
+            @if (HasActiveFilters)
+            {
+                <RadzenButton Text="Reset" Icon="clear" Variant="Variant.Text" ButtonStyle="ButtonStyle.Secondary" Size="ButtonSize.Small" Click="ResetAsync" />
+            }
+        </RadzenStack>
     </RadzenStack>
 </RadzenCard>

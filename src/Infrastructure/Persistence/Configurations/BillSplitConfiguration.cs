@@ -22,5 +22,7 @@ public sealed class BillSplitConfiguration : IEntityTypeConfiguration<BillSplit>
 
         builder.HasIndex(s => s.UserId);
         builder.HasIndex(s => new { s.BillId, s.UserId }).IsUnique();
+
+        builder.HasQueryFilter(s => !s.Bill.IsDeleted);
     }
 }

@@ -10,4 +10,12 @@ public sealed record GetOccurrencesByDateRangeQuery : IRequest<IReadOnlyCollecti
     public DateOnly EndDate { get; init; }
     public string? AssignedToUserId { get; init; }
     public OccurrenceStatus? Status { get; init; }
+    public bool? AssignedByMe { get; init; }
+    public bool? MyTasks { get; init; }
+    public bool? Private { get; init; }
+    public bool? Shared { get; init; }
+    public bool? IsRecurring { get; init; }
+    public bool? HasBill { get; init; }
+    public TaskCategory? Category { get; init; }
+    public TaskPriority? Priority { get; init; }
 }

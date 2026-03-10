@@ -12,4 +12,6 @@ public sealed record UpdateBillRequest
     public BillCategory Category { get; init; }
     public DateTimeOffset BillDate { get; init; }
     public string? Notes { get; init; }
+    public string? PaidByUserId { get; init; }
+    public List<BillSplitRequest>? Splits { get; init; }
 }

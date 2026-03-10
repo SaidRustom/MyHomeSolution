@@ -20,6 +20,8 @@ public sealed class BillService(HttpClient httpClient)
         string? searchTerm = null,
         DateTimeOffset? fromDate = null,
         DateTimeOffset? toDate = null,
+        string? sortBy = null,
+        string? sortDirection = null,
         CancellationToken cancellationToken = default)
     {
         var query = BuildQueryString(
@@ -29,7 +31,9 @@ public sealed class BillService(HttpClient httpClient)
             ("paidByUserId", paidByUserId),
             ("searchTerm", searchTerm),
             ("fromDate", fromDate?.ToString("O")),
-            ("toDate", toDate?.ToString("O")));
+            ("toDate", toDate?.ToString("O")),
+            ("sortBy", sortBy),
+            ("sortDirection", sortDirection));
 
         return GetAsync<PaginatedList<BillBriefDto>>($"{BasePath}{query}", cancellationToken);
     }

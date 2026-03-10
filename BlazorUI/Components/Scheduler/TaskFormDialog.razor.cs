@@ -1,8 +1,12 @@
+using System.Security.Claims;
+using BlazorUI.Components.Bills;
 using BlazorUI.Models.Common;
 using BlazorUI.Models.Enums;
 using BlazorUI.Models.Tasks;
+using BlazorUI.Models.Users;
 using BlazorUI.Services.Contracts;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Authorization;
 using Radzen;
 
 namespace BlazorUI.Components.Scheduler;
@@ -18,6 +22,9 @@ public partial class TaskFormDialog
     [Inject]
     NotificationService Notifications { get; set; } = default!;
 
+    [CascadingParameter]
+    private Task<AuthenticationState> AuthState { get; set; } = default!;
+
     [Parameter]
     public TaskFormModel Model { get; set; } = new();
 
@@ -28,12 +35,64 @@ public partial class TaskFormDialog
 
     string? ErrorMessage { get; set; }
 
+    string? CurrentUserId { get; set; }
+
+    UserDto? CurrentUserDto { get; set; }
+
     string SubmitText => IsEdit ? "Save Changes" : "Create Task";
 
     IEnumerable<TaskCategory> Categories => Enum.GetValues<TaskCategory>();
     IEnumerable<TaskPriority> Priorities => Enum.GetValues<TaskPriority>();
     IEnumerable<RecurrenceType> RecurrenceTypes => Enum.GetValues<RecurrenceType>();
     IEnumerable<BillCategory> BillCategories => Enum.GetValues<BillCategory>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var state = await AuthState;
+        CurrentUserId = state.User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+            ?? state.User.FindFirst("sub")?.Value;
+
+        if (!string.IsNullOrEmpty(CurrentUserId))
+        {
+            var email = state.User.FindFirst(ClaimTypes.Email)?.Value
+                ?? state.User.FindFirst("email")?.Value ?? string.Empty;
+            var name = state.User.FindFirst(ClaimTypes.Name)?.Value
+                ?? state.User.FindFirst("name")?.Value ?? email;
+            var parts = name.Split(' ', 2);
+
+            CurrentUserDto = new UserDto
+            {
+                Id = CurrentUserId,
+                Email = email,
+                FirstName = parts.Length > 0 ? parts[0] : name,
+                LastName = parts.Length > 1 ? parts[1] : string.Empty,
+                FullName = $"{name} (You)"
+            };
+        }
+    }
+
+    void OnRecurrenceToggled(bool value)
+    {
+        Model.IsRecurring = value;
+
+        if (value)
+        {
+            // Clear one-time fields since recurring tasks use recurrence dates and rotation assignees
+            Model.DueDate = null;
+            Model.AssignedToUserId = null;
+
+            // Auto-include current user in rotation assignees when enabling recurrence
+            if (!string.IsNullOrEmpty(CurrentUserId))
+            {
+                var existing = Model.AssigneeUserIds?.ToList() ?? [];
+                if (!existing.Contains(CurrentUserId))
+                {
+                    existing.Insert(0, CurrentUserId);
+                    Model.AssigneeUserIds = existing;
+                }
+            }
+        }
+    }
 
     async Task OnSubmitAsync()
     {
@@ -96,6 +155,39 @@ public partial class TaskFormDialog
     }
 
     void Cancel() => DialogService.Close(null);
+
+    void OnAutoBillToggled(bool value)
+    {
+        Model.AutoCreateBill = value;
+
+        if (value && string.IsNullOrEmpty(Model.DefaultBillPaidByUserId)
+            && !string.IsNullOrEmpty(CurrentUserId))
+        {
+            // Auto-select current user when the task isn't shared with others
+            var hasOtherAssignees = Model.IsRecurring
+                && Model.AssigneeUserIds?.Any(id => id != CurrentUserId) == true;
+
+            if (!hasOtherAssignees)
+            {
+                Model.DefaultBillPaidByUserId = CurrentUserId;
+            }
+        }
+    }
+
+    // Bill split helpers
+    bool ShowBillSplitSection => Model.AutoCreateBill
+        && Model.IsRecurring
+        && Model.AssigneeUserIds?.Any() == true
+        && (Model.AssigneeUserIds.Count() > 1 || Model.AssigneeUserIds.First() != CurrentUserId);
+
+    decimal RemainingPercentage
+    {
+        get
+        {
+            var allocated = Model.BillSplits.Sum(s => s.Percentage ?? 0m);
+            return 100m - allocated;
+        }
+    }
 }
 
 public sealed class TaskFormModel
@@ -120,6 +212,8 @@ public sealed class TaskFormModel
     public string? DefaultBillCurrency { get; set; } = "$";
     public BillCategory? DefaultBillCategory { get; set; }
     public string? DefaultBillTitle { get; set; }
+    public string? DefaultBillPaidByUserId { get; set; }
+    public List<BillSplitFormModel> BillSplits { get; set; } = [];
 
     public CreateTaskRequest ToCreateRequest() => new()
     {
@@ -129,8 +223,8 @@ public sealed class TaskFormModel
         Category = Category,
         EstimatedDurationMinutes = EstimatedDurationMinutes,
         IsRecurring = IsRecurring,
-        DueDate = DueDate,
-        AssignedToUserId = AssignedToUserId,
+        DueDate = IsRecurring ? null : DueDate,
+        AssignedToUserId = IsRecurring ? null : AssignedToUserId,
         RecurrenceType = IsRecurring ? RecurrenceType : null,
         Interval = IsRecurring ? Interval : null,
         RecurrenceStartDate = IsRecurring ? RecurrenceStartDate : null,
@@ -140,7 +234,8 @@ public sealed class TaskFormModel
         DefaultBillAmount = AutoCreateBill ? DefaultBillAmount : null,
         DefaultBillCurrency = AutoCreateBill ? DefaultBillCurrency : null,
         DefaultBillCategory = AutoCreateBill ? DefaultBillCategory : null,
-        DefaultBillTitle = AutoCreateBill ? DefaultBillTitle : null
+        DefaultBillTitle = AutoCreateBill ? DefaultBillTitle : null,
+        DefaultBillPaidByUserId = AutoCreateBill ? DefaultBillPaidByUserId : null
     };
 
     public UpdateTaskRequest ToUpdateRequest() => new()
@@ -153,8 +248,8 @@ public sealed class TaskFormModel
         EstimatedDurationMinutes = EstimatedDurationMinutes,
         IsRecurring = IsRecurring,
         IsActive = IsActive,
-        DueDate = DueDate,
-        AssignedToUserId = AssignedToUserId,
+        DueDate = IsRecurring ? null : DueDate,
+        AssignedToUserId = IsRecurring ? null : AssignedToUserId,
         RecurrenceType = IsRecurring ? RecurrenceType : null,
         Interval = IsRecurring ? Interval : null,
         RecurrenceStartDate = IsRecurring ? RecurrenceStartDate : null,
@@ -164,7 +259,8 @@ public sealed class TaskFormModel
         DefaultBillAmount = AutoCreateBill ? DefaultBillAmount : null,
         DefaultBillCurrency = AutoCreateBill ? DefaultBillCurrency : null,
         DefaultBillCategory = AutoCreateBill ? DefaultBillCategory : null,
-        DefaultBillTitle = AutoCreateBill ? DefaultBillTitle : null
+        DefaultBillTitle = AutoCreateBill ? DefaultBillTitle : null,
+        DefaultBillPaidByUserId = AutoCreateBill ? DefaultBillPaidByUserId : null
     };
 
     public static TaskFormModel FromDetail(TaskDetailDto detail) => new()
@@ -188,6 +284,7 @@ public sealed class TaskFormModel
         DefaultBillAmount = detail.DefaultBillAmount,
         DefaultBillCurrency = detail.DefaultBillCurrency,
         DefaultBillCategory = detail.DefaultBillCategory,
-        DefaultBillTitle = detail.DefaultBillTitle
+        DefaultBillTitle = detail.DefaultBillTitle,
+        DefaultBillPaidByUserId = detail.DefaultBillPaidByUserId
     };
 }

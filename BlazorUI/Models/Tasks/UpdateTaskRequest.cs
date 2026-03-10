@@ -24,4 +24,5 @@ public sealed record UpdateTaskRequest
     public string? DefaultBillCurrency { get; init; }
     public BillCategory? DefaultBillCategory { get; init; }
     public string? DefaultBillTitle { get; init; }
+    public string? DefaultBillPaidByUserId { get; init; }
 }

@@ -13,5 +13,11 @@ public sealed record CalendarOccurrenceDto
     public DateOnly DueDate { get; init; }
     public OccurrenceStatus Status { get; init; }
     public string? AssignedToUserId { get; init; }
+    public string? AssignedToUserFullName { get; init; }
+    public string? CompletedByUserId { get; init; }
+    public string? CompletedByUserFullName { get; init; }
     public Guid? BillId { get; init; }
+    public bool IsRecurring { get; init; }
+    public bool HasBill { get; init; }
+    public bool IsPrivate { get; init; }
 }

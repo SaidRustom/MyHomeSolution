@@ -2,5 +2,5 @@ namespace MyHomeSolution.Domain.Common;
 
 public abstract class BaseEntity : IEntity
 {
-    public Guid Id { get; protected set; } = Guid.CreateVersion7();
+    public Guid Id { get; protected set; } = Guid.NewGuid();
 }

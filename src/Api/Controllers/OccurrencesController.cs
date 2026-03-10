@@ -6,6 +6,7 @@ using MyHomeSolution.Application.Features.Occurrences.Commands.CompleteOccurrenc
 using MyHomeSolution.Application.Features.Occurrences.Commands.RescheduleOccurrence;
 using MyHomeSolution.Application.Features.Occurrences.Commands.SkipOccurrence;
 using MyHomeSolution.Application.Features.Occurrences.Commands.StartOccurrence;
+using MyHomeSolution.Application.Features.Occurrences.Commands.UpdateOccurrenceNotes;
 using MyHomeSolution.Application.Features.Occurrences.Queries.GetOccurrencesByDateRange;
 using MyHomeSolution.Application.Features.Occurrences.Queries.GetOccurrencesByTask;
 using MyHomeSolution.Application.Features.Occurrences.Queries.GetUpcomingOccurrences;
@@ -47,6 +48,14 @@ public sealed class OccurrencesController(ISender sender) : ControllerBase
         [FromQuery] DateOnly endDate,
         [FromQuery] string? assignedToUserId = null,
         [FromQuery] OccurrenceStatus? status = null,
+        [FromQuery] bool? assignedByMe = null,
+        [FromQuery] bool? myTasks = null,
+        [FromQuery] bool? @private = null,
+        [FromQuery] bool? shared = null,
+        [FromQuery] bool? isRecurring = null,
+        [FromQuery] bool? hasBill = null,
+        [FromQuery] TaskCategory? category = null,
+        [FromQuery] TaskPriority? priority = null,
         CancellationToken cancellationToken = default)
     {
         var query = new GetOccurrencesByDateRangeQuery
@@ -54,7 +63,15 @@ public sealed class OccurrencesController(ISender sender) : ControllerBase
             StartDate = startDate,
             EndDate = endDate,
             AssignedToUserId = assignedToUserId,
-            Status = status
+            Status = status,
+            AssignedByMe = assignedByMe,
+            MyTasks = myTasks,
+            Private = @private,
+            Shared = shared,
+            IsRecurring = isRecurring,
+            HasBill = hasBill,
+            Category = category,
+            Priority = priority
         };
 
         var result = await sender.Send(query, cancellationToken);
@@ -66,12 +83,16 @@ public sealed class OccurrencesController(ISender sender) : ControllerBase
     public async Task<IActionResult> GetUpcoming(
         [FromQuery] int pageNumber = 1,
         [FromQuery] int pageSize = 20,
+        [FromQuery] DateOnly? startDate = null,
+        [FromQuery] DateOnly? endDate = null,
         CancellationToken cancellationToken = default)
     {
         var query = new GetUpcomingOccurrencesQuery
         {
             PageNumber = pageNumber,
-            PageSize = pageSize
+            PageSize = pageSize,
+            StartDate = startDate,
+            EndDate = endDate
         };
 
         var result = await sender.Send(query, cancellationToken);
@@ -122,7 +143,8 @@ public sealed class OccurrencesController(ISender sender) : ControllerBase
         var command = new SkipOccurrenceCommand
         {
             OccurrenceId = id,
-            Notes = request?.Notes
+            Notes = request?.Notes,
+            ZeroLinkedBillBalance = request?.ZeroLinkedBillBalance ?? false
         };
 
         await sender.Send(command, cancellationToken);
@@ -147,9 +169,27 @@ public sealed class OccurrencesController(ISender sender) : ControllerBase
         await sender.Send(command, cancellationToken);
         return NoContent();
     }
+
+    [HttpPut("{id:guid}/notes")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> UpdateNotes(
+        Guid id, [FromBody] UpdateOccurrenceNotesRequest request,
+        CancellationToken cancellationToken)
+    {
+        var command = new UpdateOccurrenceNotesCommand
+        {
+            OccurrenceId = id,
+            Notes = request.Notes
+        };
+
+        await sender.Send(command, cancellationToken);
+        return NoContent();
+    }
 }
 
 public sealed record StartOccurrenceRequest(string? Notes);
 public sealed record CompleteOccurrenceRequest(string? Notes);
-public sealed record SkipOccurrenceRequest(string? Notes);
+public sealed record SkipOccurrenceRequest(string? Notes, bool ZeroLinkedBillBalance = false);
+public sealed record UpdateOccurrenceNotesRequest(string? Notes);
 public sealed record RescheduleOccurrenceRequest(DateOnly NewDueDate, string? Notes);

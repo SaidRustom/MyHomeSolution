@@ -36,6 +36,10 @@
                     <RadzenCheckBox TValue="bool" @bind-Value="@_activeOnly" />
                     <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0">Active only</RadzenText>
                 </RadzenStack>
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.25rem">
+                    <RadzenCheckBox TValue="bool" @bind-Value="@_assignedByMe" />
+                    <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0">Assigned by me</RadzenText>
+                </RadzenStack>
                 <RadzenButton Text="Search" Icon="search" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small" Click="LoadTasksAsync" />
             </RadzenStack>
         </RadzenCard>

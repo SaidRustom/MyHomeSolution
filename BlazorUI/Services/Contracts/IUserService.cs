@@ -47,4 +47,7 @@ public interface IUserService
 
     Task<string?> GetAvatarDataUrlAsync(
         CancellationToken cancellationToken = default);
+
+    Task<ApiResult> DeleteAccountAsync(
+        CancellationToken cancellationToken = default);
 }

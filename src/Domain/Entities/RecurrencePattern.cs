@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using MyHomeSolution.Domain.Common;
 using MyHomeSolution.Domain.Enums;
 
@@ -5,6 +6,9 @@ namespace MyHomeSolution.Domain.Entities;
 
 public sealed class RecurrencePattern : BaseEntity
 {
+    [Timestamp]
+    public byte[] RowVersion { get; set; } = default!;
+
     public Guid HouseholdTaskId { get; set; }
     public RecurrenceType Type { get; set; }
     public int Interval { get; set; } = 1;
@@ -43,5 +47,30 @@ public sealed class RecurrencePattern : BaseEntity
             return;
 
         LastAssigneeIndex = (LastAssigneeIndex + 1) % Assignees.Count;
+    }
+
+    /// <summary>
+    /// Enumerates the due dates this pattern produces, starting from
+    /// <paramref name="from"/> (inclusive) up to an optional <paramref name="until"/>
+    /// (inclusive) with a hard cap of <paramref name="maxCount"/>.
+    /// </summary>
+    public IReadOnlyList<DateOnly> EnumerateDueDates(DateOnly from, DateOnly? until, int maxCount)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(maxCount);
+
+        var effectiveEnd = until ?? EndDate;
+        var dates = new List<DateOnly>(Math.Min(maxCount, 64));
+        var current = from < StartDate ? StartDate : from;
+
+        while (dates.Count < maxCount)
+        {
+            if (effectiveEnd.HasValue && current > effectiveEnd.Value)
+                break;
+
+            dates.Add(current);
+            current = GetNextOccurrenceDate(current);
+        }
+
+        return dates;
     }
 }

@@ -36,6 +36,49 @@
             </RadzenStack>
         </RadzenCard>
 
+        @* Analysis filters *@
+        @if (Summary is not null)
+        {
+            <RadzenCard Variant="Variant.Outlined" class="rz-p-3">
+                <RadzenStack Orientation="Orientation.Vertical" Gap="0.75rem">
+                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                        <RadzenIcon Icon="filter_list" Style="color: var(--rz-info);" />
+                        <RadzenText TextStyle="TextStyle.Subtitle2" class="rz-mb-0"><strong>Analysis Filters</strong></RadzenText>
+                        @if (HasAnalysisFilters)
+                        {
+                            <RadzenButton Text="Clear Filters" Icon="clear" Variant="Variant.Text" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.ExtraSmall" Click="ClearAnalysisFilters" />
+                        }
+                    </RadzenStack>
+                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.End" Gap="0.75rem" Wrap="FlexWrap.Wrap">
+                        <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem" Style="min-width: 220px; flex: 1;">
+                            <RadzenLabel Text="Users" />
+                            <RadzenDropDown TValue="IEnumerable<string>"
+                                           Data="@AvailableUsers"
+                                           @bind-Value="@SelectedUserIds"
+                                           TextProperty="UserFullName"
+                                           ValueProperty="UserId"
+                                           Multiple="true"
+                                           Chips="true"
+                                           AllowClear="true"
+                                           Placeholder="All users"
+                                           Style="width: 100%;" />
+                        </RadzenStack>
+                        <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem" Style="min-width: 220px; flex: 1;">
+                            <RadzenLabel Text="Bill Categories" />
+                            <RadzenDropDown TValue="IEnumerable<BillCategory>"
+                                           Data="@AllBillCategories"
+                                           @bind-Value="@SelectedBillCategories"
+                                           Multiple="true"
+                                           Chips="true"
+                                           AllowClear="true"
+                                           Placeholder="All categories"
+                                           Style="width: 100%;" />
+                        </RadzenStack>
+                    </RadzenStack>
+                </RadzenStack>
+            </RadzenCard>
+        }
+
         @* Spending summary metrics & charts *@
         @if (Summary is not null)
         {
@@ -63,12 +106,12 @@
             <RadzenRow Gap="1rem" RowGap="1rem">
                 <RadzenColumn Size="12" SizeLG="6">
                     <RadzenCard Variant="Variant.Outlined" class="rz-p-4">
-                        <CategoryBreakdownChart Data="@Summary.ByCategory" />
+                        <CategoryBreakdownChart Data="@FilteredByCategory" />
                     </RadzenCard>
                 </RadzenColumn>
                 <RadzenColumn Size="12" SizeLG="6">
                     <RadzenCard Variant="Variant.Outlined" class="rz-p-4">
-                        <UserSpendingChart Data="@Summary.ByUser" />
+                        <UserSpendingChart Data="@FilteredByUser" />
                     </RadzenCard>
                 </RadzenColumn>
             </RadzenRow>
@@ -100,33 +143,57 @@
             </RadzenStack>
         </RadzenCard>
 
-        @* Recent bills *@
+        @* Bills tabs — Recent & Upcoming *@
         <RadzenCard Variant="Variant.Outlined" class="rz-p-4">
-            <RadzenStack Orientation="Orientation.Vertical" Gap="1rem">
-                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
-                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
-                        <RadzenIcon Icon="receipt_long" Style="color: var(--rz-primary);" />
-                        <RadzenText TextStyle="TextStyle.Subtitle1" class="rz-mb-0"><strong>Recent Bills</strong></RadzenText>
-                    </RadzenStack>
-                    <RadzenButton Text="View All" Icon="arrow_forward" Variant="Variant.Text" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small" Click="NavigateToBills" />
-                </RadzenStack>
+            <RadzenTabs>
+                <Tabs>
+                    @* Recent / Past Bills Tab *@
+                    <RadzenTabsItem Text="@($"Recent Bills ({PastBills.Count})")" Icon="receipt_long">
+                        <RadzenStack Orientation="Orientation.Vertical" Gap="1rem" class="rz-pt-2">
+                            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.End">
+                                <RadzenButton Text="View All" Icon="arrow_forward" Variant="Variant.Text" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small" Click="NavigateToBills" />
+                            </RadzenStack>
 
-                @if (RecentBills.Items.Count == 0)
-                {
-                    <EmptyState Icon="receipt_long" Title="No recent bills" Description="Create your first bill to see it here." />
-                }
-                else
-                {
-                    <RadzenRow Gap="1rem" RowGap="1rem">
-                        @foreach (var bill in RecentBills.Items)
-                        {
-                            <RadzenColumn Size="12" SizeSM="6" SizeLG="4">
-                                <BillCard Bill="@bill" OnView="NavigateToBill" />
-                            </RadzenColumn>
-                        }
-                    </RadzenRow>
-                }
-            </RadzenStack>
+                            @if (PastBills.Count == 0)
+                            {
+                                <EmptyState Icon="receipt_long" Title="No recent bills" Description="Create your first bill to see it here." />
+                            }
+                            else
+                            {
+                                <RadzenRow Gap="1rem" RowGap="1rem">
+                                    @foreach (var bill in PastBills)
+                                    {
+                                        <RadzenColumn Size="12" SizeSM="6" SizeLG="4">
+                                            <BillCard Bill="@bill" OnView="NavigateToBill" />
+                                        </RadzenColumn>
+                                    }
+                                </RadzenRow>
+                            }
+                        </RadzenStack>
+                    </RadzenTabsItem>
+
+                    @* Upcoming Bills Tab *@
+                    <RadzenTabsItem Text="@($"Upcoming ({UpcomingBills.Count})")" Icon="upcoming">
+                        <RadzenStack Orientation="Orientation.Vertical" Gap="1rem" class="rz-pt-2">
+                            @if (UpcomingBills.Count == 0)
+                            {
+                                <EmptyState Icon="upcoming" Title="No upcoming bills" Description="No future bills scheduled." />
+                            }
+                            else
+                            {
+                                <RadzenRow Gap="1rem" RowGap="1rem">
+                                    @foreach (var bill in UpcomingBills)
+                                    {
+                                        <RadzenColumn Size="12" SizeSM="6" SizeLG="4">
+                                            <BillCard Bill="@bill" OnView="NavigateToBill" />
+                                        </RadzenColumn>
+                                    }
+                                </RadzenRow>
+                            }
+                        </RadzenStack>
+                    </RadzenTabsItem>
+                </Tabs>
+            </RadzenTabs>
         </RadzenCard>
     }
 </RadzenStack>

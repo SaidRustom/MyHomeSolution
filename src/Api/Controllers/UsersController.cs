@@ -282,6 +282,33 @@ public sealed class UsersController(ISender sender) : ControllerBase
         return User.FindFirstValue(ClaimTypes.NameIdentifier)
             ?? throw new UnauthorizedAccessException();
     }
+
+    // ── Self-service: delete own account ────────────────────────────────────
+
+    [HttpDelete("me")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> DeleteAccount(
+        [FromServices] IEmailBackgroundQueue emailQueue,
+        CancellationToken cancellationToken)
+    {
+        var result = await sender.Send(
+            new MyHomeSolution.Application.Features.Users.Commands.DeleteAccount.DeleteAccountCommand(),
+            cancellationToken);
+
+        if (!string.IsNullOrEmpty(result.Email))
+        {
+            var html = MyHomeSolution.Infrastructure.Services.EmailTemplates.AccountDeleted(
+                result.UserName ?? "there");
+
+            await emailQueue.EnqueueAsync(
+                new MyHomeSolution.Application.Common.Interfaces.EmailMessage(
+                    result.Email, result.UserName, "Your MyHome Account Has Been Deleted", html),
+                cancellationToken);
+        }
+
+        return NoContent();
+    }
 }
 
 public sealed record UpdateUserProfileRequest(

@@ -2,6 +2,7 @@ using BlazorUI.Components.Bills;
 using BlazorUI.Models.Bills;
 using BlazorUI.Models.Common;
 using BlazorUI.Models.Enums;
+using BlazorUI.Models.Realtime;
 using BlazorUI.Services.Contracts;
 using Microsoft.AspNetCore.Components;
 using Radzen;
@@ -22,6 +23,9 @@ public partial class BillList : IDisposable
 
     [Inject]
     NotificationService NotificationService { get; set; } = default!;
+
+    [Inject]
+    INotificationHubClient NotificationHubClient { get; set; } = default!;
 
     static readonly DialogOptions BillDialogOptions = new()
     {
@@ -44,14 +48,18 @@ public partial class BillList : IDisposable
     BillCategory? SelectedCategory { get; set; }
     DateTimeOffset? FromDate { get; set; }
     DateTimeOffset? ToDate { get; set; }
+    BillPaymentFilter PaymentFilter { get; set; } = BillPaymentFilter.All;
 
     int _currentPage = 1;
     const int PageSize = 20;
+    string? _sortBy;
+    string? _sortDirection;
 
     CancellationTokenSource _cts = new();
 
     protected override async Task OnInitializedAsync()
     {
+        NotificationHubClient.OnUserNotification += HandleRealtimeNotification;
         await LoadBillsAsync();
     }
 
@@ -67,6 +75,8 @@ public partial class BillList : IDisposable
             searchTerm: SearchTerm,
             fromDate: FromDate,
             toDate: ToDate,
+            sortBy: _sortBy,
+            sortDirection: _sortDirection,
             cancellationToken: _cts.Token);
 
         if (result.IsSuccess)
@@ -84,6 +94,14 @@ public partial class BillList : IDisposable
     async Task OnLoadDataAsync(LoadDataArgs args)
     {
         _currentPage = (args.Skip ?? 0) / PageSize + 1;
+
+        if (args.Sorts?.Any() == true)
+        {
+            var sort = args.Sorts.First();
+            _sortBy = sort.Property;
+            _sortDirection = sort.SortOrder == SortOrder.Descending ? "desc" : "asc";
+        }
+
         await LoadBillsAsync();
     }
 
@@ -100,6 +118,37 @@ public partial class BillList : IDisposable
         SelectedCategory = null;
         FromDate = null;
         ToDate = null;
+        PaymentFilter = BillPaymentFilter.All;
+        await LoadBillsAsync();
+    }
+
+    PaginatedList<BillBriefDto> FilteredBillData
+    {
+        get
+        {
+            if (PaymentFilter == BillPaymentFilter.All)
+                return BillData;
+
+            var filtered = PaymentFilter switch
+            {
+                BillPaymentFilter.Paid => BillData.Items.Where(b => b.IsFullyPaid).ToList(),
+                BillPaymentFilter.Unpaid => BillData.Items.Where(b => !b.IsFullyPaid).ToList(),
+                _ => BillData.Items.ToList()
+            };
+
+            return new PaginatedList<BillBriefDto>
+            {
+                Items = filtered,
+                TotalCount = filtered.Count,
+                PageNumber = 1,
+                TotalPages = 1
+            };
+        }
+    }
+
+    async Task OnPaymentFilterChanged()
+    {
+        _currentPage = 1;
         await LoadBillsAsync();
     }
 
@@ -201,7 +250,27 @@ public partial class BillList : IDisposable
 
     public void Dispose()
     {
+        NotificationHubClient.OnUserNotification -= HandleRealtimeNotification;
         _cts.Cancel();
         _cts.Dispose();
     }
+
+    void HandleRealtimeNotification(UserPushNotification push)
+    {
+        if (string.Equals(push.RelatedEntityType, "Bill", StringComparison.OrdinalIgnoreCase))
+        {
+            InvokeAsync(async () =>
+            {
+                await LoadBillsAsync();
+                StateHasChanged();
+            });
+        }
+    }
+}
+
+public enum BillPaymentFilter
+{
+    All,
+    Paid,
+    Unpaid
 }

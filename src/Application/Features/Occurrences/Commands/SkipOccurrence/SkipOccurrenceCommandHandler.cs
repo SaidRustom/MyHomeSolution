@@ -22,6 +22,20 @@ public sealed class SkipOccurrenceCommandHandler(
         occurrence.Status = OccurrenceStatus.Skipped;
         occurrence.Notes = request.Notes;
 
+        // When the user opts to zero the linked bill balance, mark all splits as settled
+        if (request.ZeroLinkedBillBalance && occurrence.BillId.HasValue)
+        {
+            var billSplits = await dbContext.BillSplits
+                .Where(s => s.BillId == occurrence.BillId.Value)
+                .ToListAsync(cancellationToken);
+
+            foreach (var split in billSplits)
+            {
+                split.Amount = 0m;
+                split.Status = SplitStatus.Settled;
+            }
+        }
+
         await dbContext.SaveChangesAsync(cancellationToken);
 
         await publisher.Publish(

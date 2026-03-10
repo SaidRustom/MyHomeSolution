@@ -1,0 +1,46 @@
+@using Radzen
+
+<RadzenStack Orientation="Orientation.Vertical" Gap="1.25rem" class="rz-p-4">
+    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.75rem">
+        <RadzenIcon Icon="warning" Style="font-size: 2.5rem; color: var(--rz-danger);" />
+        <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem">
+            <RadzenText TextStyle="TextStyle.H6" class="rz-mb-0" Style="font-weight: 600; color: var(--rz-danger);">
+                Delete Your Account?
+            </RadzenText>
+            <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0" Style="color: var(--rz-text-secondary-color);">
+                This action is permanent and cannot be reversed.
+            </RadzenText>
+        </RadzenStack>
+    </RadzenStack>
+
+    <RadzenAlert AlertStyle="AlertStyle.Danger" Variant="Variant.Flat" Shade="Shade.Lighter" ShowIcon="false">
+        All your tasks, bills, shopping lists, connections, notifications, and shared data will be
+        <strong>permanently deleted</strong>. You will receive a confirmation email after the process completes.
+    </RadzenAlert>
+
+    <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem">
+        <RadzenLabel Text="Type DELETE to confirm" Style="font-weight: 600;" />
+        <RadzenTextBox @bind-Value="@_confirmText"
+                       Placeholder="DELETE"
+                       Style="width: 100%;"
+                       @oninput="OnConfirmTextChanged" />
+        @if (_showError)
+        {
+            <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-danger);">
+                Please type DELETE exactly to proceed.
+            </RadzenText>
+        }
+    </RadzenStack>
+
+    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
+        <RadzenButton Text="Cancel"
+                      Variant="Variant.Flat"
+                      ButtonStyle="ButtonStyle.Light"
+                      Click="Cancel" />
+        <RadzenButton Text="Delete My Account"
+                      Icon="delete_forever"
+                      ButtonStyle="ButtonStyle.Danger"
+                      Click="Confirm"
+                      Disabled="@(!IsConfirmValid)" />
+    </RadzenStack>
+</RadzenStack>

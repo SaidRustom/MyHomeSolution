@@ -29,6 +29,9 @@ public sealed class CreateBillCommandValidator : AbstractValidator<CreateBillCom
         RuleFor(x => x.RelatedEntityType)
             .MaximumLength(256).WithMessage("Related entity type must not exceed 256 characters.");
 
+        RuleFor(x => x.Splits)
+            .NotEmpty().WithMessage("At least one split is required.");
+
         RuleForEach(x => x.Splits).ChildRules(split =>
         {
             split.RuleFor(s => s.UserId)

@@ -1,6 +1,5 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using MyHomeSolution.Application.Common.Interfaces;
@@ -12,11 +11,19 @@ namespace MyHomeSolution.Infrastructure.Services;
 
 public sealed class OccurrenceGeneratorService(
     IServiceScopeFactory scopeFactory,
+    ITaskProcessingLock processingLock,
     IOptions<OccurrenceGeneratorOptions> options,
     ILogger<OccurrenceGeneratorService> logger)
-    : BackgroundService
+    : MonitoredBackgroundService<OccurrenceGeneratorService>(scopeFactory, logger),
+      IMonitoredBackgroundService
 {
     private readonly OccurrenceGeneratorOptions _options = options.Value;
+    private const int MaxRetries = 3;
+
+    public static Guid ServiceId => BackgroundServiceSeeder.ServiceIds.OccurrenceGenerator;
+    public static string ServiceName => "Occurrence Generator";
+    public static string ServiceDescription =>
+        "Generates future task occurrences for recurring household tasks based on their recurrence patterns.";
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
@@ -34,7 +41,7 @@ public sealed class OccurrenceGeneratorService(
         {
             try
             {
-                await GenerateOccurrencesAsync(stoppingToken);
+                await RunMonitoredCycleAsync(GenerateOccurrencesAsync, stoppingToken);
             }
             catch (Exception ex) when (ex is not OperationCanceledException)
             {
@@ -46,157 +53,100 @@ public sealed class OccurrenceGeneratorService(
         logger.LogInformation("Occurrence generator stopped");
     }
 
-    private async Task GenerateOccurrencesAsync(CancellationToken cancellationToken)
+    private async Task<string?> GenerateOccurrencesAsync(CancellationToken cancellationToken)
     {
         await using var scope = scopeFactory.CreateAsyncScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<IApplicationDbContext>();
         var dateTimeProvider = scope.ServiceProvider.GetRequiredService<IDateTimeProvider>();
 
-        var recurringTasks = await dbContext.HouseholdTasks
+        var recurringTaskIds = await dbContext.HouseholdTasks
             .IgnoreQueryFilters()
             .Where(t => t.IsRecurring && t.IsActive && !t.IsDeleted)
-            .Include(t => t.RecurrencePattern!)
-                .ThenInclude(rp => rp.Assignees.OrderBy(a => a.Order))
-            .Include(t => t.Occurrences.Where(o => !o.IsDeleted))
-            .AsSplitQuery()
+            .Select(t => t.Id)
             .ToListAsync(cancellationToken);
 
         var today = dateTimeProvider.Today;
         var generated = 0;
+        var failed = 0;
 
-        foreach (var task in recurringTasks)
+        foreach (var taskId in recurringTaskIds)
         {
-            if (task.RecurrencePattern is null)
-            {
-                logger.LogWarning("Recurring task {TaskId} has no recurrence pattern — skipping", task.Id);
-                continue;
-            }
-
             try
             {
-                generated += GenerateOccurrencesForTask(task, today, dbContext);
+                await using var lockHandle = await processingLock.TryAcquireAsync(
+                    taskId, TimeSpan.FromSeconds(5), cancellationToken);
+
+                if (lockHandle is null)
+                {
+                    logger.LogDebug("Skipping task {TaskId} — another process holds the lock", taskId);
+                    continue;
+                }
+
+                var count = await TopUpWithRetryAsync(taskId, today, cancellationToken);
+                generated += count;
             }
-            catch (Exception ex)
+            catch (Exception ex) when (ex is not OperationCanceledException)
             {
-                logger.LogError(ex, "Failed to generate occurrences for task {TaskId}", task.Id);
+                logger.LogError(ex, "Failed to generate occurrences for task {TaskId}", taskId);
+                failed++;
             }
         }
 
-        if (generated > 0)
+        if (generated > 0 || failed > 0)
         {
-            var saved = await dbContext.SaveChangesAsync(cancellationToken);
             logger.LogInformation(
-                "Generated {Count} occurrences across {Tasks} tasks ({Rows} rows saved)",
-                generated, recurringTasks.Count, saved);
+                "Occurrence generation cycle complete: {Generated} created, {Failed} tasks failed, {Total} tasks processed",
+                generated, failed, recurringTaskIds.Count);
         }
+
+        return $"{generated} created, {failed} failed, {recurringTaskIds.Count} tasks processed";
     }
 
-    internal static int GenerateOccurrencesForTask(
-        HouseholdTask task, DateOnly today, IApplicationDbContext dbContext, int requiredFutureOccurrences = 5)
+    private async Task<int> TopUpWithRetryAsync(
+        Guid taskId, DateOnly today, CancellationToken cancellationToken)
     {
-        var pattern = task.RecurrencePattern!;
-
-        var pendingFutureCount = task.Occurrences
-            .Count(o => o.DueDate >= today
-                        && o.Status is OccurrenceStatus.Pending or OccurrenceStatus.InProgress);
-
-        if (pendingFutureCount >= requiredFutureOccurrences)
-            return 0;
-
-        var toGenerate = requiredFutureOccurrences - pendingFutureCount;
-
-        var lastOccurrenceDate = task.Occurrences
-            .Select(o => (DateOnly?)o.DueDate)
-            .OrderByDescending(d => d)
-            .FirstOrDefault();
-
-        var nextDate = lastOccurrenceDate.HasValue
-            ? pattern.GetNextOccurrenceDate(lastOccurrenceDate.Value)
-            : MaxDate(pattern.StartDate, today);
-
-        var existingDueDates = task.Occurrences.Select(o => o.DueDate).ToHashSet();
-        var created = 0;
-        var assignees = pattern.Assignees.OrderBy(a => a.Order).Select(a => a.UserId).ToList();
-
-        for (var i = 0; i < toGenerate; i++)
+        for (var attempt = 1; attempt <= MaxRetries; attempt++)
         {
-            if (pattern.EndDate.HasValue && nextDate > pattern.EndDate.Value)
-                break;
-
-            if (!existingDueDates.Add(nextDate))
+            try
             {
-                nextDate = pattern.GetNextOccurrenceDate(nextDate);
-                continue;
+                await using var taskScope = scopeFactory.CreateAsyncScope();
+                var taskDbContext = taskScope.ServiceProvider.GetRequiredService<IApplicationDbContext>();
+
+                var task = await taskDbContext.HouseholdTasks
+                    .IgnoreQueryFilters()
+                    .Where(t => t.Id == taskId && !t.IsDeleted)
+                    .Include(t => t.RecurrencePattern!)
+                        .ThenInclude(rp => rp.Assignees.OrderBy(a => a.Order))
+                    .Include(t => t.Occurrences.Where(o => !o.IsDeleted))
+                    .AsSplitQuery()
+                    .FirstOrDefaultAsync(cancellationToken);
+
+                if (task?.RecurrencePattern is null)
+                    return 0;
+
+                var count = OccurrenceReconciler.TopUp(
+                    task, today, taskDbContext, _options.RequiredFutureOccurrences);
+
+                if (count > 0)
+                {
+                    await taskDbContext.SaveChangesAsync(cancellationToken);
+                }
+
+                return count;
             }
-
-            var assigneeUserId = pattern.GetNextAssigneeUserId();
-            pattern.AdvanceAssigneeIndex();
-
-            var occurrence = new TaskOccurrence
+            catch (DbUpdateConcurrencyException ex)
             {
-                HouseholdTaskId = task.Id,
-                DueDate = nextDate,
-                Status = OccurrenceStatus.Pending,
-                AssignedToUserId = assigneeUserId
-            };
+                logger.LogWarning(ex,
+                    "Concurrency conflict generating occurrences for task {TaskId} (attempt {Attempt}/{MaxRetries})",
+                    taskId, attempt, MaxRetries);
 
-            if (task.AutoCreateBill && task.DefaultBillAmount.HasValue && assignees.Count > 0)
-            {
-                var bill = CreateBillForOccurrence(task, occurrence, assignees);
-                dbContext.Bills.Add(bill);
-                occurrence.BillId = bill.Id;
+                if (attempt == MaxRetries)
+                    throw;
+
+                await Task.Delay(100 * attempt, cancellationToken);
             }
-
-            task.Occurrences.Add(occurrence);
-            nextDate = pattern.GetNextOccurrenceDate(nextDate);
-            created++;
         }
 
-        return created;
+        return 0;
     }
-
-    internal static Bill CreateBillForOccurrence(
-        HouseholdTask task, TaskOccurrence occurrence, List<string> assigneeUserIds)
-    {
-        var amount = task.DefaultBillAmount!.Value;
-        var currency = task.DefaultBillCurrency ?? "CAD";
-        var category = task.DefaultBillCategory ?? BillCategory.General;
-        var title = task.DefaultBillTitle ?? $"{task.Title} – {occurrence.DueDate:MMM dd, yyyy}";
-
-        var bill = new Bill
-        {
-            Title = title,
-            Amount = amount,
-            Currency = currency,
-            Category = category,
-            BillDate = new DateTimeOffset(occurrence.DueDate.ToDateTime(TimeOnly.MinValue), TimeSpan.Zero),
-            PaidByUserId = occurrence.AssignedToUserId ?? task.CreatedBy ?? assigneeUserIds[0],
-            RelatedEntityId = occurrence.Id,
-            RelatedEntityType = "TaskOccurrence"
-        };
-
-        var equalPercentage = Math.Round(100m / assigneeUserIds.Count, 2);
-
-        foreach (var userId in assigneeUserIds)
-        {
-            var splitAmount = Math.Round(amount * equalPercentage / 100m, 2);
-            bill.Splits.Add(new BillSplit
-            {
-                BillId = bill.Id,
-                UserId = userId,
-                Percentage = equalPercentage,
-                Amount = splitAmount,
-                Status = SplitStatus.Unpaid
-            });
-        }
-
-        return bill;
-    }
-
-    private int GenerateOccurrencesForTask(HouseholdTask task, DateOnly today, IApplicationDbContext dbContext)
-    {
-        return GenerateOccurrencesForTask(task, today, dbContext, _options.RequiredFutureOccurrences);
-    }
-
-    internal static DateOnly MaxDate(DateOnly a, DateOnly b) => a >= b ? a : b;
 }

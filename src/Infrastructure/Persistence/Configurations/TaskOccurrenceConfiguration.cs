@@ -10,6 +10,9 @@ public sealed class TaskOccurrenceConfiguration : IEntityTypeConfiguration<TaskO
     {
         builder.HasKey(o => o.Id);
 
+        builder.Property(o => o.RowVersion)
+            .IsRowVersion();
+
         builder.Property(o => o.AssignedToUserId)
             .HasMaxLength(450);
 

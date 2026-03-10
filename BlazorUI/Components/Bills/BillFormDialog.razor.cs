@@ -2,6 +2,7 @@ using System.Security.Claims;
 using BlazorUI.Models.Bills;
 using BlazorUI.Models.Common;
 using BlazorUI.Models.Enums;
+using BlazorUI.Models.Users;
 using BlazorUI.Services.Contracts;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
@@ -20,6 +21,9 @@ public partial class BillFormDialog
     [Inject]
     NotificationService Notifications { get; set; } = default!;
 
+    [Inject]
+    IUserConnectionService UserConnectionService { get; set; } = default!;
+
     [CascadingParameter]
     private Task<AuthenticationState> AuthState { get; set; } = default!;
 
@@ -35,6 +39,8 @@ public partial class BillFormDialog
 
     string? CurrentUserId { get; set; }
 
+    string? CurrentUserFullName { get; set; }
+
     string DialogTitle => IsEdit ? "Edit Bill" : "Create Bill";
 
     string SubmitText => IsEdit ? "Save Changes" : "Create Bill";
@@ -46,6 +52,47 @@ public partial class BillFormDialog
         var state = await AuthState;
         CurrentUserId = state.User.FindFirst(ClaimTypes.NameIdentifier)?.Value
             ?? state.User.FindFirst("sub")?.Value;
+
+        var name = state.User.FindFirst(ClaimTypes.Name)?.Value
+            ?? state.User.FindFirst("name")?.Value;
+        var email = state.User.FindFirst(ClaimTypes.Email)?.Value
+            ?? state.User.FindFirst("email")?.Value;
+        CurrentUserFullName = name ?? email ?? CurrentUserId;
+    }
+
+    /// <summary>
+    /// Users eligible to be selected as "Paid By" — split participants + current user.
+    /// </summary>
+    List<EligibleUserOption> PaidByEligibleUsers
+    {
+        get
+        {
+            var users = new List<EligibleUserOption>();
+
+            // Always include current user first
+            if (!string.IsNullOrEmpty(CurrentUserId))
+            {
+                users.Add(new EligibleUserOption
+                {
+                    UserId = CurrentUserId,
+                    DisplayName = $"{CurrentUserFullName} (You)"
+                });
+            }
+
+            // Add split participants
+            foreach (var split in Model.Splits)
+            {
+                if (string.IsNullOrEmpty(split.UserId)) continue;
+                if (users.Any(u => u.UserId == split.UserId)) continue;
+                users.Add(new EligibleUserOption
+                {
+                    UserId = split.UserId,
+                    DisplayName = split.UserId // Display name resolved by split editor
+                });
+            }
+
+            return users;
+        }
     }
 
     async Task OnSubmit()
@@ -132,6 +179,7 @@ public sealed class BillFormModel
     public string? Notes { get; set; }
     public Guid? RelatedEntityId { get; set; }
     public string? RelatedEntityType { get; set; }
+    public string? PaidByUserId { get; set; }
     public List<BillSplitFormModel> Splits { get; set; } = [];
 
     public CreateBillRequest ToCreateRequest() => new()
@@ -161,7 +209,15 @@ public sealed class BillFormModel
         Currency = Currency,
         Category = Category,
         BillDate = BillDate,
-        Notes = Notes
+        Notes = Notes,
+        PaidByUserId = PaidByUserId,
+        Splits = Splits.Count > 0
+            ? Splits.Select(s => new BillSplitRequest
+            {
+                UserId = s.UserId,
+                Percentage = s.Percentage
+            }).ToList()
+            : null
     };
 
     public static BillFormModel FromDetail(BillDetailDto detail) => new()
@@ -176,6 +232,7 @@ public sealed class BillFormModel
         Notes = detail.Notes,
         RelatedEntityId = detail.RelatedEntityId,
         RelatedEntityType = detail.RelatedEntityType,
+        PaidByUserId = detail.PaidByUserId,
         Splits = detail.Splits.Select(s => new BillSplitFormModel
         {
             UserId = s.UserId,

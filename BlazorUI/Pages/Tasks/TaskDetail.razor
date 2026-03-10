@@ -54,6 +54,27 @@
                             }
                         </RadzenStack>
 
+                        @* Assigned to *@
+                        @if (!string.IsNullOrEmpty(Task.AssignedToUserId))
+                        {
+                            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                                @if (!string.IsNullOrEmpty(Task.AssignedToUserAvatarUrl))
+                                {
+                                    <RadzenImage Path="@Task.AssignedToUserAvatarUrl" Style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover;" />
+                                }
+                                else
+                                {
+                                    <div style="width: 32px; height: 32px; border-radius: 50%; background: var(--rz-primary-lighter); display: flex; align-items: center; justify-content: center;">
+                                        <RadzenIcon Icon="person" Style="font-size: 1rem; color: var(--rz-primary);" />
+                                    </div>
+                                }
+                                <RadzenStack Orientation="Orientation.Vertical" Gap="0">
+                                    <RadzenText TextStyle="TextStyle.Caption" class="rz-mb-0 rz-color-secondary">Assigned to</RadzenText>
+                                    <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0"><strong>@(Task.AssignedToUserFullName ?? Task.AssignedToUserId)</strong></RadzenText>
+                                </RadzenStack>
+                            </RadzenStack>
+                        }
+
                         @* Description *@
                         @if (!string.IsNullOrEmpty(Task.Description))
                         {
@@ -91,31 +112,58 @@
                             </RadzenColumn>
                         </RadzenRow>
 
-                        @* Recurrence pattern *@
+                        @* Recurrence pattern with rotation *@
                         @if (Task.RecurrencePattern is not null)
                         {
                             <RadzenFieldset Text="Recurrence Pattern">
-                                <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" Wrap="FlexWrap.Wrap">
-                                    <RadzenStack Orientation="Orientation.Vertical" Gap="0.125rem">
-                                        <RadzenText TextStyle="TextStyle.Caption" class="rz-mb-0 rz-color-secondary">Frequency</RadzenText>
-                                        <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0"><strong>Every @Task.RecurrencePattern.Interval @(Task.RecurrencePattern.Type.ToString().ToLowerInvariant())(s)</strong></RadzenText>
-                                    </RadzenStack>
-                                    <RadzenStack Orientation="Orientation.Vertical" Gap="0.125rem">
-                                        <RadzenText TextStyle="TextStyle.Caption" class="rz-mb-0 rz-color-secondary">Start</RadzenText>
-                                        <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0"><strong>@Task.RecurrencePattern.StartDate.ToString("MMM dd, yyyy")</strong></RadzenText>
-                                    </RadzenStack>
-                                    @if (Task.RecurrencePattern.EndDate.HasValue)
-                                    {
+                                <RadzenStack Orientation="Orientation.Vertical" Gap="0.75rem">
+                                    <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" Wrap="FlexWrap.Wrap">
                                         <RadzenStack Orientation="Orientation.Vertical" Gap="0.125rem">
-                                            <RadzenText TextStyle="TextStyle.Caption" class="rz-mb-0 rz-color-secondary">End</RadzenText>
-                                            <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0"><strong>@Task.RecurrencePattern.EndDate.Value.ToString("MMM dd, yyyy")</strong></RadzenText>
+                                            <RadzenText TextStyle="TextStyle.Caption" class="rz-mb-0 rz-color-secondary">Frequency</RadzenText>
+                                            <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0"><strong>Every @Task.RecurrencePattern.Interval @(Task.RecurrencePattern.Type.ToString().ToLowerInvariant())(s)</strong></RadzenText>
                                         </RadzenStack>
-                                    }
-                                    @if (Task.RecurrencePattern.AssigneeUserIds.Count > 0)
-                                    {
                                         <RadzenStack Orientation="Orientation.Vertical" Gap="0.125rem">
-                                            <RadzenText TextStyle="TextStyle.Caption" class="rz-mb-0 rz-color-secondary">Rotation</RadzenText>
-                                            <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0"><strong>@Task.RecurrencePattern.AssigneeUserIds.Count member(s)</strong></RadzenText>
+                                            <RadzenText TextStyle="TextStyle.Caption" class="rz-mb-0 rz-color-secondary">Start</RadzenText>
+                                            <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0"><strong>@Task.RecurrencePattern.StartDate.ToString("MMM dd, yyyy")</strong></RadzenText>
+                                        </RadzenStack>
+                                        @if (Task.RecurrencePattern.EndDate.HasValue)
+                                        {
+                                            <RadzenStack Orientation="Orientation.Vertical" Gap="0.125rem">
+                                                <RadzenText TextStyle="TextStyle.Caption" class="rz-mb-0 rz-color-secondary">End</RadzenText>
+                                                <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0"><strong>@Task.RecurrencePattern.EndDate.Value.ToString("MMM dd, yyyy")</strong></RadzenText>
+                                            </RadzenStack>
+                                        }
+                                    </RadzenStack>
+
+                                    @* Rotation assignees with avatars *@
+                                    @if (Task.RecurrencePattern.Assignees.Count > 0)
+                                    {
+                                        <RadzenStack Orientation="Orientation.Vertical" Gap="0.375rem">
+                                            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.375rem">
+                                                <RadzenIcon Icon="swap_horiz" Style="font-size: 1rem; color: var(--rz-info);" />
+                                                <RadzenText TextStyle="TextStyle.Subtitle2" class="rz-mb-0"><strong>Rotation Assignees</strong></RadzenText>
+                                                <RadzenBadge BadgeStyle="BadgeStyle.Info" IsPill="true" Text="@($"{Task.RecurrencePattern.Assignees.Count}")" />
+                                            </RadzenStack>
+                                            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.75rem" Wrap="FlexWrap.Wrap">
+                                                @foreach (var assignee in Task.RecurrencePattern.Assignees)
+                                                {
+                                                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.375rem"
+                                                                 Style="padding: 0.375rem 0.75rem; background: var(--rz-base-100); border-radius: var(--rz-border-radius);">
+                                                        @if (!string.IsNullOrEmpty(assignee.AvatarUrl))
+                                                        {
+                                                            <RadzenImage Path="@assignee.AvatarUrl" Style="width: 24px; height: 24px; border-radius: 50%; object-fit: cover;" />
+                                                        }
+                                                        else
+                                                        {
+                                                            <div style="width: 24px; height: 24px; border-radius: 50%; background: var(--rz-primary-lighter); display: flex; align-items: center; justify-content: center;">
+                                                                <RadzenIcon Icon="person" Style="font-size: 0.75rem; color: var(--rz-primary);" />
+                                                            </div>
+                                                        }
+                                                        <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0">@(assignee.FullName ?? assignee.UserId)</RadzenText>
+                                                        <RadzenBadge BadgeStyle="BadgeStyle.Light" IsPill="true" Text="@($"#{assignee.Order + 1}")" Style="font-size: 0.65rem;" />
+                                                    </RadzenStack>
+                                                }
+                                            </RadzenStack>
                                         </RadzenStack>
                                     }
                                 </RadzenStack>
@@ -169,88 +217,327 @@
             </RadzenColumn>
         </RadzenRow>
 
-        @* Occurrence timeline *@
-        <RadzenCard Variant="Variant.Outlined" class="rz-p-4">
-            <RadzenStack Orientation="Orientation.Vertical" Gap="1rem">
-                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
-                    <RadzenIcon Icon="timeline" Style="color: var(--rz-primary);" />
-                    <RadzenText TextStyle="TextStyle.Subtitle1" class="rz-mb-0"><strong>Occurrence History</strong></RadzenText>
-                </RadzenStack>
+        @* Tabbed content: History + Analytics *@
+        <RadzenTabs>
+            <Tabs>
+                @* History Tab *@
+                <RadzenTabsItem Text="Occurrence History" Icon="timeline">
+                    <RadzenCard Variant="Variant.Outlined" class="rz-p-4">
+                        <RadzenStack Orientation="Orientation.Vertical" Gap="1rem">
+                            @if (Task.Occurrences.Count == 0)
+                            {
+                                <EmptyState Icon="event_busy" Title="No occurrences" Description="No occurrences have been generated yet." />
+                            }
+                            else
+                            {
+                                <RadzenDataGrid TItem="TaskOccurrence" Data="@Task.Occurrences" AllowSorting="true" AllowPaging="true" PageSize="10"
+                                                PagerHorizontalAlign="HorizontalAlign.Center" Density="Density.Compact"
+                                                RowRender="@((RowRenderEventArgs<TaskOccurrence> args) => OnOccurrenceRowRender(args))">
+                                    <Columns>
+                                        <RadzenDataGridColumn TItem="TaskOccurrence" Property="DueDate" Title="Due Date" Width="140px">
+                                            <Template Context="occ">
+                                                <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0"
+                                                            Style="@(occ.Status == OccurrenceStatus.Overdue ? "color: var(--rz-danger); font-weight: 600;" : "")">
+                                                    @occ.DueDate.ToString("MMM dd, yyyy")
+                                                </RadzenText>
+                                            </Template>
+                                        </RadzenDataGridColumn>
+                                        <RadzenDataGridColumn TItem="TaskOccurrence" Property="Status" Title="Status" Width="120px">
+                                            <Template Context="occ">
+                                                <StatusBadge Text="@occ.Status.ToString()" Severity="@GetStatusSeverity(occ.Status)" />
+                                            </Template>
+                                        </RadzenDataGridColumn>
+                                        <RadzenDataGridColumn TItem="TaskOccurrence" Title="Assigned To" Width="180px" Sortable="false">
+                                            <Template Context="occ">
+                                                @if (!string.IsNullOrEmpty(occ.AssignedToUserId))
+                                                {
+                                                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.375rem">
+                                                        @if (!string.IsNullOrEmpty(occ.AssignedToUserAvatarUrl))
+                                                        {
+                                                            <RadzenImage Path="@occ.AssignedToUserAvatarUrl" Style="width: 22px; height: 22px; border-radius: 50%; object-fit: cover;" />
+                                                        }
+                                                        else
+                                                        {
+                                                            <div style="width: 22px; height: 22px; border-radius: 50%; background: var(--rz-primary-lighter); display: flex; align-items: center; justify-content: center;">
+                                                                <RadzenIcon Icon="person" Style="font-size: 0.7rem; color: var(--rz-primary);" />
+                                                            </div>
+                                                        }
+                                                        <RadzenText TextStyle="TextStyle.Caption" class="rz-mb-0">@(occ.AssignedToUserFullName ?? occ.AssignedToUserId)</RadzenText>
+                                                    </RadzenStack>
+                                                }
+                                                else
+                                                {
+                                                    <RadzenText TextStyle="TextStyle.Caption" class="rz-mb-0 rz-color-secondary">—</RadzenText>
+                                                }
+                                            </Template>
+                                        </RadzenDataGridColumn>
+                                        <RadzenDataGridColumn TItem="TaskOccurrence" Title="Completed By" Width="180px" Sortable="false">
+                                            <Template Context="occ">
+                                                @if (occ.CompletedAt.HasValue)
+                                                {
+                                                    <RadzenStack Orientation="Orientation.Vertical" Gap="0.125rem">
+                                                        @if (!string.IsNullOrEmpty(occ.CompletedByUserId))
+                                                        {
+                                                            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.375rem">
+                                                                @if (!string.IsNullOrEmpty(occ.CompletedByUserAvatarUrl))
+                                                                {
+                                                                    <RadzenImage Path="@occ.CompletedByUserAvatarUrl" Style="width: 22px; height: 22px; border-radius: 50%; object-fit: cover;" />
+                                                                }
+                                                                else
+                                                                {
+                                                                    <div style="width: 22px; height: 22px; border-radius: 50%; background: var(--rz-success-lighter); display: flex; align-items: center; justify-content: center;">
+                                                                        <RadzenIcon Icon="check" Style="font-size: 0.7rem; color: var(--rz-success);" />
+                                                                    </div>
+                                                                }
+                                                                <RadzenText TextStyle="TextStyle.Caption" class="rz-mb-0">@(occ.CompletedByUserFullName ?? occ.CompletedByUserId)</RadzenText>
+                                                            </RadzenStack>
+                                                        }
+                                                        <RadzenText TextStyle="TextStyle.Overline" class="rz-mb-0 rz-color-secondary">@occ.CompletedAt.Value.LocalDateTime.ToString("MMM dd h:mm tt")</RadzenText>
+                                                    </RadzenStack>
+                                                }
+                                                else
+                                                {
+                                                    <RadzenText TextStyle="TextStyle.Caption" class="rz-mb-0 rz-color-secondary">—</RadzenText>
+                                                }
+                                            </Template>
+                                        </RadzenDataGridColumn>
+                                        <RadzenDataGridColumn TItem="TaskOccurrence" Property="Notes" Title="Notes">
+                                            <Template Context="occ">
+                                                <div @onclick="@(() => OpenNotesEditorAsync(occ.Id, occ.Notes))" @onclick:stopPropagation="true"
+                                                     style="cursor: pointer; min-height: 24px; display: flex; align-items: center; gap: 0.25rem;">
+                                                    @if (!string.IsNullOrEmpty(occ.Notes))
+                                                    {
+                                                        <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0 rz-color-secondary" Style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">@occ.Notes</RadzenText>
+                                                    }
+                                                    else
+                                                    {
+                                                        <RadzenText TextStyle="TextStyle.Caption" class="rz-mb-0" Style="color: var(--rz-text-disabled-color); font-style: italic;">Add note…</RadzenText>
+                                                    }
+                                                    <RadzenIcon Icon="edit_note" Style="font-size: 0.875rem; color: var(--rz-primary-lighter);" />
+                                                </div>
+                                            </Template>
+                                        </RadzenDataGridColumn>
+                                        <RadzenDataGridColumn TItem="TaskOccurrence" Title="Bill" Width="80px" Sortable="false">
+                                            <Template Context="occ">
+                                                @if (occ.Bill is not null)
+                                                {
+                                                    <RadzenButton Icon="receipt" Variant="Variant.Text" ButtonStyle="ButtonStyle.Warning" Size="ButtonSize.Small"
+                                                                  Click="@(() => NavigateToBill(occ.Bill.Id))" />
+                                                }
+                                            </Template>
+                                        </RadzenDataGridColumn>
+                                        <RadzenDataGridColumn TItem="TaskOccurrence" Title="Actions" Width="160px" Sortable="false" TextAlign="TextAlign.End">
+                                            <Template Context="occ">
+                                                @if (occ.Status is OccurrenceStatus.Pending or OccurrenceStatus.Overdue)
+                                                {
+                                                    <RadzenStack Orientation="Orientation.Horizontal" Gap="0.125rem" JustifyContent="JustifyContent.End">
+                                                        <RadzenButton Icon="play_arrow" Variant="Variant.Text" ButtonStyle="ButtonStyle.Info" Size="ButtonSize.Small"
+                                                                      Click="@(async () => await StartOccurrenceAsync(occ.Id))" IsBusy="@(_busyOccurrenceId == occ.Id)" />
+                                                        <RadzenButton Icon="check" Variant="Variant.Text" ButtonStyle="ButtonStyle.Success" Size="ButtonSize.Small"
+                                                                      Click="@(async () => await CompleteOccurrenceAsync(occ.Id))" IsBusy="@(_busyOccurrenceId == occ.Id)" />
+                                                        <RadzenButton Icon="skip_next" Variant="Variant.Text" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small"
+                                                                      Click="@(async () => await SkipOccurrenceAsync(occ.Id))" IsBusy="@(_busyOccurrenceId == occ.Id)" />
+                                                    </RadzenStack>
+                                                }
+                                                else if (occ.Status == OccurrenceStatus.InProgress)
+                                                {
+                                                    <RadzenStack Orientation="Orientation.Horizontal" Gap="0.125rem" JustifyContent="JustifyContent.End">
+                                                        <RadzenButton Icon="check" Variant="Variant.Text" ButtonStyle="ButtonStyle.Success" Size="ButtonSize.Small"
+                                                                      Click="@(async () => await CompleteOccurrenceAsync(occ.Id))" IsBusy="@(_busyOccurrenceId == occ.Id)" />
+                                                    </RadzenStack>
+                                                }
+                                            </Template>
+                                        </RadzenDataGridColumn>
+                                    </Columns>
+                                </RadzenDataGrid>
+                            }
+                        </RadzenStack>
+                    </RadzenCard>
+                </RadzenTabsItem>
 
-                @if (Task.Occurrences.Count == 0)
-                {
-                    <EmptyState Icon="event_busy" Title="No occurrences" Description="No occurrences have been generated yet." />
-                }
-                else
-                {
-                    <RadzenDataGrid TItem="TaskOccurrence" Data="@Task.Occurrences" AllowSorting="true" AllowPaging="true" PageSize="10"
-                                    PagerHorizontalAlign="HorizontalAlign.Center" Density="Density.Compact">
-                        <Columns>
-                            <RadzenDataGridColumn TItem="TaskOccurrence" Property="DueDate" Title="Due Date" Width="140px">
-                                <Template Context="occ">
-                                    <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0"
-                                                Style="@(occ.Status == OccurrenceStatus.Overdue ? "color: var(--rz-danger); font-weight: 600;" : "")">
-                                        @occ.DueDate.ToString("MMM dd, yyyy")
-                                    </RadzenText>
-                                </Template>
-                            </RadzenDataGridColumn>
-                            <RadzenDataGridColumn TItem="TaskOccurrence" Property="Status" Title="Status" Width="120px">
-                                <Template Context="occ">
-                                    <StatusBadge Text="@occ.Status.ToString()" Severity="@GetStatusSeverity(occ.Status)" />
-                                </Template>
-                            </RadzenDataGridColumn>
-                            <RadzenDataGridColumn TItem="TaskOccurrence" Property="CompletedAt" Title="Completed" Width="170px">
-                                <Template Context="occ">
-                                    @if (occ.CompletedAt.HasValue)
-                                    {
-                                        <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0">@occ.CompletedAt.Value.LocalDateTime.ToString("MMM dd, yyyy h:mm tt")</RadzenText>
-                                    }
-                                    else
-                                    {
-                                        <RadzenText TextStyle="TextStyle.Caption" class="rz-mb-0 rz-color-secondary">—</RadzenText>
-                                    }
-                                </Template>
-                            </RadzenDataGridColumn>
-                            <RadzenDataGridColumn TItem="TaskOccurrence" Property="Notes" Title="Notes">
-                                <Template Context="occ">
-                                    <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0 rz-color-secondary">@(occ.Notes ?? "—")</RadzenText>
-                                </Template>
-                            </RadzenDataGridColumn>
-                            <RadzenDataGridColumn TItem="TaskOccurrence" Title="Bill" Width="80px" Sortable="false">
-                                <Template Context="occ">
-                                    @if (occ.Bill is not null)
-                                    {
-                                        <RadzenButton Icon="receipt" Variant="Variant.Text" ButtonStyle="ButtonStyle.Warning" Size="ButtonSize.Small"
-                                                      Click="@(() => NavigateToBill(occ.Bill.Id))" />
-                                    }
-                                </Template>
-                            </RadzenDataGridColumn>
-                            <RadzenDataGridColumn TItem="TaskOccurrence" Title="Actions" Width="160px" Sortable="false" TextAlign="TextAlign.End">
-                                <Template Context="occ">
-                                    @if (occ.Status is OccurrenceStatus.Pending or OccurrenceStatus.Overdue)
-                                    {
-                                        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.125rem" JustifyContent="JustifyContent.End">
-                                            <RadzenButton Icon="play_arrow" Variant="Variant.Text" ButtonStyle="ButtonStyle.Info" Size="ButtonSize.Small"
-                                                          Click="@(async () => await StartOccurrenceAsync(occ.Id))" IsBusy="@(_busyOccurrenceId == occ.Id)" />
-                                            <RadzenButton Icon="check" Variant="Variant.Text" ButtonStyle="ButtonStyle.Success" Size="ButtonSize.Small"
-                                                          Click="@(async () => await CompleteOccurrenceAsync(occ.Id))" IsBusy="@(_busyOccurrenceId == occ.Id)" />
-                                            <RadzenButton Icon="skip_next" Variant="Variant.Text" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small"
-                                                          Click="@(async () => await SkipOccurrenceAsync(occ.Id))" IsBusy="@(_busyOccurrenceId == occ.Id)" />
+                @* Analytics Tab *@
+                <RadzenTabsItem Text="Completion Analytics" Icon="analytics">
+                    <RadzenCard Variant="Variant.Outlined" class="rz-p-4">
+                        <RadzenStack Orientation="Orientation.Vertical" Gap="1.25rem">
+                            @if (Task.Occurrences.Count == 0)
+                            {
+                                <EmptyState Icon="analytics" Title="No data yet" Description="Complete some occurrences to see analytics." />
+                            }
+                            else
+                            {
+                                @* Summary stats *@
+                                <RadzenRow Gap="1rem" RowGap="1rem">
+                                    <RadzenColumn Size="12" SizeSM="6" SizeLG="3">
+                                        <StatCard Title="Completion Rate" Value="@($"{CompletionRate:N0}%")" Icon="percent" IconColor="var(--rz-success)" />
+                                    </RadzenColumn>
+                                    <RadzenColumn Size="12" SizeSM="6" SizeLG="3">
+                                        <StatCard Title="On-time Rate" Value="@($"{OnTimeRate:N0}%")" Icon="schedule" IconColor="var(--rz-info)" />
+                                    </RadzenColumn>
+                                    <RadzenColumn Size="12" SizeSM="6" SizeLG="3">
+                                        <StatCard Title="Skipped" Value="@SkippedCount.ToString()" Icon="skip_next" IconColor="var(--rz-base-500)" />
+                                    </RadzenColumn>
+                                    <RadzenColumn Size="12" SizeSM="6" SizeLG="3">
+                                        <StatCard Title="Overdue" Value="@OverdueAnalyticsCount.ToString()" Icon="warning" IconColor="var(--rz-danger)" />
+                                    </RadzenColumn>
+                                </RadzenRow>
+
+                                @* Completions by user *@
+                                @if (CompletionsByUser.Count > 0)
+                                {
+                                    <RadzenFieldset Text="Completions by User">
+                                        <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
+                                            @foreach (var entry in CompletionsByUser)
+                                            {
+                                                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween"
+                                                             Style="padding: 0.5rem 0.75rem; background: var(--rz-base-100); border-radius: var(--rz-border-radius);">
+                                                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                                                        @if (!string.IsNullOrEmpty(entry.AvatarUrl))
+                                                        {
+                                                            <RadzenImage Path="@entry.AvatarUrl" Style="width: 28px; height: 28px; border-radius: 50%; object-fit: cover;" />
+                                                        }
+                                                        else
+                                                        {
+                                                            <div style="width: 28px; height: 28px; border-radius: 50%; background: var(--rz-primary-lighter); display: flex; align-items: center; justify-content: center;">
+                                                                <RadzenIcon Icon="person" Style="font-size: 0.875rem; color: var(--rz-primary);" />
+                                                            </div>
+                                                        }
+                                                        <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0"><strong>@entry.UserName</strong></RadzenText>
+                                                    </RadzenStack>
+                                                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.75rem">
+                                                        <RadzenStack Orientation="Orientation.Vertical" AlignItems="AlignItems.End" Gap="0">
+                                                            <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0"><strong>@entry.Completed</strong> completed</RadzenText>
+                                                            <RadzenText TextStyle="TextStyle.Caption" class="rz-mb-0 rz-color-secondary">@entry.OnTime on time • @entry.Late late</RadzenText>
+                                                        </RadzenStack>
+                                                        <RadzenProgressBarCircular Value="@entry.Percentage" Max="100" Size="ProgressBarCircularSize.Small"
+                                                                                   ProgressBarStyle="@(entry.Percentage >= 80 ? ProgressBarStyle.Success : entry.Percentage >= 50 ? ProgressBarStyle.Warning : ProgressBarStyle.Danger)" />
+                                                    </RadzenStack>
+                                                </RadzenStack>
+                                            }
                                         </RadzenStack>
-                                    }
-                                    else if (occ.Status == OccurrenceStatus.InProgress)
-                                    {
-                                        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.125rem" JustifyContent="JustifyContent.End">
-                                            <RadzenButton Icon="check" Variant="Variant.Text" ButtonStyle="ButtonStyle.Success" Size="ButtonSize.Small"
-                                                          Click="@(async () => await CompleteOccurrenceAsync(occ.Id))" IsBusy="@(_busyOccurrenceId == occ.Id)" />
+                                    </RadzenFieldset>
+                                }
+
+                                @* Recent activity *@
+                                @if (RecentCompletions.Count > 0)
+                                {
+                                    <RadzenFieldset Text="Recent Completions">
+                                        <RadzenStack Orientation="Orientation.Vertical" Gap="0.375rem">
+                                            @foreach (var occ in RecentCompletions)
+                                            {
+                                                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween"
+                                                             class="rz-py-2" Style="border-bottom: 1px solid var(--rz-base-100);">
+                                                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.375rem">
+                                                        @if (!string.IsNullOrEmpty(occ.CompletedByUserAvatarUrl))
+                                                        {
+                                                            <RadzenImage Path="@occ.CompletedByUserAvatarUrl" Style="width: 22px; height: 22px; border-radius: 50%; object-fit: cover;" />
+                                                        }
+                                                        else
+                                                        {
+                                                            <RadzenIcon Icon="check_circle" Style="font-size: 1rem; color: var(--rz-success);" />
+                                                        }
+                                                        <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0">@(occ.CompletedByUserFullName ?? "Unknown")</RadzenText>
+                                                    </RadzenStack>
+                                                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                                                        @if (occ.CompletedAt.HasValue && occ.DueDate < DateOnly.FromDateTime(occ.CompletedAt.Value.LocalDateTime))
+                                                        {
+                                                            <RadzenBadge BadgeStyle="BadgeStyle.Danger" IsPill="true" Text="Late" Variant="Variant.Flat" Style="font-size: 0.65rem;" />
+                                                        }
+                                                        else
+                                                        {
+                                                            <RadzenBadge BadgeStyle="BadgeStyle.Success" IsPill="true" Text="On time" Variant="Variant.Flat" Style="font-size: 0.65rem;" />
+                                                        }
+                                                        <RadzenText TextStyle="TextStyle.Caption" class="rz-mb-0 rz-color-secondary">@occ.CompletedAt?.LocalDateTime.ToString("MMM dd")</RadzenText>
+                                                    </RadzenStack>
+                                                </RadzenStack>
+                                            }
                                         </RadzenStack>
-                                    }
-                                </Template>
-                            </RadzenDataGridColumn>
-                        </Columns>
-                    </RadzenDataGrid>
+                                    </RadzenFieldset>
+                                }
+                            }
+                        </RadzenStack>
+                    </RadzenCard>
+                </RadzenTabsItem>
+
+                @* Financial Summary Tab — only shown when auto-bill is enabled *@
+                @if (Task.AutoCreateBill)
+                {
+                    <RadzenTabsItem Text="@($"Finances ({LinkedBills.Count})")" Icon="account_balance">
+                        <RadzenCard Variant="Variant.Outlined" class="rz-p-4">
+                            <RadzenStack Orientation="Orientation.Vertical" Gap="1.25rem">
+                                @if (LinkedBills.Count == 0)
+                                {
+                                    <EmptyState Icon="account_balance" Title="No bills yet" Description="Complete occurrences to generate bills and see financial data." />
+                                }
+                                else
+                                {
+                                    @* Financial summary stats *@
+                                    <RadzenRow Gap="1rem" RowGap="1rem">
+                                        <RadzenColumn Size="12" SizeSM="6" SizeLG="3">
+                                            <StatCard Title="Total Billed" Value="@($"${TotalBilled:N2}")" Icon="payments" IconColor="var(--rz-primary)" />
+                                        </RadzenColumn>
+                                        <RadzenColumn Size="12" SizeSM="6" SizeLG="3">
+                                            <StatCard Title="Avg / Occurrence" Value="@($"${AveragePerOccurrence:N2}")" Icon="analytics" IconColor="var(--rz-info)" />
+                                        </RadzenColumn>
+                                        <RadzenColumn Size="12" SizeSM="6" SizeLG="3">
+                                            <StatCard Title="Fully Paid" Value="@FullyPaidBillCount.ToString()" Icon="check_circle" IconColor="var(--rz-success)" />
+                                        </RadzenColumn>
+                                        <RadzenColumn Size="12" SizeSM="6" SizeLG="3">
+                                            <StatCard Title="Pending Payment" Value="@PendingBillCount.ToString()" Icon="schedule" IconColor="var(--rz-warning)"
+                                                      Subtitle="@($"{PaymentCompletionRate:N0}% completion")" />
+                                        </RadzenColumn>
+                                    </RadzenRow>
+
+                                    @* Payment progress *@
+                                    <RadzenFieldset Text="Payment Progress">
+                                        <RadzenStack Orientation="Orientation.Vertical" Gap="0.75rem">
+                                            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
+                                                <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0">Overall payment completion</RadzenText>
+                                                <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0"><strong>@($"{PaymentCompletionRate:N0}%")</strong></RadzenText>
+                                            </RadzenStack>
+                                            <RadzenProgressBar Value="@PaymentCompletionRate" Max="100"
+                                                               ProgressBarStyle="@(PaymentCompletionRate >= 80 ? ProgressBarStyle.Success : PaymentCompletionRate >= 50 ? ProgressBarStyle.Warning : ProgressBarStyle.Danger)"
+                                                               Style="height: 8px;" />
+                                        </RadzenStack>
+                                    </RadzenFieldset>
+
+                                    @* Bill history *@
+                                    <RadzenFieldset Text="Bill History">
+                                        <RadzenStack Orientation="Orientation.Vertical" Gap="0.375rem">
+                                            @foreach (var bill in LinkedBills.OrderByDescending(b => b.BillDate))
+                                            {
+                                                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween"
+                                                             Style="padding: 0.5rem 0.75rem; background: var(--rz-base-100); border-radius: var(--rz-border-radius); cursor: pointer;"
+                                                             @onclick="@(() => NavigateToBill(bill.Id))">
+                                                    <RadzenStack Orientation="Orientation.Vertical" Gap="0.125rem">
+                                                        <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0"><strong>@bill.Title</strong></RadzenText>
+                                                        <RadzenText TextStyle="TextStyle.Caption" class="rz-mb-0 rz-color-secondary">
+                                                            @bill.Category — @bill.BillDate.LocalDateTime.ToString("MMM dd, yyyy")
+                                                        </RadzenText>
+                                                    </RadzenStack>
+                                                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                                                        <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0" Style="font-weight: 600; font-variant-numeric: tabular-nums;">
+                                                            @bill.Currency@bill.Amount.ToString("N2")
+                                                        </RadzenText>
+                                                        @if (bill.PaidSplits == bill.TotalSplits && bill.TotalSplits > 0)
+                                                        {
+                                                            <RadzenBadge BadgeStyle="BadgeStyle.Success" IsPill="true" Text="Paid" Variant="Variant.Flat" Style="font-size: 0.65rem;" />
+                                                        }
+                                                        else
+                                                        {
+                                                            <RadzenBadge BadgeStyle="BadgeStyle.Warning" IsPill="true" Text="@($"{bill.PaidSplits}/{bill.TotalSplits}")" Variant="Variant.Flat" Style="font-size: 0.65rem;" />
+                                                        }
+                                                        <RadzenIcon Icon="chevron_right" Style="font-size: 1rem; color: var(--rz-text-secondary-color);" />
+                                                    </RadzenStack>
+                                                </RadzenStack>
+                                            }
+                                        </RadzenStack>
+                                    </RadzenFieldset>
+                                }
+                            </RadzenStack>
+                        </RadzenCard>
+                    </RadzenTabsItem>
                 }
-            </RadzenStack>
-        </RadzenCard>
+            </Tabs>
+        </RadzenTabs>
     }
 </RadzenStack>

@@ -24,6 +24,17 @@
         <ErrorAlert Problem="@Error" OnRetry="LoadBillsAsync" />
     }
 
+    @* Payment status tabs *@
+    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.Center">
+        <RadzenSelectBar TValue="BillPaymentFilter" @bind-Value="@PaymentFilter" Change="@OnPaymentFilterChanged" Size="ButtonSize.Small">
+            <Items>
+                <RadzenSelectBarItem Text="All Bills" Value="BillPaymentFilter.All" Icon="list" />
+                <RadzenSelectBarItem Text="Unpaid" Value="BillPaymentFilter.Unpaid" Icon="schedule" />
+                <RadzenSelectBarItem Text="Paid" Value="BillPaymentFilter.Paid" Icon="check_circle" />
+            </Items>
+        </RadzenSelectBar>
+    </RadzenStack>
+
     @* Filter bar *@
     <BillFilterBar @bind-SearchTerm="SearchTerm"
                    @bind-SelectedCategory="SelectedCategory"
@@ -33,21 +44,21 @@
                    OnClear="OnClearFiltersAsync" />
 
     @* Data grid *@
-    @if (IsLoading && BillData.Items.Count == 0)
+    @if (IsLoading && FilteredBillData.Items.Count == 0)
     {
         <LoadingIndicator Text="Loading bills…" />
     }
-    else if (!IsLoading && BillData.Items.Count == 0)
+    else if (!IsLoading && FilteredBillData.Items.Count == 0)
     {
         <EmptyState Icon="receipt_long"
                     Title="No bills found"
-                    Description="@(SearchTerm is not null || SelectedCategory.HasValue ? "Try adjusting your filters." : "Create your first bill to start tracking expenses.")"
-                    ActionText="@(SearchTerm is null && !SelectedCategory.HasValue ? "Create Bill" : null)"
+                    Description="@(SearchTerm is not null || SelectedCategory.HasValue || PaymentFilter != BillPaymentFilter.All ? "Try adjusting your filters." : "Create your first bill to start tracking expenses.")"
+                    ActionText="@(SearchTerm is null && !SelectedCategory.HasValue && PaymentFilter == BillPaymentFilter.All ? "Create Bill" : null)"
                     OnAction="CreateBillAsync" />
     }
     else
     {
-        <BillDataGrid Data="@BillData"
+        <BillDataGrid Data="@FilteredBillData"
                       IsLoading="@IsLoading"
                       PageSize="@PageSize"
                       OnLoadData="OnLoadDataAsync"

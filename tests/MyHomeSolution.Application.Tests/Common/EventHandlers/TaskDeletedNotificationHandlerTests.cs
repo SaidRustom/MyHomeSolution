@@ -29,7 +29,7 @@ public sealed class TaskDeletedNotificationHandlerTests : IDisposable
         using var context = _factory.CreateContext();
         var handler = new TaskDeletedNotificationHandler(context, _realtimeService, _dateTimeProvider);
 
-        await handler.Handle(new TaskDeletedEvent(task.Id), CancellationToken.None);
+        await handler.Handle(new TaskDeletedEvent(task.Id, task.Title, 0, 0, []), CancellationToken.None);
 
         using var assertContext = _factory.CreateContext();
         var notification = await assertContext.Notifications.FirstOrDefaultAsync(n => n.ToUserId == "assignee-id");
@@ -47,7 +47,7 @@ public sealed class TaskDeletedNotificationHandlerTests : IDisposable
         using var context = _factory.CreateContext();
         var handler = new TaskDeletedNotificationHandler(context, _realtimeService, _dateTimeProvider);
 
-        await handler.Handle(new TaskDeletedEvent(task.Id), CancellationToken.None);
+        await handler.Handle(new TaskDeletedEvent(task.Id, task.Title, 0, 0, []), CancellationToken.None);
 
         using var assertContext = _factory.CreateContext();
         var count = await assertContext.Notifications.CountAsync();
@@ -62,7 +62,7 @@ public sealed class TaskDeletedNotificationHandlerTests : IDisposable
         using var context = _factory.CreateContext();
         var handler = new TaskDeletedNotificationHandler(context, _realtimeService, _dateTimeProvider);
 
-        await handler.Handle(new TaskDeletedEvent(task.Id), CancellationToken.None);
+        await handler.Handle(new TaskDeletedEvent(task.Id, task.Title, 0, 0, []), CancellationToken.None);
 
         using var assertContext = _factory.CreateContext();
         var count = await assertContext.Notifications.CountAsync();
@@ -76,7 +76,7 @@ public sealed class TaskDeletedNotificationHandlerTests : IDisposable
         var handler = new TaskDeletedNotificationHandler(context, _realtimeService, _dateTimeProvider);
 
         var act = () => handler.Handle(
-            new TaskDeletedEvent(Guid.CreateVersion7()), CancellationToken.None);
+            new TaskDeletedEvent(Guid.CreateVersion7(), "Unknown", 0, 0, []), CancellationToken.None);
 
         await act.Should().NotThrowAsync();
     }

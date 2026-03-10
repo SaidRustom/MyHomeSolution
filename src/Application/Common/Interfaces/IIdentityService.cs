@@ -60,4 +60,7 @@ public interface IIdentityService
 
     Task<bool> IsEmailConfirmedAsync(
         string userId, CancellationToken cancellationToken = default);
+
+    Task<(IdentityResultDto Result, string? Email, string? UserName)> DeleteUserAsync(
+        string userId, CancellationToken cancellationToken = default);
 }

@@ -22,11 +22,11 @@ public sealed class TaskDeletedEventHandlerTests
     }
 
     [Fact]
-    public async Task Handle_ShouldSendTaskNotification_WithNullTitle()
+    public async Task Handle_ShouldSendTaskNotification_WithTitle()
     {
         var handler = new TaskDeletedEventHandler(_notificationService, _dateTimeProvider);
         var taskId = Guid.CreateVersion7();
-        var @event = new TaskDeletedEvent(taskId);
+        var @event = new TaskDeletedEvent(taskId, "Test Task", 0, 0, []);
 
         await handler.Handle(@event, CancellationToken.None);
 
@@ -34,7 +34,7 @@ public sealed class TaskDeletedEventHandlerTests
             Arg.Is<TaskNotification>(n =>
                 n.EventType == nameof(TaskDeletedEvent) &&
                 n.TaskId == taskId &&
-                n.Title == null &&
+                n.Title == "Test Task" &&
                 n.OccurredAt == new DateTimeOffset(2025, 6, 2, 8, 0, 0, TimeSpan.Zero)),
             Arg.Any<CancellationToken>());
     }

@@ -13,13 +13,19 @@ public sealed record BillDetailDto
     public DateTimeOffset BillDate { get; init; }
     public required string PaidByUserId { get; init; }
     public string? PaidByUserFullName { get; init; }
+    public string? PaidByUserAvatarUrl { get; init; }
     public string? ReceiptUrl { get; init; }
     public Guid? RelatedEntityId { get; init; }
     public string? RelatedEntityType { get; init; }
+    public string? RelatedTaskName { get; init; }
+    public Guid? RelatedTaskId { get; init; }
+    public Guid? RelatedOccurrenceId { get; init; }
     public string? Notes { get; init; }
     public IReadOnlyList<BillSplitDto> Splits { get; init; } = [];
     public IReadOnlyList<BillItemDto> Items { get; init; } = [];
     public DateTimeOffset CreatedAt { get; init; }
+    public string? CreatedByUserId { get; init; }
     public string? CreatedBy { get; init; }
+    public string? CreatedByAvatarUrl { get; init; }
     public DateTimeOffset? LastModifiedAt { get; init; }
 }

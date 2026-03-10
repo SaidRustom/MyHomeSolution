@@ -1,8 +1,12 @@
+using System.Security.Claims;
 using BlazorUI.Components.Bills;
 using BlazorUI.Models.Bills;
 using BlazorUI.Models.Common;
+using BlazorUI.Models.Enums;
+using BlazorUI.Models.Realtime;
 using BlazorUI.Services.Contracts;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Authorization;
 using Radzen;
 
 namespace BlazorUI.Pages.Bills;
@@ -24,6 +28,15 @@ public partial class BillDetail : IDisposable
     [Inject]
     NotificationService NotificationService { get; set; } = default!;
 
+    [Inject]
+    IShareService ShareService { get; set; } = default!;
+
+    [Inject]
+    INotificationHubClient NotificationHubClient { get; set; } = default!;
+
+    [CascadingParameter]
+    private Task<AuthenticationState> AuthState { get; set; } = default!;
+
     BillDetailDto? Bill { get; set; }
 
     bool IsLoading { get; set; }
@@ -32,10 +45,21 @@ public partial class BillDetail : IDisposable
 
     ApiProblemDetails? Error { get; set; }
 
+    string? _currentUserId;
+    bool _isOwner;
+    bool _canEdit;
+
     CancellationTokenSource _cts = new();
 
     protected override async Task OnParametersSetAsync()
     {
+        var state = await AuthState;
+        _currentUserId = state.User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+            ?? state.User.FindFirst("sub")?.Value;
+
+        NotificationHubClient.OnUserNotification -= HandleRealtimeNotification;
+        NotificationHubClient.OnUserNotification += HandleRealtimeNotification;
+
         await LoadBillAsync();
     }
 
@@ -49,6 +73,21 @@ public partial class BillDetail : IDisposable
         if (result.IsSuccess)
         {
             Bill = result.Value;
+            _isOwner = !string.IsNullOrEmpty(_currentUserId)
+                && string.Equals(Bill.CreatedByUserId, _currentUserId, StringComparison.OrdinalIgnoreCase);
+
+            // Owners always can edit; shared users with Edit permission can edit too
+            _canEdit = _isOwner;
+            if (!_canEdit && !string.IsNullOrEmpty(_currentUserId))
+            {
+                var sharesResult = await ShareService.GetSharesAsync("Bill", Bill.Id, _cts.Token);
+                if (sharesResult.IsSuccess)
+                {
+                    _canEdit = sharesResult.Value.Any(s =>
+                        s.SharedWithUserId == _currentUserId
+                        && s.Permission == SharePermission.Edit);
+                }
+            }
         }
         else
         {
@@ -172,7 +211,21 @@ public partial class BillDetail : IDisposable
 
     public void Dispose()
     {
+        NotificationHubClient.OnUserNotification -= HandleRealtimeNotification;
         _cts.Cancel();
         _cts.Dispose();
+    }
+
+    void HandleRealtimeNotification(UserPushNotification push)
+    {
+        if (string.Equals(push.RelatedEntityType, "Bill", StringComparison.OrdinalIgnoreCase)
+            && (push.RelatedEntityId == Id || push.RelatedEntityId is null))
+        {
+            InvokeAsync(async () =>
+            {
+                await LoadBillAsync();
+                StateHasChanged();
+            });
+        }
     }
 }

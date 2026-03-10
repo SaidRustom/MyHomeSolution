@@ -1,15 +1,24 @@
 using FluentAssertions;
 using MyHomeSolution.Application.Common.Exceptions;
+using MyHomeSolution.Application.Common.Interfaces;
 using MyHomeSolution.Application.Features.Tasks.Queries.GetTaskById;
 using MyHomeSolution.Application.Tests.Testing;
 using MyHomeSolution.Domain.Entities;
 using MyHomeSolution.Domain.Enums;
+using NSubstitute;
 
 namespace MyHomeSolution.Application.Tests.Features.Tasks.Queries.GetTaskById;
 
 public sealed class GetTaskByIdQueryHandlerTests : IDisposable
 {
     private readonly TestDbContextFactory _factory = new();
+    private readonly IIdentityService _identityService = Substitute.For<IIdentityService>();
+
+    public GetTaskByIdQueryHandlerTests()
+    {
+        _identityService.GetUserFullNamesByIdsAsync(Arg.Any<IEnumerable<string>>(), Arg.Any<CancellationToken>())
+            .Returns(new Dictionary<string, string>());
+    }
 
     [Fact]
     public async Task Handle_ShouldReturnTaskDetail()
@@ -17,7 +26,7 @@ public sealed class GetTaskByIdQueryHandlerTests : IDisposable
         var taskId = await SeedSimpleTask();
 
         using var context = _factory.CreateContext();
-        var handler = new GetTaskByIdQueryHandler(context);
+        var handler = new GetTaskByIdQueryHandler(context, _identityService);
 
         var result = await handler.Handle(new GetTaskByIdQuery(taskId), CancellationToken.None);
 
@@ -39,7 +48,7 @@ public sealed class GetTaskByIdQueryHandlerTests : IDisposable
         var taskId = await SeedRecurringTask();
 
         using var context = _factory.CreateContext();
-        var handler = new GetTaskByIdQueryHandler(context);
+        var handler = new GetTaskByIdQueryHandler(context, _identityService);
 
         var result = await handler.Handle(new GetTaskByIdQuery(taskId), CancellationToken.None);
 
@@ -57,7 +66,7 @@ public sealed class GetTaskByIdQueryHandlerTests : IDisposable
         var taskId = await SeedTaskWithOccurrences();
 
         using var context = _factory.CreateContext();
-        var handler = new GetTaskByIdQueryHandler(context);
+        var handler = new GetTaskByIdQueryHandler(context, _identityService);
 
         var result = await handler.Handle(new GetTaskByIdQuery(taskId), CancellationToken.None);
 
@@ -70,7 +79,7 @@ public sealed class GetTaskByIdQueryHandlerTests : IDisposable
     public async Task Handle_ShouldThrowNotFoundException_WhenTaskDoesNotExist()
     {
         using var context = _factory.CreateContext();
-        var handler = new GetTaskByIdQueryHandler(context);
+        var handler = new GetTaskByIdQueryHandler(context, _identityService);
 
         var act = () => handler.Handle(
             new GetTaskByIdQuery(Guid.CreateVersion7()), CancellationToken.None);
@@ -93,7 +102,7 @@ public sealed class GetTaskByIdQueryHandlerTests : IDisposable
         await seedContext.SaveChangesAsync();
 
         using var context = _factory.CreateContext();
-        var handler = new GetTaskByIdQueryHandler(context);
+        var handler = new GetTaskByIdQueryHandler(context, _identityService);
 
         var act = () => handler.Handle(
             new GetTaskByIdQuery(task.Id), CancellationToken.None);

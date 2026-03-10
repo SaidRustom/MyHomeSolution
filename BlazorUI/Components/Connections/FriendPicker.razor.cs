@@ -43,6 +43,12 @@ public partial class FriendPicker
     [Parameter]
     public IEnumerable<string>? ExcludedUserIds { get; set; }
 
+    /// <summary>
+    /// When set, injects the current user as the first option in the dropdown.
+    /// </summary>
+    [Parameter]
+    public UserDto? CurrentUser { get; set; }
+
     IEnumerable<UserDto> _allUsers = [];
     IEnumerable<UserDto> _users = [];
 
@@ -63,7 +69,15 @@ public partial class FriendPicker
 
         if (result.IsSuccess)
         {
-            _allUsers = result.Value;
+            var users = result.Value.ToList();
+
+            // Inject current user at the top if requested and not already present
+            if (CurrentUser is not null && !users.Any(u => u.Id == CurrentUser.Id))
+            {
+                users.Insert(0, CurrentUser);
+            }
+
+            _allUsers = users;
             ApplyExclusions();
         }
     }

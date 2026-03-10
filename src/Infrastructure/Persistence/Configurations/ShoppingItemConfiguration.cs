@@ -25,5 +25,7 @@ public sealed class ShoppingItemConfiguration : IEntityTypeConfiguration<Shoppin
 
         builder.HasIndex(si => si.ShoppingListId);
         builder.HasIndex(si => new { si.ShoppingListId, si.SortOrder });
+
+        builder.HasQueryFilter(si => !si.ShoppingList.IsDeleted);
     }
 }

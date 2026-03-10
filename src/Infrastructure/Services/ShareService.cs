@@ -14,8 +14,18 @@ public sealed class ShareService(IApplicationDbContext dbContext) : IShareServic
         if (await IsOwnerAsync(entityType, entityId, userId, cancellationToken))
             return true;
 
-        return await HasSharePermissionAsync(
-            entityType, entityId, userId, requiredPermission, cancellationToken);
+        if (await HasSharePermissionAsync(
+            entityType, entityId, userId, requiredPermission, cancellationToken))
+            return true;
+
+        // Bills have additional access via splits and PaidByUserId
+        if (entityType == EntityTypes.Bill)
+        {
+            if (await HasBillAccessAsync(entityId, userId, cancellationToken))
+                return true;
+        }
+
+        return false;
     }
 
     private async Task<bool> IsOwnerAsync(
@@ -50,6 +60,18 @@ public sealed class ShareService(IApplicationDbContext dbContext) : IShareServic
             s.SharedWithUserId == userId &&
             !s.IsDeleted &&
             s.Permission >= requiredPermission,
+            cancellationToken);
+    }
+
+    private async Task<bool> HasBillAccessAsync(
+        Guid billId, string userId, CancellationToken cancellationToken)
+    {
+        // User is the payer or has a split in this bill
+        return await dbContext.Bills.AnyAsync(
+            b => b.Id == billId && !b.IsDeleted && b.PaidByUserId == userId,
+            cancellationToken)
+        || await dbContext.BillSplits.AnyAsync(
+            s => s.BillId == billId && s.UserId == userId,
             cancellationToken);
     }
 }

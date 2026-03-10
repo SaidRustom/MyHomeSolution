@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using MyHomeSolution.Domain.Common;
 using MyHomeSolution.Domain.Enums;
 
@@ -5,6 +6,9 @@ namespace MyHomeSolution.Domain.Entities;
 
 public sealed class HouseholdTask : BaseAuditableEntity, IBillable
 {
+    [Timestamp]
+    public byte[] RowVersion { get; set; } = default!;
+
     public string Title { get; set; } = default!;
     public string? Description { get; set; }
     public TaskPriority Priority { get; set; }
@@ -21,6 +25,7 @@ public sealed class HouseholdTask : BaseAuditableEntity, IBillable
     public string? DefaultBillCurrency { get; set; }
     public BillCategory? DefaultBillCategory { get; set; }
     public string? DefaultBillTitle { get; set; }
+    public string? DefaultBillPaidByUserId { get; set; }
 
     public RecurrencePattern? RecurrencePattern { get; set; }
     public ICollection<TaskOccurrence> Occurrences { get; set; } = [];

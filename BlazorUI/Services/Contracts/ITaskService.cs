@@ -17,6 +17,9 @@ public interface ITaskService
         DateOnly? fromDate = null,
         DateOnly? toDate = null,
         bool? notCompletedOnly = null,
+        bool? assignedByMe = null,
+        string? sortBy = null,
+        string? sortDirection = null,
         CancellationToken cancellationToken = default);
 
     Task<ApiResult<IReadOnlyCollection<TodayTaskDto>>> GetTodayTasksAsync(

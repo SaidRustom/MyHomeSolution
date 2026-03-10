@@ -1,12 +1,14 @@
 using System.Diagnostics;
 using System.Text.Json;
 using MyHomeSolution.Application.Common.Exceptions;
+using MyHomeSolution.Application.Common.Interfaces;
 
 namespace MyHomeSolution.Api.Middleware;
 
 public sealed class ExceptionHandlingMiddleware(
     RequestDelegate next,
-    ILogger<ExceptionHandlingMiddleware> logger)
+    ILogger<ExceptionHandlingMiddleware> logger,
+    IServiceScopeFactory scopeFactory)
 {
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -92,6 +94,38 @@ public sealed class ExceptionHandlingMiddleware(
         };
 
         await context.Response.WriteAsync(JsonSerializer.Serialize(problem, JsonOptions));
+
+        // Persist the exception to the database for the admin dashboard
+        await PersistExceptionAsync(context, exception, statusCode, traceId,
+            statusCode < 500);
+    }
+
+    private async Task PersistExceptionAsync(
+        HttpContext context, Exception exception, int statusCode,
+        string traceId, bool isHandled)
+    {
+        try
+        {
+            await using var scope = scopeFactory.CreateAsyncScope();
+            var exceptionLogService = scope.ServiceProvider.GetRequiredService<IExceptionLogService>();
+
+            var userId = context.User?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+            await exceptionLogService.LogAsync(
+                exception,
+                thrownByService: "ExceptionHandlingMiddleware",
+                requestPath: context.Request.Path,
+                httpMethod: context.Request.Method,
+                userId: userId,
+                traceId: traceId,
+                httpStatusCode: statusCode,
+                isHandled: isHandled,
+                cancellationToken: CancellationToken.None);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to persist exception log for TraceId: {TraceId}", traceId);
+        }
     }
 
     private sealed class ProblemResponse

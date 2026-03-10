@@ -22,6 +22,9 @@ public sealed class TaskService(HttpClient httpClient)
         DateOnly? fromDate = null,
         DateOnly? toDate = null,
         bool? notCompletedOnly = null,
+        bool? assignedByMe = null,
+        string? sortBy = null,
+        string? sortDirection = null,
         CancellationToken cancellationToken = default)
     {
         var query = BuildQueryString(
@@ -34,7 +37,10 @@ public sealed class TaskService(HttpClient httpClient)
             ("searchTerm", searchTerm),
             ("fromDate", fromDate?.ToString("O")),
             ("toDate", toDate?.ToString("O")),
-            ("notCompletedOnly", notCompletedOnly?.ToString()));
+            ("notCompletedOnly", notCompletedOnly?.ToString()),
+            ("assignedByMe", assignedByMe?.ToString()),
+            ("sortBy", sortBy),
+            ("sortDirection", sortDirection));
 
         return GetAsync<PaginatedList<TaskBriefDto>>($"{BasePath}{query}", cancellationToken);
     }

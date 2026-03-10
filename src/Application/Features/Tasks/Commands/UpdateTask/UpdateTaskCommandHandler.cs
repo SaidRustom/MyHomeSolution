@@ -1,5 +1,6 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using MyHomeSolution.Application.Common.Constants;
 using MyHomeSolution.Application.Common.Events;
 using MyHomeSolution.Application.Common.Exceptions;
 using MyHomeSolution.Application.Common.Interfaces;
@@ -10,12 +11,15 @@ namespace MyHomeSolution.Application.Features.Tasks.Commands.UpdateTask;
 
 public sealed class UpdateTaskCommandHandler(
     IApplicationDbContext dbContext,
+    ICurrentUserService currentUserService,
     IOccurrenceScheduler occurrenceScheduler,
     IPublisher publisher)
     : IRequestHandler<UpdateTaskCommand>
 {
     public async Task Handle(UpdateTaskCommand request, CancellationToken cancellationToken)
     {
+        var currentUserId = currentUserService.UserId;
+
         var task = await dbContext.HouseholdTasks
             .Include(t => t.RecurrencePattern!)
                 .ThenInclude(rp => rp.Assignees)
@@ -38,6 +42,7 @@ public sealed class UpdateTaskCommandHandler(
         task.DefaultBillCurrency = request.DefaultBillCurrency;
         task.DefaultBillCategory = request.DefaultBillCategory;
         task.DefaultBillTitle = request.DefaultBillTitle;
+        task.DefaultBillPaidByUserId = request.DefaultBillPaidByUserId;
 
         if (request.IsRecurring && request.RecurrenceType.HasValue && request.RecurrenceStartDate.HasValue)
         {
@@ -72,11 +77,26 @@ public sealed class UpdateTaskCommandHandler(
             recurrenceChanged = true;
         }
 
+        // Auto-share: when task is assigned to another user, ensure they have Edit access
+        await EnsureAssigneeShareAsync(task.Id, task.AssignedToUserId, currentUserId, cancellationToken);
+
+        // Also ensure all recurrence assignees have shares
+        if (request.IsRecurring && request.AssigneeUserIds is { Count: > 0 })
+        {
+            foreach (var assigneeId in request.AssigneeUserIds.Where(id =>
+                !string.IsNullOrEmpty(id) && id != currentUserId))
+            {
+                await EnsureAssigneeShareAsync(task.Id, assigneeId, currentUserId, cancellationToken);
+            }
+        }
+
+        // Persist task + pattern changes BEFORE syncing occurrences.
+        // The scheduler opens its own DB scope and reads the latest persisted state.
         await dbContext.SaveChangesAsync(cancellationToken);
 
         if (recurrenceChanged)
         {
-            await occurrenceScheduler.RegenerateOccurrencesAsync(task.Id, cancellationToken);
+            await occurrenceScheduler.SyncOccurrencesAsync(task.Id, cancellationToken);
         }
 
         await publisher.Publish(new TaskUpdatedEvent(task.Id, task.Title), cancellationToken);
@@ -136,5 +156,31 @@ public sealed class UpdateTaskCommandHandler(
         }
 
         pattern.LastAssigneeIndex = -1;
+    }
+
+    private async Task EnsureAssigneeShareAsync(
+        Guid taskId, string? assigneeId, string? currentUserId,
+        CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrEmpty(assigneeId) || string.IsNullOrEmpty(currentUserId)
+            || assigneeId == currentUserId)
+            return;
+
+        var alreadyShared = await dbContext.EntityShares
+            .AnyAsync(s => s.EntityType == EntityTypes.HouseholdTask
+                && s.EntityId == taskId
+                && s.SharedWithUserId == assigneeId
+                && !s.IsDeleted, cancellationToken);
+
+        if (!alreadyShared)
+        {
+            dbContext.EntityShares.Add(new EntityShare
+            {
+                EntityType = EntityTypes.HouseholdTask,
+                EntityId = taskId,
+                SharedWithUserId = assigneeId,
+                Permission = SharePermission.Edit
+            });
+        }
     }
 }

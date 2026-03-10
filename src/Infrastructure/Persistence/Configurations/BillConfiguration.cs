@@ -10,6 +10,9 @@ public sealed class BillConfiguration : IEntityTypeConfiguration<Bill>
     {
         builder.HasKey(b => b.Id);
 
+        builder.Property(b => b.RowVersion)
+            .IsRowVersion();
+
         builder.Property(b => b.Title)
             .HasMaxLength(256)
             .IsRequired();

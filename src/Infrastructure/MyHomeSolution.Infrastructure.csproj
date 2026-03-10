@@ -7,17 +7,22 @@
   </PropertyGroup>
 
   <ItemGroup>
+	<InternalsVisibleTo Include="MyHomeSolution.Infrastructure.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
 	<FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
 
   <ItemGroup>
 	<PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.*-*" />
-	<PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="10.0.*-*" />
-	<PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.*-*" />
-	<PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="10.0.*-*">
+	<PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="10.0.3.0" />
+	<PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.3.0" />
+	<PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="10.0.3.0">
 	  <PrivateAssets>all</PrivateAssets>
 	  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 	</PackageReference>
+	<PackageReference Include="RestSharp" Version="114.0.0" />
   </ItemGroup>
 
   <ItemGroup>

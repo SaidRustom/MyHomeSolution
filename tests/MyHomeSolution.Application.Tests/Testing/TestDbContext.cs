@@ -23,6 +23,9 @@ public sealed class TestDbContext(DbContextOptions<TestDbContext> options)
     public DbSet<ShoppingList> ShoppingLists => Set<ShoppingList>();
     public DbSet<ShoppingItem> ShoppingItems => Set<ShoppingItem>();
     public DbSet<UserConnection> UserConnections => Set<UserConnection>();
+    public DbSet<ExceptionLog> ExceptionLogs => Set<ExceptionLog>();
+    public DbSet<BackgroundServiceDefinition> BackgroundServiceDefinitions => Set<BackgroundServiceDefinition>();
+    public DbSet<BackgroundServiceLog> BackgroundServiceLogs => Set<BackgroundServiceLog>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -55,6 +58,7 @@ public sealed class TestDbContext(DbContextOptions<TestDbContext> options)
             entity.Property(t => t.DefaultBillTitle).HasMaxLength(256);
             entity.Ignore(t => t.AuditLogs);
             entity.Ignore(t => t.Bills);
+            entity.Ignore(t => t.RowVersion);
 
             entity.HasOne(t => t.RecurrencePattern)
                 .WithOne(rp => rp.HouseholdTask)
@@ -72,6 +76,7 @@ public sealed class TestDbContext(DbContextOptions<TestDbContext> options)
             entity.HasKey(rp => rp.Id);
             entity.Property(rp => rp.Interval).IsRequired();
             entity.Property(rp => rp.StartDate).IsRequired();
+            entity.Ignore(rp => rp.RowVersion);
 
             entity.HasMany(rp => rp.Assignees)
                 .WithOne(a => a.RecurrencePattern)
@@ -92,6 +97,7 @@ public sealed class TestDbContext(DbContextOptions<TestDbContext> options)
             entity.Property(o => o.CompletedByUserId).HasMaxLength(450);
             entity.Property(o => o.Notes).HasMaxLength(1000);
             entity.Ignore(o => o.AuditLogs);
+            entity.Ignore(o => o.RowVersion);
 
             entity.HasOne(o => o.Bill)
                 .WithMany()
@@ -151,6 +157,7 @@ public sealed class TestDbContext(DbContextOptions<TestDbContext> options)
             entity.Property(b => b.RelatedEntityType).HasMaxLength(256);
             entity.Property(b => b.Notes).HasMaxLength(2000);
             entity.Ignore(b => b.AuditLogs);
+            entity.Ignore(b => b.RowVersion);
 
             entity.HasMany(b => b.Splits)
                 .WithOne(s => s.Bill)

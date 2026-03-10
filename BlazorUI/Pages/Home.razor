@@ -5,53 +5,60 @@
 
 <PageHeader Title="Home" Subtitle="Welcome to MyHome" />
 
-<RadzenRow Gap="1rem" class="rz-mt-4">
-    <RadzenColumn Size="12" SizeMD="6" SizeLG="4">
-        <RadzenCard>
-            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem">
-                <RadzenIcon Icon="receipt_long" Style="font-size: 2rem; color: var(--rz-primary);" />
-                <RadzenStack Gap="0">
-                    <RadzenText TextStyle="TextStyle.H6" Style="margin: 0;">Bills</RadzenText>
-                    <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-text-secondary-color);">
-                        Track and split household expenses
-                    </RadzenText>
+<RadzenStack Orientation="Orientation.Vertical" Gap="1.25rem" class="rz-mt-4">
+
+    @* Requires Your Attention panel *@
+    <RequiresAttentionPanel />
+
+    @* Quick links *@
+    <RadzenRow Gap="1rem" RowGap="1rem">
+        <RadzenColumn Size="12" SizeMD="6" SizeLG="4">
+            <RadzenCard>
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem">
+                    <RadzenIcon Icon="receipt_long" Style="font-size: 2rem; color: var(--rz-primary);" />
+                    <RadzenStack Gap="0">
+                        <RadzenText TextStyle="TextStyle.H6" Style="margin: 0;">Bills</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-text-secondary-color);">
+                            Track and split household expenses
+                        </RadzenText>
+                    </RadzenStack>
                 </RadzenStack>
-            </RadzenStack>
-            <RadzenButton Text="View Bills" Icon="arrow_forward" Variant="Variant.Text"
-                          ButtonStyle="ButtonStyle.Primary" class="rz-mt-2"
-                          Click="@(() => Navigation.NavigateTo("/bills"))" />
-        </RadzenCard>
-    </RadzenColumn>
-    <RadzenColumn Size="12" SizeMD="6" SizeLG="4">
-        <RadzenCard>
-            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem">
-                <RadzenIcon Icon="dashboard" Style="font-size: 2rem; color: var(--rz-primary);" />
-                <RadzenStack Gap="0">
-                    <RadzenText TextStyle="TextStyle.H6" Style="margin: 0;">Dashboard</RadzenText>
-                    <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-text-secondary-color);">
-                        Spending overview and balances
-                    </RadzenText>
+                <RadzenButton Text="View Bills" Icon="arrow_forward" Variant="Variant.Text"
+                              ButtonStyle="ButtonStyle.Primary" class="rz-mt-2"
+                              Click="@(() => Navigation.NavigateTo("/bills"))" />
+            </RadzenCard>
+        </RadzenColumn>
+        <RadzenColumn Size="12" SizeMD="6" SizeLG="4">
+            <RadzenCard>
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem">
+                    <RadzenIcon Icon="dashboard" Style="font-size: 2rem; color: var(--rz-primary);" />
+                    <RadzenStack Gap="0">
+                        <RadzenText TextStyle="TextStyle.H6" Style="margin: 0;">Dashboard</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-text-secondary-color);">
+                            Spending overview and balances
+                        </RadzenText>
+                    </RadzenStack>
                 </RadzenStack>
-            </RadzenStack>
-            <RadzenButton Text="Open Dashboard" Icon="arrow_forward" Variant="Variant.Text"
-                          ButtonStyle="ButtonStyle.Primary" class="rz-mt-2"
-                          Click="@(() => Navigation.NavigateTo("/bills/dashboard"))" />
-        </RadzenCard>
-    </RadzenColumn>
-    <RadzenColumn Size="12" SizeMD="6" SizeLG="4">
-        <RadzenCard>
-            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem">
-                <RadzenIcon Icon="settings" Style="font-size: 2rem; color: var(--rz-primary);" />
-                <RadzenStack Gap="0">
-                    <RadzenText TextStyle="TextStyle.H6" Style="margin: 0;">Settings</RadzenText>
-                    <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-text-secondary-color);">
-                        Theme, profile, and preferences
-                    </RadzenText>
+                <RadzenButton Text="Open Dashboard" Icon="arrow_forward" Variant="Variant.Text"
+                              ButtonStyle="ButtonStyle.Primary" class="rz-mt-2"
+                              Click="@(() => Navigation.NavigateTo("/bills/dashboard"))" />
+            </RadzenCard>
+        </RadzenColumn>
+        <RadzenColumn Size="12" SizeMD="6" SizeLG="4">
+            <RadzenCard>
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem">
+                    <RadzenIcon Icon="settings" Style="font-size: 2rem; color: var(--rz-primary);" />
+                    <RadzenStack Gap="0">
+                        <RadzenText TextStyle="TextStyle.H6" Style="margin: 0;">Settings</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-text-secondary-color);">
+                            Theme, profile, and preferences
+                        </RadzenText>
+                    </RadzenStack>
                 </RadzenStack>
-            </RadzenStack>
-            <RadzenButton Text="Settings" Icon="arrow_forward" Variant="Variant.Text"
-                          ButtonStyle="ButtonStyle.Primary" class="rz-mt-2"
-                          Click="@(() => Navigation.NavigateTo("/settings"))" />
-        </RadzenCard>
-    </RadzenColumn>
-</RadzenRow>
+                <RadzenButton Text="Settings" Icon="arrow_forward" Variant="Variant.Text"
+                              ButtonStyle="ButtonStyle.Primary" class="rz-mt-2"
+                              Click="@(() => Navigation.NavigateTo("/settings"))" />
+            </RadzenCard>
+        </RadzenColumn>
+    </RadzenRow>
+</RadzenStack>

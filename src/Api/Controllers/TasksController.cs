@@ -31,6 +31,9 @@ public sealed class TasksController(ISender sender) : ControllerBase
         [FromQuery] DateOnly? fromDate = null,
         [FromQuery] DateOnly? toDate = null,
         [FromQuery] bool? notCompletedOnly = null,
+        [FromQuery] bool? assignedByMe = null,
+        [FromQuery] string? sortBy = null,
+        [FromQuery] string? sortDirection = null,
         CancellationToken cancellationToken = default)
     {
         var query = new GetTasksQuery
@@ -44,7 +47,10 @@ public sealed class TasksController(ISender sender) : ControllerBase
             SearchTerm = searchTerm,
             FromDate = fromDate,
             ToDate = toDate,
-            NotCompletedOnly = notCompletedOnly
+            NotCompletedOnly = notCompletedOnly,
+            AssignedByMe = assignedByMe,
+            SortBy = sortBy,
+            SortDirection = sortDirection
         };
 
         var result = await sender.Send(query, cancellationToken);

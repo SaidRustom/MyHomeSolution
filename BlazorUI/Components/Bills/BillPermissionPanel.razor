@@ -1,0 +1,92 @@
+@using BlazorUI.Models.Enums
+@using BlazorUI.Models.Shares
+
+<RadzenCard Variant="Variant.Outlined">
+    <RadzenStack Orientation="Orientation.Vertical" Gap="0.75rem" class="rz-p-2">
+        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
+            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                <RadzenIcon Icon="lock" Style="color: var(--rz-primary);" />
+                <RadzenText TextStyle="TextStyle.Subtitle1" class="rz-mb-0"><strong>Permissions</strong></RadzenText>
+                @if (_shares is not null)
+                {
+                    <RadzenBadge BadgeStyle="BadgeStyle.Info" IsPill="true" Text="@($"{_shares.Count}")" />
+                }
+            </RadzenStack>
+            @if (CanEdit)
+            {
+                <RadzenButton Text="Share" Icon="person_add" ButtonStyle="ButtonStyle.Primary" Variant="Variant.Outlined" Size="ButtonSize.Small" Click="OpenShareDialogAsync" />
+            }
+        </RadzenStack>
+
+        @* Owner row *@
+        <div style="padding: 0.5rem 0; border-bottom: 1px solid var(--rz-base-200);">
+            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                    <RadzenIcon Icon="person" Style="font-size: 1.25rem; color: var(--rz-primary);" />
+                    <RadzenStack Orientation="Orientation.Vertical" Gap="0">
+                        <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0" Style="font-weight: 600;">
+                            @(OwnerName ?? OwnerId ?? "Unknown")
+                        </RadzenText>
+                        <RadzenText TextStyle="TextStyle.Caption" class="rz-color-secondary rz-mb-0">Owner</RadzenText>
+                    </RadzenStack>
+                </RadzenStack>
+                <RadzenBadge BadgeStyle="BadgeStyle.Warning" IsPill="true" Text="Owner" Variant="Variant.Flat" />
+            </RadzenStack>
+        </div>
+
+        @* Shared users *@
+        @if (_shares is not null)
+        {
+            @foreach (var share in _shares)
+            {
+                <div style="padding: 0.5rem 0; border-bottom: 1px solid var(--rz-base-100);">
+                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                            <RadzenIcon Icon="person_outline" Style="font-size: 1.25rem; color: var(--rz-text-secondary-color);" />
+                            <RadzenStack Orientation="Orientation.Vertical" Gap="0">
+                                <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0" Style="font-weight: 600;">
+                                    @(share.SharedWithUserFullName ?? share.SharedWithUserId)
+                                </RadzenText>
+                                <RadzenText TextStyle="TextStyle.Caption" class="rz-color-secondary rz-mb-0">
+                                    Shared @share.CreatedAt.ToString("MMM dd, yyyy")
+                                </RadzenText>
+                            </RadzenStack>
+                        </RadzenStack>
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.375rem">
+                            @if (CanEdit)
+                            {
+                                <RadzenDropDown TValue="SharePermission"
+                                                Value="@share.Permission"
+                                                ValueChanged="@(async val => await UpdatePermissionAsync(share, val))"
+                                                Data="@PermissionOptions"
+                                                Style="width: 110px;"
+                                                Disabled="@(_busyShareId == share.Id)" />
+                                <RadzenButton Icon="close" Variant="Variant.Text" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.ExtraSmall"
+                                              Click="@(async () => await RevokeShareAsync(share))"
+                                              IsBusy="@(_busyShareId == share.Id)" />
+                            }
+                            else
+                            {
+                                <RadzenBadge BadgeStyle="@(share.Permission == SharePermission.Edit ? BadgeStyle.Success : BadgeStyle.Info)"
+                                             IsPill="true" Text="@share.Permission.ToString()" Variant="Variant.Flat" />
+                            }
+                        </RadzenStack>
+                    </RadzenStack>
+                </div>
+            }
+        }
+
+        @if (IsLoading)
+        {
+            <RadzenStack AlignItems="AlignItems.Center" class="rz-p-2">
+                <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Small" />
+            </RadzenStack>
+        }
+        else if (_shares is { Count: 0 })
+        {
+            <RadzenText TextStyle="TextStyle.Body2" class="rz-color-secondary rz-mb-0 rz-p-2" Style="text-align: center;">
+                Not shared with anyone yet.
+            </RadzenText>
+        }
+    </RadzenStack>
+</RadzenCard>

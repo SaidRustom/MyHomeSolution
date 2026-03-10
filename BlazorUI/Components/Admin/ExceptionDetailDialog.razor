@@ -1,0 +1,191 @@
+<RadzenStack Orientation="Orientation.Vertical" Gap="1.25rem">
+
+    @* Header with severity badge *@
+    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.75rem" Wrap="FlexWrap.Wrap">
+        <RadzenIcon Icon="error_outline" Style="@($"font-size: 1.5rem; color: {Exception.SeverityColor};")" />
+        <RadzenText TextStyle="TextStyle.H6" class="rz-mb-0"><strong>@Exception.ShortExceptionType</strong></RadzenText>
+        <span style="@SeverityBadgeStyle">@Exception.SeverityLabel</span>
+        @if (Exception.IsHandled)
+        {
+            <RadzenBadge BadgeStyle="BadgeStyle.Info" Text="Handled" />
+        }
+        else
+        {
+            <RadzenBadge BadgeStyle="BadgeStyle.Danger" Text="Unhandled" />
+        }
+        @if (Exception.IsAiAnalysed)
+        {
+            <RadzenBadge BadgeStyle="BadgeStyle.Success" Text="AI Analysed" />
+        }
+    </RadzenStack>
+
+    @* Message *@
+    <RadzenCard Variant="Variant.Outlined" class="rz-p-3">
+        <RadzenText TextStyle="TextStyle.Caption" class="rz-mb-1 rz-color-secondary"><strong>MESSAGE</strong></RadzenText>
+        <RadzenText TextStyle="TextStyle.Body1" class="rz-mb-0">@Exception.Message</RadzenText>
+    </RadzenCard>
+
+    @* Metadata grid *@
+    <RadzenCard Variant="Variant.Outlined" class="rz-p-3">
+        <RadzenText TextStyle="TextStyle.Caption" class="rz-mb-2 rz-color-secondary"><strong>DETAILS</strong></RadzenText>
+        <RadzenRow Gap="0.75rem" RowGap="0.5rem">
+            <RadzenColumn Size="6" SizeSM="4">
+                <RadzenText TextStyle="TextStyle.Caption" class="rz-color-secondary rz-mb-0">Occurred At</RadzenText>
+                <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0">@Exception.OccurredAt.LocalDateTime.ToString("yyyy-MM-dd HH:mm:ss")</RadzenText>
+            </RadzenColumn>
+            <RadzenColumn Size="6" SizeSM="4">
+                <RadzenText TextStyle="TextStyle.Caption" class="rz-color-secondary rz-mb-0">Thrown By</RadzenText>
+                <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0">@Exception.ThrownByService</RadzenText>
+            </RadzenColumn>
+            <RadzenColumn Size="6" SizeSM="4">
+                <RadzenText TextStyle="TextStyle.Caption" class="rz-color-secondary rz-mb-0">Full Type</RadzenText>
+                <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0" Style="word-break: break-all;">@Exception.ExceptionType</RadzenText>
+            </RadzenColumn>
+            @if (!string.IsNullOrWhiteSpace(Exception.ClassName))
+            {
+                <RadzenColumn Size="6" SizeSM="4">
+                    <RadzenText TextStyle="TextStyle.Caption" class="rz-color-secondary rz-mb-0">Class</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0">@Exception.ClassName</RadzenText>
+                </RadzenColumn>
+            }
+            @if (!string.IsNullOrWhiteSpace(Exception.MethodName))
+            {
+                <RadzenColumn Size="6" SizeSM="4">
+                    <RadzenText TextStyle="TextStyle.Caption" class="rz-color-secondary rz-mb-0">Method</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0">@Exception.MethodName</RadzenText>
+                </RadzenColumn>
+            }
+            @if (!string.IsNullOrWhiteSpace(Exception.RequestPath))
+            {
+                <RadzenColumn Size="6" SizeSM="4">
+                    <RadzenText TextStyle="TextStyle.Caption" class="rz-color-secondary rz-mb-0">Request</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0">@Exception.HttpMethod @Exception.RequestPath</RadzenText>
+                </RadzenColumn>
+            }
+            @if (Exception.HttpStatusCode.HasValue)
+            {
+                <RadzenColumn Size="6" SizeSM="4">
+                    <RadzenText TextStyle="TextStyle.Caption" class="rz-color-secondary rz-mb-0">HTTP Status</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0">@Exception.HttpStatusCode</RadzenText>
+                </RadzenColumn>
+            }
+            @if (!string.IsNullOrWhiteSpace(Exception.UserId))
+            {
+                <RadzenColumn Size="6" SizeSM="4">
+                    <RadzenText TextStyle="TextStyle.Caption" class="rz-color-secondary rz-mb-0">User ID</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0" Style="word-break: break-all;">@Exception.UserId</RadzenText>
+                </RadzenColumn>
+            }
+            @if (!string.IsNullOrWhiteSpace(Exception.TraceId))
+            {
+                <RadzenColumn Size="6" SizeSM="4">
+                    <RadzenText TextStyle="TextStyle.Caption" class="rz-color-secondary rz-mb-0">Trace ID</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0" Style="word-break: break-all;">@Exception.TraceId</RadzenText>
+                </RadzenColumn>
+            }
+            @if (!string.IsNullOrWhiteSpace(Exception.Environment))
+            {
+                <RadzenColumn Size="6" SizeSM="4">
+                    <RadzenText TextStyle="TextStyle.Caption" class="rz-color-secondary rz-mb-0">Environment</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0">@Exception.Environment</RadzenText>
+                </RadzenColumn>
+            }
+        </RadzenRow>
+    </RadzenCard>
+
+    @* Stack Trace *@
+    @if (!string.IsNullOrWhiteSpace(Exception.StackTrace))
+    {
+        <RadzenCard Variant="Variant.Outlined" class="rz-p-3">
+            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween" class="rz-mb-2">
+                <RadzenText TextStyle="TextStyle.Caption" class="rz-color-secondary rz-mb-0"><strong>STACK TRACE</strong></RadzenText>
+                <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem">
+                    <RadzenButton Text="@(ShowStackTrace ? "Hide" : "Show")" Icon="@(ShowStackTrace ? "expand_less" : "expand_more")"
+                                  Variant="Variant.Text" Size="ButtonSize.ExtraSmall" ButtonStyle="ButtonStyle.Secondary"
+                                  Click="@(() => ShowStackTrace = !ShowStackTrace)" />
+                    <RadzenButton Icon="content_copy" Variant="Variant.Text" Size="ButtonSize.ExtraSmall" ButtonStyle="ButtonStyle.Secondary"
+                                  Click="@(() => CopyToClipboardAsync(Exception.StackTrace))" title="Copy" />
+                </RadzenStack>
+            </RadzenStack>
+            @if (ShowStackTrace)
+            {
+                <pre style="white-space: pre-wrap; word-break: break-all; font-size: 0.75rem; max-height: 300px; overflow-y: auto; background: var(--rz-base-200); padding: 0.75rem; border-radius: 0.375rem; margin: 0;">@Exception.StackTrace</pre>
+            }
+        </RadzenCard>
+    }
+
+    @* Inner Exception *@
+    @if (!string.IsNullOrWhiteSpace(Exception.InnerException))
+    {
+        <RadzenCard Variant="Variant.Outlined" class="rz-p-3">
+            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween" class="rz-mb-2">
+                <RadzenText TextStyle="TextStyle.Caption" class="rz-color-secondary rz-mb-0"><strong>INNER EXCEPTION</strong></RadzenText>
+                <RadzenButton Text="@(ShowInnerException ? "Hide" : "Show")" Icon="@(ShowInnerException ? "expand_less" : "expand_more")"
+                              Variant="Variant.Text" Size="ButtonSize.ExtraSmall" ButtonStyle="ButtonStyle.Secondary"
+                              Click="@(() => ShowInnerException = !ShowInnerException)" />
+            </RadzenStack>
+            @if (ShowInnerException)
+            {
+                <pre style="white-space: pre-wrap; word-break: break-all; font-size: 0.75rem; max-height: 200px; overflow-y: auto; background: var(--rz-base-200); padding: 0.75rem; border-radius: 0.375rem; margin: 0;">@Exception.InnerException</pre>
+            }
+        </RadzenCard>
+    }
+
+    @* AI Analysis *@
+    @if (!Exception.IsAiAnalysed)
+    {
+        <RadzenCard Variant="Variant.Outlined" class="rz-p-3" Style="border-left: 3px solid var(--rz-warning);">
+            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                    <RadzenIcon Icon="psychology" Style="color: var(--rz-warning);" />
+                    <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0">AI analysis has not been performed for this exception.</RadzenText>
+                </RadzenStack>
+                <RadzenButton Text="Analyse with AI" Icon="auto_awesome" ButtonStyle="ButtonStyle.Warning"
+                              Size="ButtonSize.Small" IsBusy="@IsAnalysing"
+                              Click="AnalyseWithAiAsync" />
+            </RadzenStack>
+        </RadzenCard>
+    }
+
+    @if (Exception.IsAiAnalysed && !string.IsNullOrWhiteSpace(Exception.AiAnalysis))
+    {
+        <RadzenCard Variant="Variant.Outlined" class="rz-p-3" Style="border-left: 3px solid var(--rz-success);">
+            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween" class="rz-mb-2">
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                    <RadzenIcon Icon="psychology" Style="color: var(--rz-success);" />
+                    <RadzenText TextStyle="TextStyle.Caption" class="rz-color-secondary rz-mb-0"><strong>AI ANALYSIS</strong></RadzenText>
+                    @if (Exception.AiAnalysedAt.HasValue)
+                    {
+                        <RadzenText TextStyle="TextStyle.Caption" class="rz-color-secondary rz-mb-0">— @Exception.AiAnalysedAt.Value.LocalDateTime.ToString("MMM dd, HH:mm")</RadzenText>
+                    }
+                </RadzenStack>
+                <RadzenButton Text="Re-analyse" Icon="refresh" Variant="Variant.Text" Size="ButtonSize.ExtraSmall"
+                              ButtonStyle="ButtonStyle.Secondary" IsBusy="@IsAnalysing"
+                              Click="AnalyseWithAiAsync" />
+            </RadzenStack>
+            <div style="white-space: pre-wrap; font-size: 0.85rem; line-height: 1.6;">@Exception.AiAnalysis</div>
+        </RadzenCard>
+    }
+
+    @* AI Suggested Copilot Prompt *@
+    @if (!string.IsNullOrWhiteSpace(Exception.AiSuggestedPrompt))
+    {
+        <RadzenCard Variant="Variant.Outlined" class="rz-p-3" Style="border-left: 3px solid var(--rz-primary);">
+            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween" class="rz-mb-2">
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                    <RadzenIcon Icon="smart_toy" Style="color: var(--rz-primary);" />
+                    <RadzenText TextStyle="TextStyle.Caption" class="rz-color-secondary rz-mb-0"><strong>COPILOT PROMPT</strong></RadzenText>
+                </RadzenStack>
+                <RadzenButton Text="Copy" Icon="content_copy" Variant="Variant.Outlined" Size="ButtonSize.ExtraSmall" ButtonStyle="ButtonStyle.Primary"
+                              Click="@(() => CopyToClipboardAsync(Exception.AiSuggestedPrompt))" />
+            </RadzenStack>
+            <pre style="white-space: pre-wrap; word-break: break-all; font-size: 0.8rem; background: var(--rz-base-200); padding: 0.75rem; border-radius: 0.375rem; margin: 0;">@Exception.AiSuggestedPrompt</pre>
+        </RadzenCard>
+    }
+
+    @* Close button *@
+    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End">
+        <RadzenButton Text="Close" Variant="Variant.Outlined" ButtonStyle="ButtonStyle.Light" Click="Close" />
+    </RadzenStack>
+
+</RadzenStack>

@@ -248,6 +248,36 @@
         </RadzenStack>
     </RadzenCard>
 
+    <!-- Danger Zone -->
+    <RadzenCard Style="border: 1px solid var(--rz-danger); border-radius: var(--rz-border-radius);">
+        <RadzenStack Gap="1rem">
+            <RadzenText TextStyle="TextStyle.H6" Style="margin: 0; font-weight: 600; color: var(--rz-danger);">
+                <RadzenIcon Icon="warning" Style="vertical-align: middle; margin-right: 0.25rem;" />
+                Danger Zone
+            </RadzenText>
+
+            <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-text-secondary-color);">
+                Permanently delete your account and all associated data. This action <strong>cannot be undone</strong>.
+                All your tasks, bills, shopping lists, connections, notifications, and shared data will be permanently removed.
+            </RadzenText>
+
+            @if (DeleteAccountError is not null)
+            {
+                <RadzenAlert AlertStyle="AlertStyle.Danger" Shade="Shade.Lighter" ShowIcon="true"
+                             AllowClose="true" Close="@(() => DeleteAccountError = null)">
+                    @DeleteAccountError
+                </RadzenAlert>
+            }
+
+            <RadzenButton Text="Delete My Account"
+                          Icon="delete_forever"
+                          ButtonStyle="ButtonStyle.Danger"
+                          Variant="Variant.Outlined"
+                          Click="OpenDeleteAccountDialogAsync"
+                          Disabled="@IsDeletingAccount" />
+        </RadzenStack>
+    </RadzenCard>
+
 </RadzenStack>
 
 

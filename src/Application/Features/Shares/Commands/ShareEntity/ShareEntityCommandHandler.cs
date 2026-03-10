@@ -73,6 +73,10 @@ public sealed class ShareEntityCommandHandler(
                 await dbContext.Bills.AnyAsync(
                     b => b.Id == entityId && !b.IsDeleted && b.CreatedBy == userId,
                     cancellationToken),
+            EntityTypes.ShoppingList =>
+                await dbContext.ShoppingLists.AnyAsync(
+                    sl => sl.Id == entityId && !sl.IsDeleted && sl.CreatedBy == userId,
+                    cancellationToken),
             _ => false
         };
 

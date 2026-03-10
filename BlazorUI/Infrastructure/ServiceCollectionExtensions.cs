@@ -70,6 +70,18 @@ public static class ServiceCollectionExtensions
             ConfigureClient(client, apiSettings))
             .AddHttpMessageHandler<AuthTokenHandler>();
 
+        services.AddHttpClient<IExceptionLogService, ExceptionLogService>(client =>
+            ConfigureClient(client, apiSettings))
+            .AddHttpMessageHandler<AuthTokenHandler>();
+
+        services.AddHttpClient<IBackgroundServiceMonitorService, BackgroundServiceMonitorService>(client =>
+            ConfigureClient(client, apiSettings))
+            .AddHttpMessageHandler<AuthTokenHandler>();
+
+        services.AddHttpClient<IDashboardService, DashboardService>(client =>
+            ConfigureClient(client, apiSettings))
+            .AddHttpMessageHandler<AuthTokenHandler>();
+
         return services;
     }
 

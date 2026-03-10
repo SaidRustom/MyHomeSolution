@@ -98,7 +98,8 @@ public sealed class GetNotificationsQueryHandlerTests : IDisposable
             Title = "First created",
             Type = NotificationType.General,
             FromUserId = "sender",
-            ToUserId = "user-1"
+            ToUserId = "user-1",
+            CreatedAt = new DateTimeOffset(2025, 6, 1, 10, 0, 0, TimeSpan.Zero)
         };
         seedContext.Notifications.Add(first);
         await seedContext.SaveChangesAsync();
@@ -108,7 +109,8 @@ public sealed class GetNotificationsQueryHandlerTests : IDisposable
             Title = "Second created",
             Type = NotificationType.General,
             FromUserId = "sender",
-            ToUserId = "user-1"
+            ToUserId = "user-1",
+            CreatedAt = new DateTimeOffset(2025, 6, 1, 11, 0, 0, TimeSpan.Zero)
         };
         seedContext.Notifications.Add(second);
         await seedContext.SaveChangesAsync();

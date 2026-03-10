@@ -14,4 +14,6 @@ public sealed record GetBillsQuery : IRequest<PaginatedList<BillBriefDto>>
     public string? SearchTerm { get; init; }
     public DateTimeOffset? FromDate { get; init; }
     public DateTimeOffset? ToDate { get; init; }
+    public string? SortBy { get; init; }
+    public string? SortDirection { get; init; }
 }

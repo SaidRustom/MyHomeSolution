@@ -1,0 +1,15 @@
+@using BlazorUI.Components.Scheduler
+
+<RadzenStack Orientation="Orientation.Vertical" Gap="1rem" class="rz-p-4">
+    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+        <RadzenIcon Icon="edit_note" Style="font-size: 1.5rem; color: var(--rz-primary);" />
+        <RadzenText TextStyle="TextStyle.Subtitle1" class="rz-mb-0"><strong>Occurrence Notes</strong></RadzenText>
+    </RadzenStack>
+
+    <RadzenTextArea @bind-Value="@Notes" Placeholder="Add notes about this occurrence…" Rows="4" Style="width: 100%;" />
+
+    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem" class="rz-pt-2" Style="border-top: 1px solid var(--rz-base-200);">
+        <RadzenButton Text="Cancel" Variant="Variant.Flat" ButtonStyle="ButtonStyle.Light" Click="Cancel" />
+        <RadzenButton Text="Save" Icon="check" ButtonStyle="ButtonStyle.Primary" Click="Save" />
+    </RadzenStack>
+</RadzenStack>

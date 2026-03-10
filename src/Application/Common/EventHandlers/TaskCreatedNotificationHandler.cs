@@ -19,40 +19,69 @@ public sealed class TaskCreatedNotificationHandler(
     {
         var task = await dbContext.HouseholdTasks
             .AsNoTracking()
+            .Include(t => t.RecurrencePattern!)
+                .ThenInclude(rp => rp.Assignees)
             .FirstOrDefaultAsync(t => t.Id == notification.TaskId, cancellationToken);
 
-        if (task is null)
+        if (task is null || string.IsNullOrEmpty(task.CreatedBy))
             return;
 
-        if (string.IsNullOrEmpty(task.AssignedToUserId)
-            || string.IsNullOrEmpty(task.CreatedBy)
-            || task.AssignedToUserId == task.CreatedBy)
-            return;
+        // Collect all users who should be notified (assigned user + recurrence assignees)
+        var recipientIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-        var entity = new Notification
+        if (!string.IsNullOrEmpty(task.AssignedToUserId) && task.AssignedToUserId != task.CreatedBy)
+            recipientIds.Add(task.AssignedToUserId);
+
+        if (task.RecurrencePattern?.Assignees is { Count: > 0 })
         {
-            Title = $"Task assigned: {task.Title}",
-            Description = $"You have been assigned the task '{task.Title}'.",
-            Type = NotificationType.TaskAssigned,
-            FromUserId = task.CreatedBy,
-            ToUserId = task.AssignedToUserId,
-            RelatedEntityId = task.Id,
-            RelatedEntityType = EntityTypes.HouseholdTask
-        };
+            foreach (var assignee in task.RecurrencePattern.Assignees)
+            {
+                if (!string.IsNullOrEmpty(assignee.UserId) && assignee.UserId != task.CreatedBy)
+                    recipientIds.Add(assignee.UserId);
+            }
+        }
 
-        dbContext.Notifications.Add(entity);
-        await dbContext.SaveChangesAsync(cancellationToken);
+        foreach (var recipientId in recipientIds)
+        {
+            var entity = new Notification
+            {
+                Title = $"Task assigned: {task.Title}",
+                Description = $"You have been assigned the task '{task.Title}'.",
+                Type = NotificationType.TaskAssigned,
+                FromUserId = task.CreatedBy,
+                ToUserId = recipientId,
+                RelatedEntityId = task.Id,
+                RelatedEntityType = EntityTypes.HouseholdTask
+            };
 
+            dbContext.Notifications.Add(entity);
+            await dbContext.SaveChangesAsync(cancellationToken);
+
+            await realtimeService.SendUserNotificationAsync(
+                entity.ToUserId,
+                new UserPushNotification
+                {
+                    EventType = nameof(NotificationCreatedEvent),
+                    NotificationId = entity.Id,
+                    Title = entity.Title,
+                    Description = entity.Description,
+                    RelatedEntityId = entity.RelatedEntityId,
+                    RelatedEntityType = entity.RelatedEntityType,
+                    OccurredAt = dateTimeProvider.UtcNow
+                },
+                cancellationToken);
+        }
+
+        // Also send a realtime push to the creator so their UI refreshes
         await realtimeService.SendUserNotificationAsync(
-            entity.ToUserId,
+            task.CreatedBy,
             new UserPushNotification
             {
-                EventType = nameof(NotificationCreatedEvent),
-                NotificationId = entity.Id,
-                Title = entity.Title,
-                Description = entity.Description,
-                RelatedEntityId = entity.RelatedEntityId,
-                RelatedEntityType = entity.RelatedEntityType,
+                EventType = nameof(TaskCreatedEvent),
+                Title = $"Task created: {task.Title}",
+                Description = $"Your task '{task.Title}' has been created successfully.",
+                RelatedEntityId = task.Id,
+                RelatedEntityType = EntityTypes.HouseholdTask,
                 OccurredAt = dateTimeProvider.UtcNow
             },
             cancellationToken);

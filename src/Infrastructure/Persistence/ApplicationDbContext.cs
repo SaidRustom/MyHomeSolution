@@ -29,12 +29,30 @@ public sealed class ApplicationDbContext(
     public DbSet<ShoppingList> ShoppingLists => Set<ShoppingList>();
     public DbSet<ShoppingItem> ShoppingItems => Set<ShoppingItem>();
     public DbSet<UserConnection> UserConnections => Set<UserConnection>();
+    public DbSet<ExceptionLog> ExceptionLogs => Set<ExceptionLog>();
+    public DbSet<BackgroundServiceDefinition> BackgroundServiceDefinitions => Set<BackgroundServiceDefinition>();
+    public DbSet<BackgroundServiceLog> BackgroundServiceLogs => Set<BackgroundServiceLog>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
         builder.ApplyConfigurationsFromAssembly(typeof(ApplicationDbContext).Assembly);
+
+        if (Database.ProviderName == "Microsoft.EntityFrameworkCore.Sqlite")
+        {
+            // SQLite does not support SQL Server rowversion; treat RowVersion as a
+            // concurrency token with a client-generated default instead.
+            foreach (var entityType in builder.Model.GetEntityTypes())
+            {
+                var rowVersionProp = entityType.FindProperty("RowVersion");
+                if (rowVersionProp is null)
+                    continue;
+
+                rowVersionProp.ValueGenerated = Microsoft.EntityFrameworkCore.Metadata.ValueGenerated.OnAddOrUpdate;
+                rowVersionProp.SetDefaultValueSql("randomblob(8)");
+            }
+        }
     }
 
     public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)

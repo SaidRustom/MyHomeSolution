@@ -5,7 +5,8 @@ namespace MyHomeSolution.Application.Features.Shares.Commands.ShareEntity;
 
 public sealed class ShareEntityCommandValidator : AbstractValidator<ShareEntityCommand>
 {
-    private static readonly string[] SupportedEntityTypes = [EntityTypes.HouseholdTask];
+    private static readonly string[] SupportedEntityTypes =
+        [EntityTypes.HouseholdTask, EntityTypes.Bill, EntityTypes.ShoppingList];
 
     public ShareEntityCommandValidator()
     {

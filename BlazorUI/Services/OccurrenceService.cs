@@ -32,13 +32,29 @@ public sealed class OccurrenceService(HttpClient httpClient)
         DateOnly endDate,
         string? assignedToUserId = null,
         OccurrenceStatus? status = null,
+        bool? assignedByMe = null,
+        bool? myTasks = null,
+        bool? @private = null,
+        bool? shared = null,
+        bool? isRecurring = null,
+        bool? hasBill = null,
+        TaskCategory? category = null,
+        TaskPriority? priority = null,
         CancellationToken cancellationToken = default)
     {
         var query = BuildQueryString(
             ("startDate", startDate.ToString("O")),
             ("endDate", endDate.ToString("O")),
             ("assignedToUserId", assignedToUserId),
-            ("status", status?.ToString()));
+            ("status", status?.ToString()),
+            ("assignedByMe", assignedByMe?.ToString()),
+            ("myTasks", myTasks?.ToString()),
+            ("private", @private?.ToString()),
+            ("shared", shared?.ToString()),
+            ("isRecurring", isRecurring?.ToString()),
+            ("hasBill", hasBill?.ToString()),
+            ("category", category?.ToString()),
+            ("priority", priority?.ToString()));
 
         return GetAsync<IReadOnlyCollection<CalendarOccurrenceDto>>(
             $"{BasePath}/by-date-range{query}", cancellationToken);
@@ -47,11 +63,15 @@ public sealed class OccurrenceService(HttpClient httpClient)
     public Task<ApiResult<PaginatedList<CalendarOccurrenceDto>>> GetUpcomingAsync(
         int pageNumber = 1,
         int pageSize = 20,
+        DateOnly? startDate = null,
+        DateOnly? endDate = null,
         CancellationToken cancellationToken = default)
     {
         var query = BuildQueryString(
             ("pageNumber", pageNumber.ToString()),
-            ("pageSize", pageSize.ToString()));
+            ("pageSize", pageSize.ToString()),
+            ("startDate", startDate?.ToString("O")),
+            ("endDate", endDate?.ToString("O")));
 
         return GetAsync<PaginatedList<CalendarOccurrenceDto>>(
             $"{BasePath}/upcoming{query}", cancellationToken);
@@ -79,5 +99,11 @@ public sealed class OccurrenceService(HttpClient httpClient)
         Guid id, RescheduleOccurrenceRequest request, CancellationToken cancellationToken = default)
     {
         return PostAsync($"{BasePath}/{id}/reschedule", request, cancellationToken);
+    }
+
+    public Task<ApiResult> UpdateNotesAsync(
+        Guid id, string? notes, CancellationToken cancellationToken = default)
+    {
+        return PutAsync($"{BasePath}/{id}/notes", new { Notes = notes }, cancellationToken);
     }
 }

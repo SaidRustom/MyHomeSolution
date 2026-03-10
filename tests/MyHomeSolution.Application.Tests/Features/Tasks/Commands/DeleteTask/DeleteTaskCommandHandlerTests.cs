@@ -3,6 +3,7 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using MyHomeSolution.Application.Common.Events;
 using MyHomeSolution.Application.Common.Exceptions;
+using MyHomeSolution.Application.Common.Interfaces;
 using MyHomeSolution.Application.Features.Tasks.Commands.DeleteTask;
 using MyHomeSolution.Application.Tests.Testing;
 using MyHomeSolution.Domain.Entities;
@@ -15,6 +16,15 @@ public sealed class DeleteTaskCommandHandlerTests : IDisposable
 {
     private readonly TestDbContextFactory _factory = new();
     private readonly IPublisher _publisher = Substitute.For<IPublisher>();
+    private readonly ICurrentUserService _currentUserService = Substitute.For<ICurrentUserService>();
+    private readonly IDateTimeProvider _dateTimeProvider = Substitute.For<IDateTimeProvider>();
+
+    public DeleteTaskCommandHandlerTests()
+    {
+        _currentUserService.UserId.Returns("test-user");
+        _dateTimeProvider.UtcNow.Returns(new DateTimeOffset(2025, 6, 1, 12, 0, 0, TimeSpan.Zero));
+        _dateTimeProvider.Today.Returns(new DateOnly(2025, 6, 1));
+    }
 
     [Fact]
     public async Task Handle_ShouldSoftDeleteTask()
@@ -22,7 +32,7 @@ public sealed class DeleteTaskCommandHandlerTests : IDisposable
         var taskId = await SeedTask();
 
         using var context = _factory.CreateContext();
-        var handler = new DeleteTaskCommandHandler(context, _publisher);
+        var handler = new DeleteTaskCommandHandler(context, _currentUserService, _dateTimeProvider, _publisher);
 
         await handler.Handle(new DeleteTaskCommand(taskId), CancellationToken.None);
 
@@ -38,7 +48,7 @@ public sealed class DeleteTaskCommandHandlerTests : IDisposable
     public async Task Handle_ShouldThrowNotFoundException_WhenTaskDoesNotExist()
     {
         using var context = _factory.CreateContext();
-        var handler = new DeleteTaskCommandHandler(context, _publisher);
+        var handler = new DeleteTaskCommandHandler(context, _currentUserService, _dateTimeProvider, _publisher);
 
         var act = () => handler.Handle(
             new DeleteTaskCommand(Guid.CreateVersion7()), CancellationToken.None);
@@ -62,7 +72,7 @@ public sealed class DeleteTaskCommandHandlerTests : IDisposable
         await seedContext.SaveChangesAsync();
 
         using var context = _factory.CreateContext();
-        var handler = new DeleteTaskCommandHandler(context, _publisher);
+        var handler = new DeleteTaskCommandHandler(context, _currentUserService, _dateTimeProvider, _publisher);
 
         var act = () => handler.Handle(
             new DeleteTaskCommand(task.Id), CancellationToken.None);
@@ -76,7 +86,7 @@ public sealed class DeleteTaskCommandHandlerTests : IDisposable
         var taskId = await SeedTask();
 
         using var context = _factory.CreateContext();
-        var handler = new DeleteTaskCommandHandler(context, _publisher);
+        var handler = new DeleteTaskCommandHandler(context, _currentUserService, _dateTimeProvider, _publisher);
 
         await handler.Handle(new DeleteTaskCommand(taskId), CancellationToken.None);
 
@@ -89,7 +99,7 @@ public sealed class DeleteTaskCommandHandlerTests : IDisposable
     public async Task Handle_ShouldNotPublishEvent_WhenTaskDoesNotExist()
     {
         using var context = _factory.CreateContext();
-        var handler = new DeleteTaskCommandHandler(context, _publisher);
+        var handler = new DeleteTaskCommandHandler(context, _currentUserService, _dateTimeProvider, _publisher);
 
         var act = () => handler.Handle(
             new DeleteTaskCommand(Guid.CreateVersion7()), CancellationToken.None);

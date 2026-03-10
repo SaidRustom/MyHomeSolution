@@ -10,6 +10,9 @@ public sealed class HouseholdTaskConfiguration : IEntityTypeConfiguration<Househ
     {
         builder.HasKey(t => t.Id);
 
+        builder.Property(t => t.RowVersion)
+            .IsRowVersion();
+
         builder.Property(t => t.Title)
             .HasMaxLength(200)
             .IsRequired();
@@ -18,6 +21,12 @@ public sealed class HouseholdTaskConfiguration : IEntityTypeConfiguration<Househ
             .HasMaxLength(2000);
 
         builder.Property(t => t.AssignedToUserId)
+            .HasMaxLength(450);
+
+        builder.Property(t => t.DefaultBillAmount)
+            .HasPrecision(18, 2);
+
+        builder.Property(t => t.DefaultBillPaidByUserId)
             .HasMaxLength(450);
 
         builder.Ignore(t => t.AuditLogs);

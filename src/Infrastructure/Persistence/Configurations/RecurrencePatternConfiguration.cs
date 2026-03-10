@@ -10,6 +10,9 @@ public sealed class RecurrencePatternConfiguration : IEntityTypeConfiguration<Re
     {
         builder.HasKey(rp => rp.Id);
 
+        builder.Property(rp => rp.RowVersion)
+            .IsRowVersion();
+
         builder.Property(rp => rp.Interval)
             .IsRequired();
 
@@ -23,5 +26,7 @@ public sealed class RecurrencePatternConfiguration : IEntityTypeConfiguration<Re
 
         builder.HasIndex(rp => rp.HouseholdTaskId)
             .IsUnique();
+
+        builder.HasQueryFilter(rp => !rp.HouseholdTask.IsDeleted);
     }
 }

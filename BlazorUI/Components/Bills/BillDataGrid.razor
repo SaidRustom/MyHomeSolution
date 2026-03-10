@@ -7,7 +7,7 @@
                 PagerHorizontalAlign="HorizontalAlign.Center"
                 LoadData="@OnLoadData"
                 RowSelect="@RowSelectAsync"
-                AllowSorting="false"
+                AllowSorting="true"
                 GridLines="DataGridGridLines.None"
                 Density="Density.Compact"
                 class="rz-datatable-striped"
@@ -37,6 +37,19 @@
         <RadzenDataGridColumn TItem="BillBriefDto" Property="BillDate" Title="Date" Width="140px">
             <Template Context="bill">
                 <DateDisplay Date="@bill.BillDate" />
+            </Template>
+        </RadzenDataGridColumn>
+
+        <RadzenDataGridColumn TItem="BillBriefDto" Property="IsFullyPaid" Title="Status" Width="110px" TextAlign="TextAlign.Center">
+            <Template Context="bill">
+                @if (bill.IsFullyPaid)
+                {
+                    <RadzenBadge BadgeStyle="BadgeStyle.Success" IsPill="true" Variant="Variant.Flat" Text="Paid" />
+                }
+                else
+                {
+                    <RadzenBadge BadgeStyle="BadgeStyle.Warning" IsPill="true" Variant="Variant.Flat" Text="Unpaid" />
+                }
             </Template>
         </RadzenDataGridColumn>
 

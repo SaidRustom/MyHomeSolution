@@ -2,6 +2,7 @@ using FluentAssertions;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using MyHomeSolution.Application.Common.Events;
+using MyHomeSolution.Application.Common.Interfaces;
 using MyHomeSolution.Application.Features.Tasks.Commands.CreateTask;
 using MyHomeSolution.Application.Tests.Testing;
 using MyHomeSolution.Domain.Enums;
@@ -13,12 +14,19 @@ public sealed class CreateTaskCommandHandlerTests : IDisposable
 {
     private readonly TestDbContextFactory _factory = new();
     private readonly IPublisher _publisher = Substitute.For<IPublisher>();
+    private readonly ICurrentUserService _currentUserService = Substitute.For<ICurrentUserService>();
+    private readonly IOccurrenceScheduler _occurrenceScheduler = Substitute.For<IOccurrenceScheduler>();
+
+    public CreateTaskCommandHandlerTests()
+    {
+        _currentUserService.UserId.Returns("test-user");
+    }
 
     [Fact]
     public async Task Handle_ShouldCreateNonRecurringTask()
     {
         using var context = _factory.CreateContext();
-        var handler = new CreateTaskCommandHandler(context, _publisher);
+        var handler = new CreateTaskCommandHandler(context, _currentUserService, _occurrenceScheduler, _publisher);
         var command = new CreateTaskCommand
         {
             Title = "Clean kitchen",
@@ -50,7 +58,7 @@ public sealed class CreateTaskCommandHandlerTests : IDisposable
     public async Task Handle_ShouldCreateRecurringTask_WithRecurrencePattern()
     {
         using var context = _factory.CreateContext();
-        var handler = new CreateTaskCommandHandler(context, _publisher);
+        var handler = new CreateTaskCommandHandler(context, _currentUserService, _occurrenceScheduler, _publisher);
         var command = new CreateTaskCommand
         {
             Title = "Vacuum house",
@@ -85,7 +93,7 @@ public sealed class CreateTaskCommandHandlerTests : IDisposable
     public async Task Handle_ShouldSetAssigneeOrder_Correctly()
     {
         using var context = _factory.CreateContext();
-        var handler = new CreateTaskCommandHandler(context, _publisher);
+        var handler = new CreateTaskCommandHandler(context, _currentUserService, _occurrenceScheduler, _publisher);
         var command = new CreateTaskCommand
         {
             Title = "Rotating task",
@@ -118,7 +126,7 @@ public sealed class CreateTaskCommandHandlerTests : IDisposable
     public async Task Handle_ShouldNotCreateRecurrencePattern_WhenNotRecurring()
     {
         using var context = _factory.CreateContext();
-        var handler = new CreateTaskCommandHandler(context, _publisher);
+        var handler = new CreateTaskCommandHandler(context, _currentUserService, _occurrenceScheduler, _publisher);
         var command = new CreateTaskCommand
         {
             Title = "One-off task",
@@ -141,7 +149,7 @@ public sealed class CreateTaskCommandHandlerTests : IDisposable
     public async Task Handle_ShouldReturnNewTaskId()
     {
         using var context = _factory.CreateContext();
-        var handler = new CreateTaskCommandHandler(context, _publisher);
+        var handler = new CreateTaskCommandHandler(context, _currentUserService, _occurrenceScheduler, _publisher);
         var command = new CreateTaskCommand
         {
             Title = "Test task",
@@ -160,7 +168,7 @@ public sealed class CreateTaskCommandHandlerTests : IDisposable
     public async Task Handle_ShouldUseDefaultInterval_WhenIntervalIsNull()
     {
         using var context = _factory.CreateContext();
-        var handler = new CreateTaskCommandHandler(context, _publisher);
+        var handler = new CreateTaskCommandHandler(context, _currentUserService, _occurrenceScheduler, _publisher);
         var command = new CreateTaskCommand
         {
             Title = "Default interval task",
@@ -185,7 +193,7 @@ public sealed class CreateTaskCommandHandlerTests : IDisposable
     public async Task Handle_ShouldPublishTaskCreatedEvent()
     {
         using var context = _factory.CreateContext();
-        var handler = new CreateTaskCommandHandler(context, _publisher);
+        var handler = new CreateTaskCommandHandler(context, _currentUserService, _occurrenceScheduler, _publisher);
         var command = new CreateTaskCommand
         {
             Title = "Event test task",

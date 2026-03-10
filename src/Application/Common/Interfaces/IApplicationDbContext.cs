@@ -19,6 +19,9 @@ public interface IApplicationDbContext
     DbSet<ShoppingList> ShoppingLists { get; }
     DbSet<ShoppingItem> ShoppingItems { get; }
     DbSet<UserConnection> UserConnections { get; }
+    DbSet<ExceptionLog> ExceptionLogs { get; }
+    DbSet<BackgroundServiceDefinition> BackgroundServiceDefinitions { get; }
+    DbSet<BackgroundServiceLog> BackgroundServiceLogs { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

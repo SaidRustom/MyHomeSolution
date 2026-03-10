@@ -22,6 +22,7 @@ public sealed record CompleteOccurrenceRequest
 public sealed record SkipOccurrenceRequest
 {
     public string? Notes { get; init; }
+    public bool ZeroLinkedBillBalance { get; init; }
 }
 
 public sealed record StartOccurrenceRequest

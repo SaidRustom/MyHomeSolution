@@ -2,6 +2,7 @@ using BlazorUI.Components.Common;
 using BlazorUI.Components.Scheduler;
 using BlazorUI.Models.Common;
 using BlazorUI.Models.Enums;
+using BlazorUI.Models.Realtime;
 using BlazorUI.Models.Tasks;
 using BlazorUI.Services.Contracts;
 using Microsoft.AspNetCore.Components;
@@ -23,6 +24,9 @@ public partial class TaskList : IDisposable
     [Inject]
     NavigationManager NavigationManager { get; set; } = default!;
 
+    [Inject]
+    INotificationHubClient NotificationHubClient { get; set; } = default!;
+
     PaginatedList<TaskBriefDto>? Tasks { get; set; }
 
     bool IsLoading { get; set; }
@@ -34,9 +38,12 @@ public partial class TaskList : IDisposable
     TaskCategory? _categoryFilter;
     TaskPriority? _priorityFilter;
     bool _activeOnly;
+    bool _assignedByMe;
 
     int _pageNumber = 1;
     int _pageSize = 20;
+    string? _sortBy;
+    string? _sortDirection;
 
     CancellationTokenSource _cts = new();
 
@@ -45,6 +52,7 @@ public partial class TaskList : IDisposable
 
     protected override async Task OnInitializedAsync()
     {
+        NotificationHubClient.OnUserNotification += HandleRealtimeNotification;
         await LoadTasksAsync();
     }
 
@@ -60,6 +68,9 @@ public partial class TaskList : IDisposable
             priority: _priorityFilter,
             searchTerm: _searchTerm,
             notCompletedOnly: _activeOnly ? true : null,
+            assignedByMe: _assignedByMe ? true : null,
+            sortBy: _sortBy,
+            sortDirection: _sortDirection,
             cancellationToken: _cts.Token);
 
         if (result.IsSuccess)
@@ -77,6 +88,14 @@ public partial class TaskList : IDisposable
     async Task OnGridLoadData(LoadDataArgs args)
     {
         _pageNumber = (args.Skip ?? 0) / _pageSize + 1;
+
+        if (args.Sorts?.Any() == true)
+        {
+            var sort = args.Sorts.First();
+            _sortBy = sort.Property;
+            _sortDirection = sort.SortOrder == SortOrder.Descending ? "desc" : "asc";
+        }
+
         await LoadTasksAsync();
     }
 
@@ -216,7 +235,21 @@ public partial class TaskList : IDisposable
 
     public void Dispose()
     {
+        NotificationHubClient.OnUserNotification -= HandleRealtimeNotification;
         _cts.Cancel();
         _cts.Dispose();
+    }
+
+    void HandleRealtimeNotification(UserPushNotification push)
+    {
+        var entityType = push.RelatedEntityType?.ToLowerInvariant();
+        if (entityType is "householdtask" or "task" or "taskoccurrence" or "occurrence")
+        {
+            InvokeAsync(async () =>
+            {
+                await LoadTasksAsync();
+                StateHasChanged();
+            });
+        }
     }
 }

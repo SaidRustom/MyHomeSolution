@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using MyHomeSolution.Domain.Common;
 using MyHomeSolution.Domain.Enums;
 
@@ -5,6 +6,9 @@ namespace MyHomeSolution.Domain.Entities;
 
 public sealed class Bill : BaseAuditableEntity
 {
+    [Timestamp]
+    public byte[] RowVersion { get; set; } = default!;
+
     public string Title { get; set; } = default!;
     public string? Description { get; set; }
     public decimal Amount { get; set; }

@@ -14,6 +14,8 @@ public interface IBillService
         string? searchTerm = null,
         DateTimeOffset? fromDate = null,
         DateTimeOffset? toDate = null,
+        string? sortBy = null,
+        string? sortDirection = null,
         CancellationToken cancellationToken = default);
 
     Task<ApiResult<BillDetailDto>> GetBillByIdAsync(

@@ -46,6 +46,10 @@ public sealed class GetTasksQueryHandler(
         if (!string.IsNullOrWhiteSpace(request.AssignedToUserId))
             query = query.Where(t => t.AssignedToUserId == request.AssignedToUserId);
 
+        // "Assigned by me": tasks created by the current user but assigned to someone else
+        if (request.AssignedByMe == true && userId is not null)
+            query = query.Where(t => t.CreatedBy == userId && t.AssignedToUserId != null && t.AssignedToUserId != userId);
+
         if (!string.IsNullOrWhiteSpace(request.SearchTerm))
             query = query.Where(t => t.Title.Contains(request.SearchTerm)
                                      || (t.Description != null && t.Description.Contains(request.SearchTerm)));
@@ -73,9 +77,25 @@ public sealed class GetTasksQueryHandler(
                 (!t.IsRecurring && t.DueDate != null));
         }
 
-        var projected = query
-            .OrderByDescending(t => t.Priority)
-            .ThenBy(t => t.DueDate)
+        var sortBy = request.SortBy?.ToLowerInvariant();
+        var descending = string.Equals(request.SortDirection, "desc", StringComparison.OrdinalIgnoreCase);
+
+        IOrderedQueryable<Domain.Entities.HouseholdTask> ordered = sortBy switch
+        {
+            "priority" => descending ? query.OrderByDescending(t => t.Priority) : query.OrderBy(t => t.Priority),
+            "category" => descending ? query.OrderByDescending(t => t.Category) : query.OrderBy(t => t.Category),
+            "nextduedate" => descending
+                ? query.OrderByDescending(t => t.IsRecurring
+                    ? t.Occurrences.Where(o => o.Status == OccurrenceStatus.Pending).Min(o => (DateOnly?)o.DueDate)
+                    : t.DueDate)
+                : query.OrderBy(t => t.IsRecurring
+                    ? t.Occurrences.Where(o => o.Status == OccurrenceStatus.Pending).Min(o => (DateOnly?)o.DueDate)
+                    : t.DueDate),
+            "isactive" => descending ? query.OrderByDescending(t => t.IsActive) : query.OrderBy(t => t.IsActive),
+            _ => descending ? query.OrderByDescending(t => t.Title) : query.OrderBy(t => t.Title),
+        };
+
+        var projected = ordered
             .Select(t => new TaskBriefDto
             {
                 Id = t.Id,

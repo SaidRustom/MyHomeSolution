@@ -1,0 +1,195 @@
+@page "/admin/exceptions"
+@attribute [Authorize(Roles = "Administrator")]
+
+<PageTitle>Exception Logs — MyHome</PageTitle>
+
+<RadzenStack Orientation="Orientation.Vertical" Gap="1.25rem">
+
+    <PageHeader Title="Exception Logs" Subtitle="Monitor, analyse, and triage application exceptions" Icon="bug_report">
+        <Actions>
+            <RadzenButton Text="Refresh" Icon="refresh" Variant="Variant.Outlined" ButtonStyle="ButtonStyle.Secondary" Click="OnSearchAsync" />
+        </Actions>
+    </PageHeader>
+
+    @if (Error is not null)
+    {
+        <ErrorAlert Problem="@Error" OnRetry="OnSearchAsync" />
+    }
+
+    @* ── Summary cards ────────────────────────────────────────────────── *@
+    @if (Summary is not null)
+    {
+        <RadzenRow Gap="1rem" RowGap="1rem">
+            <RadzenColumn Size="12" SizeSM="6" SizeLG="3">
+                <StatCard Title="Total Exceptions" Value="@Summary.TotalExceptions.ToString("N0")" Icon="bug_report" IconColor="var(--rz-primary)" />
+            </RadzenColumn>
+            <RadzenColumn Size="12" SizeSM="6" SizeLG="3">
+                <StatCard Title="Unhandled" Value="@Summary.UnhandledExceptions.ToString("N0")" Icon="error" IconColor="var(--rz-danger)" />
+            </RadzenColumn>
+            <RadzenColumn Size="12" SizeSM="6" SizeLG="3">
+                <StatCard Title="Critical" Value="@Summary.CriticalCount.ToString("N0")" Icon="dangerous" IconColor="#d32f2f"
+                          Subtitle="@($"+ {Summary.HighCount} high")" />
+            </RadzenColumn>
+            <RadzenColumn Size="12" SizeSM="6" SizeLG="3">
+                <StatCard Title="Today" Value="@Summary.TodayCount.ToString("N0")" Icon="today" IconColor="var(--rz-warning)" />
+            </RadzenColumn>
+        </RadzenRow>
+
+        @* Top exception types *@
+        @if (Summary.TopExceptionTypes.Count > 0)
+        {
+            <RadzenCard Variant="Variant.Outlined" class="rz-p-4">
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem" class="rz-mb-3">
+                    <RadzenIcon Icon="leaderboard" Style="color: var(--rz-primary);" />
+                    <RadzenText TextStyle="TextStyle.Subtitle1" class="rz-mb-0"><strong>Top Exception Types</strong></RadzenText>
+                </RadzenStack>
+                <RadzenRow Gap="0.75rem" RowGap="0.5rem">
+                    @foreach (var item in Summary.TopExceptionTypes)
+                    {
+                        <RadzenColumn Size="12" SizeSM="6" SizeLG="4">
+                            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween"
+                                         Style="background: var(--rz-base-200); padding: 0.5rem 0.75rem; border-radius: 0.375rem;">
+                                <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0" Style="word-break: break-all;">@item.ShortExceptionType</RadzenText>
+                                <RadzenBadge BadgeStyle="BadgeStyle.Primary" Text="@item.Count.ToString()" />
+                            </RadzenStack>
+                        </RadzenColumn>
+                    }
+                </RadzenRow>
+            </RadzenCard>
+        }
+    }
+
+    @* ── Filters ──────────────────────────────────────────────────────── *@
+    <RadzenCard Variant="Variant.Outlined" class="rz-p-3">
+        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.75rem" AlignItems="AlignItems.End" Wrap="FlexWrap.Wrap">
+            <RadzenStack Gap="0.25rem" Style="flex: 1; min-width: 180px;">
+                <RadzenLabel Text="Search" />
+                <RadzenTextBox @bind-Value="SearchTerm" Placeholder="Message, class, path…" Style="width: 100%;" />
+            </RadzenStack>
+            <RadzenStack Gap="0.25rem" Style="width: 140px;">
+                <RadzenLabel Text="Severity" />
+                <RadzenDropDown TValue="int?" @bind-Value="SeverityFilter" Data="@SeverityOptions"
+                                TextProperty="Text" ValueProperty="Value"
+                                Placeholder="All" AllowClear="true" Style="width: 100%;" />
+            </RadzenStack>
+            <RadzenStack Gap="0.25rem" Style="width: 140px;">
+                <RadzenLabel Text="Status" />
+                <RadzenDropDown TValue="bool?" @bind-Value="HandledFilter" Data="@HandledOptions"
+                                TextProperty="Text" ValueProperty="Value"
+                                Placeholder="All" AllowClear="true" Style="width: 100%;" />
+            </RadzenStack>
+            <RadzenStack Gap="0.25rem" Style="width: 170px;">
+                <RadzenLabel Text="From" />
+                <RadzenDatePicker TValue="DateTimeOffset?" @bind-Value="@FromDate" Placeholder="From" DateFormat="MMM dd, yyyy" Style="width: 100%;" />
+            </RadzenStack>
+            <RadzenStack Gap="0.25rem" Style="width: 170px;">
+                <RadzenLabel Text="To" />
+                <RadzenDatePicker TValue="DateTimeOffset?" @bind-Value="@ToDate" Placeholder="To" DateFormat="MMM dd, yyyy" Style="width: 100%;" />
+            </RadzenStack>
+            <RadzenButton Text="Search" Icon="search" ButtonStyle="ButtonStyle.Primary" Click="OnSearchAsync" />
+            <RadzenButton Text="Clear" Icon="clear" Variant="Variant.Outlined" ButtonStyle="ButtonStyle.Light" Click="OnClearFiltersAsync" />
+        </RadzenStack>
+    </RadzenCard>
+
+    @* ── Data grid ────────────────────────────────────────────────────── *@
+    @if (IsLoading && ExceptionData.Items.Count == 0)
+    {
+        <LoadingIndicator Text="Loading exceptions…" />
+    }
+    else if (!IsLoading && ExceptionData.Items.Count == 0)
+    {
+        <EmptyState Icon="check_circle"
+                    Title="No exceptions found"
+                    Description="@(HasActiveFilters ? "Try adjusting your filters." : "No exceptions have been recorded yet.")" />
+    }
+    else
+    {
+        <RadzenDataGrid Data="@ExceptionData.Items" TItem="ExceptionLogBriefDto"
+                        Count="@ExceptionData.TotalCount"
+                        PageSize="@PageSize"
+                        AllowPaging="true"
+                        PagerHorizontalAlign="HorizontalAlign.Center"
+                        LoadData="OnLoadDataAsync"
+                        IsLoading="@IsLoading"
+                        RowSelect="ViewException"
+                        Style="cursor: pointer;"
+                        Responsive="true"
+                        Density="Density.Compact">
+
+            <Columns>
+                <RadzenDataGridColumn TItem="ExceptionLogBriefDto" Title="" Width="36px" Sortable="false" Filterable="false">
+                    <Template Context="item">
+                        <RadzenIcon Icon="@GetSeverityIcon(item.Severity)" Style="@($"color: {item.SeverityColor}; font-size: 1.125rem;")" />
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <RadzenDataGridColumn TItem="ExceptionLogBriefDto" Title="Time" Width="140px">
+                    <Template Context="item">
+                        <RadzenText TextStyle="TextStyle.Caption" class="rz-mb-0">@item.OccurredAt.LocalDateTime.ToString("MMM dd, HH:mm:ss")</RadzenText>
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <RadzenDataGridColumn TItem="ExceptionLogBriefDto" Title="Exception">
+                    <Template Context="item">
+                        <RadzenStack Orientation="Orientation.Vertical" Gap="0.125rem">
+                            <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0"><strong>@item.ShortExceptionType</strong></RadzenText>
+                            <RadzenText TextStyle="TextStyle.Caption" class="rz-mb-0 rz-color-secondary" Style="max-width: 400px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">@item.Message</RadzenText>
+                        </RadzenStack>
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <RadzenDataGridColumn TItem="ExceptionLogBriefDto" Title="Source" Width="160px">
+                    <Template Context="item">
+                        <RadzenText TextStyle="TextStyle.Caption" class="rz-mb-0">@(item.ClassName ?? item.ThrownByService)</RadzenText>
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <RadzenDataGridColumn TItem="ExceptionLogBriefDto" Title="Request" Width="140px">
+                    <Template Context="item">
+                        @if (!string.IsNullOrEmpty(item.RequestPath))
+                        {
+                            <RadzenText TextStyle="TextStyle.Caption" class="rz-mb-0">@item.HttpMethod @item.RequestPath</RadzenText>
+                        }
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <RadzenDataGridColumn TItem="ExceptionLogBriefDto" Title="Status" Width="100px" TextAlign="TextAlign.Center">
+                    <Template Context="item">
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.25rem" JustifyContent="JustifyContent.Center">
+                            @if (item.IsHandled)
+                            {
+                                <RadzenBadge BadgeStyle="BadgeStyle.Info" Text="Handled" Style="font-size: 0.65rem;" />
+                            }
+                            else
+                            {
+                                <RadzenBadge BadgeStyle="BadgeStyle.Danger" Text="Unhandled" Style="font-size: 0.65rem;" />
+                            }
+                            @if (item.IsAiAnalysed)
+                            {
+                                <RadzenIcon Icon="psychology" Style="font-size: 0.875rem; color: var(--rz-success);" title="AI Analysed" />
+                            }
+                        </RadzenStack>
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <RadzenDataGridColumn TItem="ExceptionLogBriefDto" Title="" Width="48px" Sortable="false" Filterable="false" TextAlign="TextAlign.Center">
+                    <Template Context="item">
+                        <RadzenButton Icon="delete" Variant="Variant.Text" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small"
+                                      Click:stopPropagation="true"
+                                      Click="@(() => DeleteException(item))"
+                                      title="Delete" />
+                    </Template>
+                </RadzenDataGridColumn>
+            </Columns>
+        </RadzenDataGrid>
+    }
+</RadzenStack>
+
+@code {
+    bool HasActiveFilters => !string.IsNullOrWhiteSpace(SearchTerm) ||
+                             SeverityFilter.HasValue ||
+                             HandledFilter.HasValue ||
+                             !string.IsNullOrWhiteSpace(ExceptionTypeFilter) ||
+                             FromDate.HasValue ||
+                             ToDate.HasValue;
+}

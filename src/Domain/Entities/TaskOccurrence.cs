@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using MyHomeSolution.Domain.Common;
 using MyHomeSolution.Domain.Enums;
 
@@ -5,6 +6,9 @@ namespace MyHomeSolution.Domain.Entities;
 
 public sealed class TaskOccurrence : BaseAuditableEntity
 {
+    [Timestamp]
+    public byte[] RowVersion { get; set; } = default!;
+
     public Guid HouseholdTaskId { get; set; }
     public DateOnly DueDate { get; set; }
     public OccurrenceStatus Status { get; set; } = OccurrenceStatus.Pending;

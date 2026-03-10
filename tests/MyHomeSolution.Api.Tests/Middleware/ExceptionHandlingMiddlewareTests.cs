@@ -2,9 +2,11 @@ using System.Net;
 using System.Text.Json;
 using FluentAssertions;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using MyHomeSolution.Api.Middleware;
 using MyHomeSolution.Application.Common.Exceptions;
+using MyHomeSolution.Application.Common.Interfaces;
 using NSubstitute;
 using ValidationException = MyHomeSolution.Application.Common.Exceptions.ValidationException;
 
@@ -15,10 +17,27 @@ public sealed class ExceptionHandlingMiddlewareTests
     private readonly ILogger<ExceptionHandlingMiddleware> _logger =
         Substitute.For<ILogger<ExceptionHandlingMiddleware>>();
 
+    private readonly IServiceScopeFactory _scopeFactory = CreateScopeFactory();
+
+    private static IServiceScopeFactory CreateScopeFactory()
+    {
+        var exceptionLogService = Substitute.For<IExceptionLogService>();
+        var serviceProvider = Substitute.For<IServiceProvider>();
+        serviceProvider.GetService(typeof(IExceptionLogService)).Returns(exceptionLogService);
+
+        var scope = Substitute.For<IServiceScope>();
+        scope.ServiceProvider.Returns(serviceProvider);
+
+        var factory = Substitute.For<IServiceScopeFactory>();
+        factory.CreateScope().Returns(scope);
+        factory.CreateAsyncScope().Returns(new AsyncServiceScope(scope));
+        return factory;
+    }
+
     [Fact]
     public async Task InvokeAsync_ShouldPassThrough_WhenNoExceptionOccurs()
     {
-        var middleware = new ExceptionHandlingMiddleware(_ => Task.CompletedTask, _logger);
+        var middleware = new ExceptionHandlingMiddleware(_ => Task.CompletedTask, _logger, _scopeFactory);
         var context = CreateHttpContext();
 
         await middleware.InvokeAsync(context);
@@ -31,7 +50,8 @@ public sealed class ExceptionHandlingMiddlewareTests
     {
         var middleware = new ExceptionHandlingMiddleware(
             _ => throw new NotFoundException("HouseholdTask", Guid.Empty),
-            _logger);
+            _logger,
+            _scopeFactory);
         var context = CreateHttpContext();
 
         await middleware.InvokeAsync(context);
@@ -52,7 +72,8 @@ public sealed class ExceptionHandlingMiddlewareTests
         };
         var middleware = new ExceptionHandlingMiddleware(
             _ => throw new ValidationException(failures),
-            _logger);
+            _logger,
+            _scopeFactory);
         var context = CreateHttpContext();
 
         await middleware.InvokeAsync(context);
@@ -70,7 +91,8 @@ public sealed class ExceptionHandlingMiddlewareTests
     {
         var middleware = new ExceptionHandlingMiddleware(
             _ => throw new InvalidOperationException("Something went wrong"),
-            _logger);
+            _logger,
+            _scopeFactory);
         var context = CreateHttpContext();
 
         await middleware.InvokeAsync(context);
@@ -92,7 +114,8 @@ public sealed class ExceptionHandlingMiddlewareTests
 
         var middleware = new ExceptionHandlingMiddleware(
             _ => throw new OperationCanceledException(),
-            _logger);
+            _logger,
+            _scopeFactory);
         var context = CreateHttpContext();
         context.RequestAborted = cts.Token;
 
@@ -112,7 +135,8 @@ public sealed class ExceptionHandlingMiddlewareTests
         };
         var middleware = new ExceptionHandlingMiddleware(
             _ => throw new ValidationException(failures),
-            _logger);
+            _logger,
+            _scopeFactory);
         var context = CreateHttpContext();
 
         await middleware.InvokeAsync(context);
@@ -129,7 +153,8 @@ public sealed class ExceptionHandlingMiddlewareTests
     {
         var middleware = new ExceptionHandlingMiddleware(
             _ => throw new InvalidOperationException("Unexpected"),
-            _logger);
+            _logger,
+            _scopeFactory);
         var context = CreateHttpContext();
 
         await middleware.InvokeAsync(context);

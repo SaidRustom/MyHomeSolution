@@ -1,0 +1,107 @@
+@if (IsLoading)
+{
+    <LoadingIndicator Text="Loading…" />
+}
+else if (Error is not null)
+{
+    <ErrorAlert Problem="@Error" OnRetry="LoadAsync" />
+}
+else if (HasItems)
+{
+    <RadzenCard Variant="Variant.Outlined">
+        <RadzenStack Orientation="Orientation.Vertical" Gap="1rem" class="rz-p-2">
+
+            @* Header *@
+            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                <RadzenIcon Icon="notifications_active" Style="color: var(--rz-warning); font-size: 1.5rem;" />
+                <RadzenText TextStyle="TextStyle.H6" class="rz-mb-0"><strong>Requires Your Attention</strong></RadzenText>
+                <RadzenBadge BadgeStyle="BadgeStyle.Warning" IsPill="true" Text="@TotalCount.ToString()" />
+            </RadzenStack>
+
+            @* Unpaid Bills *@
+            @if (Data!.UnpaidBills.Count > 0)
+            {
+                <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
+                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.375rem">
+                        <RadzenIcon Icon="receipt_long" Style="font-size: 1rem; color: var(--rz-danger);" />
+                        <RadzenText TextStyle="TextStyle.Subtitle2" class="rz-mb-0"><strong>Unpaid Bills</strong></RadzenText>
+                        <RadzenBadge BadgeStyle="BadgeStyle.Danger" IsPill="true" Text="@Data.UnpaidBills.Count.ToString()" Style="font-size: 0.65rem;" />
+                    </RadzenStack>
+
+                    @foreach (var bill in Data.UnpaidBills.Take(RemainingBillSlots))
+                    {
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween"
+                                     Style="padding: 0.5rem 0.75rem; background: var(--rz-base-100); border-radius: var(--rz-border-radius); cursor: pointer;"
+                                     @onclick="@(() => NavigateToBill(bill.Id))">
+                            <RadzenStack Orientation="Orientation.Vertical" Gap="0.125rem">
+                                <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0"><strong>@bill.Title</strong></RadzenText>
+                                <RadzenText TextStyle="TextStyle.Caption" class="rz-mb-0 rz-color-secondary">
+                                    @bill.Category — @bill.BillDate.LocalDateTime.ToString("MMM dd, yyyy")
+                                </RadzenText>
+                            </RadzenStack>
+                            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                                <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0" Style="font-weight: 600; font-variant-numeric: tabular-nums;">
+                                    <CurrencyDisplay Amount="@bill.Amount" Currency="@bill.Currency" />
+                                </RadzenText>
+                                <RadzenIcon Icon="chevron_right" Style="font-size: 1rem; color: var(--rz-text-secondary-color);" />
+                            </RadzenStack>
+                        </RadzenStack>
+                    }
+                </RadzenStack>
+            }
+
+            @* Urgent Tasks *@
+            @if (Data!.UrgentTasks.Count > 0 && RemainingTaskSlots > 0)
+            {
+                <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
+                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.375rem">
+                        <RadzenIcon Icon="priority_high" Style="font-size: 1rem; color: var(--rz-warning);" />
+                        <RadzenText TextStyle="TextStyle.Subtitle2" class="rz-mb-0"><strong>Urgent Tasks</strong></RadzenText>
+                        <RadzenBadge BadgeStyle="BadgeStyle.Warning" IsPill="true" Text="@Data.UrgentTasks.Count.ToString()" Style="font-size: 0.65rem;" />
+                    </RadzenStack>
+
+                    @foreach (var task in Data.UrgentTasks.Take(RemainingTaskSlots))
+                    {
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween"
+                                     Style="padding: 0.5rem 0.75rem; background: var(--rz-base-100); border-radius: var(--rz-border-radius); cursor: pointer;"
+                                     @onclick="@(() => NavigateToTask(task.TaskId, task.OccurrenceId))">
+                            <RadzenStack Orientation="Orientation.Vertical" Gap="0.125rem">
+                                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.375rem">
+                                    <RadzenIcon Icon="flag" Style="@($"font-size: 0.875rem; color: {GetPriorityColor(task.Priority)};")" />
+                                    <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0"><strong>@task.Title</strong></RadzenText>
+                                </RadzenStack>
+                                <RadzenText TextStyle="TextStyle.Caption" class="rz-mb-0 rz-color-secondary">
+                                    @task.Category
+                                    @if (!string.IsNullOrEmpty(task.AssignedToUserFullName))
+                                    {
+                                        <text> • Assigned to @task.AssignedToUserFullName</text>
+                                    }
+                                </RadzenText>
+                            </RadzenStack>
+                            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                                <RadzenBadge BadgeStyle="@(task.Status == Models.Enums.OccurrenceStatus.Overdue ? BadgeStyle.Danger : BadgeStyle.Warning)"
+                                             IsPill="true" Variant="Variant.Flat"
+                                             Text="@GetDueDateLabel(task.DueDate)" Style="font-size: 0.7rem;" />
+                                <RadzenBadge BadgeStyle="@(task.Priority == Models.Enums.TaskPriority.Critical ? BadgeStyle.Danger : BadgeStyle.Warning)"
+                                             IsPill="true" Variant="Variant.Flat"
+                                             Text="@task.Priority.ToString()" Style="font-size: 0.7rem;" />
+                                <RadzenIcon Icon="chevron_right" Style="font-size: 1rem; color: var(--rz-text-secondary-color);" />
+                            </RadzenStack>
+                        </RadzenStack>
+                    }
+                </RadzenStack>
+            }
+
+            @* Expand / Collapse *@
+            @if (HasMoreItems)
+            {
+                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Center">
+                    <RadzenButton Text="@(IsExpanded ? "Show Less" : $"Show All ({TotalCount})")"
+                                  Icon="@(IsExpanded ? "expand_less" : "expand_more")"
+                                  Variant="Variant.Text" ButtonStyle="ButtonStyle.Secondary" Size="ButtonSize.Small"
+                                  Click="ToggleExpanded" />
+                </RadzenStack>
+            }
+        </RadzenStack>
+    </RadzenCard>
+}

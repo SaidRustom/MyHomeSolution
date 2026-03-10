@@ -219,6 +219,84 @@ namespace MyHomeSolution.Infrastructure.Persistence.Migrations
                     b.ToTable("AuditLogs");
                 });
 
+            modelBuilder.Entity("MyHomeSolution.Domain.Entities.BackgroundServiceDefinition", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(1024)
+                        .HasColumnType("nvarchar(1024)");
+
+                    b.Property<bool>("IsEnabled")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<string>("QualifiedTypeName")
+                        .IsRequired()
+                        .HasMaxLength(1024)
+                        .HasColumnType("nvarchar(1024)");
+
+                    b.Property<DateTimeOffset>("RegisteredAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name");
+
+                    b.HasIndex("QualifiedTypeName")
+                        .IsUnique();
+
+                    b.ToTable("BackgroundServiceDefinitions");
+                });
+
+            modelBuilder.Entity("MyHomeSolution.Domain.Entities.BackgroundServiceLog", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("BackgroundServiceId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset?>("CompletedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid?>("ExceptionLogId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ResultMessage")
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<DateTimeOffset>("StartedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BackgroundServiceId");
+
+                    b.HasIndex("ExceptionLogId");
+
+                    b.HasIndex("StartedAt")
+                        .IsDescending();
+
+                    b.HasIndex("Status");
+
+                    b.ToTable("BackgroundServiceLogs");
+                });
+
             modelBuilder.Entity("MyHomeSolution.Domain.Entities.Bill", b =>
                 {
                     b.Property<Guid>("Id")
@@ -284,6 +362,12 @@ namespace MyHomeSolution.Infrastructure.Persistence.Migrations
                     b.Property<string>("RelatedEntityType")
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
 
                     b.Property<string>("Title")
                         .IsRequired()
@@ -436,6 +520,100 @@ namespace MyHomeSolution.Infrastructure.Persistence.Migrations
                     b.ToTable("EntityShares");
                 });
 
+            modelBuilder.Entity("MyHomeSolution.Domain.Entities.ExceptionLog", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset?>("AiAnalysedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("AiAnalysis")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("AiSuggestedPrompt")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ClassName")
+                        .HasMaxLength(512)
+                        .HasColumnType("nvarchar(512)");
+
+                    b.Property<string>("Environment")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("ExceptionType")
+                        .IsRequired()
+                        .HasMaxLength(1024)
+                        .HasColumnType("nvarchar(1024)");
+
+                    b.Property<string>("HttpMethod")
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
+
+                    b.Property<int?>("HttpStatusCode")
+                        .HasColumnType("int");
+
+                    b.Property<string>("InnerException")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsAiAnalysed")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsHandled")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Message")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("MethodName")
+                        .HasMaxLength(512)
+                        .HasColumnType("nvarchar(512)");
+
+                    b.Property<DateTimeOffset>("OccurredAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("RequestPath")
+                        .HasMaxLength(2048)
+                        .HasColumnType("nvarchar(2048)");
+
+                    b.Property<int>("Severity")
+                        .HasColumnType("int");
+
+                    b.Property<string>("StackTrace")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ThrownByService")
+                        .IsRequired()
+                        .HasMaxLength(512)
+                        .HasColumnType("nvarchar(512)");
+
+                    b.Property<string>("TraceId")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<string>("UserId")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ExceptionType");
+
+                    b.HasIndex("IsHandled");
+
+                    b.HasIndex("OccurredAt")
+                        .IsDescending();
+
+                    b.HasIndex("Severity");
+
+                    b.HasIndex("ThrownByService");
+
+                    b.ToTable("ExceptionLogs");
+                });
+
             modelBuilder.Entity("MyHomeSolution.Domain.Entities.HouseholdTask", b =>
                 {
                     b.Property<Guid>("Id")
@@ -459,6 +637,7 @@ namespace MyHomeSolution.Infrastructure.Persistence.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<decimal?>("DefaultBillAmount")
+                        .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<int?>("DefaultBillCategory")
@@ -466,6 +645,10 @@ namespace MyHomeSolution.Infrastructure.Persistence.Migrations
 
                     b.Property<string>("DefaultBillCurrency")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("DefaultBillPaidByUserId")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("DefaultBillTitle")
                         .HasColumnType("nvarchar(max)");
@@ -503,6 +686,12 @@ namespace MyHomeSolution.Infrastructure.Persistence.Migrations
 
                     b.Property<int>("Priority")
                         .HasColumnType("int");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
 
                     b.Property<string>("Title")
                         .IsRequired()
@@ -643,6 +832,12 @@ namespace MyHomeSolution.Infrastructure.Persistence.Migrations
 
                     b.Property<int>("LastAssigneeIndex")
                         .HasColumnType("int");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
 
                     b.Property<DateOnly>("StartDate")
                         .HasColumnType("date");
@@ -818,6 +1013,12 @@ namespace MyHomeSolution.Infrastructure.Persistence.Migrations
                     b.Property<string>("Notes")
                         .HasMaxLength(1000)
                         .HasColumnType("nvarchar(1000)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
 
                     b.Property<int>("Status")
                         .HasColumnType("int");
@@ -1088,6 +1289,24 @@ namespace MyHomeSolution.Infrastructure.Persistence.Migrations
                     b.Navigation("AuditLog");
                 });
 
+            modelBuilder.Entity("MyHomeSolution.Domain.Entities.BackgroundServiceLog", b =>
+                {
+                    b.HasOne("MyHomeSolution.Domain.Entities.BackgroundServiceDefinition", "BackgroundService")
+                        .WithMany("Logs")
+                        .HasForeignKey("BackgroundServiceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("MyHomeSolution.Domain.Entities.ExceptionLog", "ExceptionLog")
+                        .WithMany()
+                        .HasForeignKey("ExceptionLogId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("BackgroundService");
+
+                    b.Navigation("ExceptionLog");
+                });
+
             modelBuilder.Entity("MyHomeSolution.Domain.Entities.BillItem", b =>
                 {
                     b.HasOne("MyHomeSolution.Domain.Entities.Bill", "Bill")
@@ -1163,6 +1382,11 @@ namespace MyHomeSolution.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("MyHomeSolution.Domain.Entities.AuditLog", b =>
                 {
                     b.Navigation("HistoryEntries");
+                });
+
+            modelBuilder.Entity("MyHomeSolution.Domain.Entities.BackgroundServiceDefinition", b =>
+                {
+                    b.Navigation("Logs");
                 });
 
             modelBuilder.Entity("MyHomeSolution.Domain.Entities.Bill", b =>

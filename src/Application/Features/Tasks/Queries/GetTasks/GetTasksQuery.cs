@@ -17,4 +17,7 @@ public sealed record GetTasksQuery : IRequest<PaginatedList<TaskBriefDto>>
     public DateOnly? FromDate { get; init; }
     public DateOnly? ToDate { get; init; }
     public bool? NotCompletedOnly { get; init; }
+    public bool? AssignedByMe { get; init; }
+    public string? SortBy { get; init; }
+    public string? SortDirection { get; init; }
 }

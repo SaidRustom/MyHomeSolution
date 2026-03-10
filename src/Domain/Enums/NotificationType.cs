@@ -25,5 +25,7 @@ public enum NotificationType
     ConnectionRequestAccepted = 20,
     OccurrenceOverdue = 21,
     OccurrenceStarted = 22,
-    OccurrenceRescheduled = 23
+    OccurrenceRescheduled = 23,
+    OccurrenceCompletedByOther = 24,
+    BillRequiresPayment = 25
 }

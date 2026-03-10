@@ -52,16 +52,46 @@
             <RadzenTextArea Name="Notes" @bind-Value="@Model.Notes" Placeholder="Optional notes…" Rows="2" Style="width: 100%;" />
         </RadzenStack>
 
-        @* Splits section *@
-        @if (!IsEdit)
+        @* Paid By — filtered to split participants + current user *@
+        @if (IsEdit || Model.Splits.Count > 0)
         {
-            <RadzenFieldset Text="Bill Splits" AllowCollapse="true">
-                <BillSplitEditor Splits="@Model.Splits" BillAmount="@Model.Amount" CurrentUserId="@CurrentUserId" />
-            </RadzenFieldset>
+            <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem">
+                <RadzenLabel Text="Paid By" />
+                @if (PaidByEligibleUsers.Count > 0)
+                {
+                    <RadzenDropDown TValue="string"
+                                    Data="@PaidByEligibleUsers"
+                                    @bind-Value="@Model.PaidByUserId"
+                                    TextProperty="DisplayName"
+                                    ValueProperty="UserId"
+                                    AllowClear="true"
+                                    Placeholder="Select who paid…"
+                                    Style="width: 100%;">
+                        <Template Context="user">
+                            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                                <div style="width: 24px; height: 24px; border-radius: 50%; background: var(--rz-primary-lighter); display: flex; align-items: center; justify-content: center;">
+                                    <RadzenIcon Icon="person" Style="font-size: 0.75rem; color: var(--rz-primary);" />
+                                </div>
+                                <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0">@((user as EligibleUserOption)?.DisplayName)</RadzenText>
+                            </RadzenStack>
+                        </Template>
+                    </RadzenDropDown>
+                }
+                else
+                {
+                    <FriendPicker @bind-SelectedUserId="@Model.PaidByUserId" Placeholder="Select who paid…" />
+                }
+                <RadzenText TextStyle="TextStyle.Caption" class="rz-mb-0 rz-color-secondary">Only users who are part of this bill's splits can be selected.</RadzenText>
+            </RadzenStack>
         }
 
+        @* Splits section *@
+        <RadzenFieldset Text="Bill Splits" AllowCollapse="true">
+            <BillSplitEditor Splits="@Model.Splits" BillAmount="@Model.Amount" CurrentUserId="@CurrentUserId" />
+        </RadzenFieldset>
+
         @* Remaining Percentage indicator *@
-        @if (!IsEdit && Model.Splits.Count > 0)
+        @if (Model.Splits.Count > 0)
         {
             <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
                 <RadzenIcon Icon="pie_chart" Style="font-size: 1rem;" />

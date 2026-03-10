@@ -10,9 +10,16 @@ else
                          Wrap="FlexWrap.Wrap" Gap="0.75rem" class="rz-py-2" Style="border-bottom: 1px solid var(--rz-base-200);">
                 @* User & percentage *@
                 <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.75rem" Style="flex: 1; min-width: 200px;">
-                    <div style="width: 36px; height: 36px; border-radius: 50%; background: var(--rz-base-200); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                        <RadzenIcon Icon="person" Style="font-size: 1.125rem; color: var(--rz-text-secondary-color);" />
-                    </div>
+                    @if (!string.IsNullOrEmpty(split.UserAvatarUrl))
+                    {
+                        <RadzenImage Path="@split.UserAvatarUrl" Style="width: 36px; height: 36px; border-radius: 50%; object-fit: cover; flex-shrink: 0;" />
+                    }
+                    else
+                    {
+                        <div style="width: 36px; height: 36px; border-radius: 50%; background: var(--rz-primary-lighter); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                            <RadzenIcon Icon="person" Style="font-size: 1.125rem; color: var(--rz-primary);" />
+                        </div>
+                    }
                     <RadzenStack Orientation="Orientation.Vertical" Gap="0">
                         <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0"><strong>@(split.UserFullName ?? split.UserId)</strong></RadzenText>
                         <RadzenText TextStyle="TextStyle.Caption" class="rz-color-secondary rz-mb-0">@($"{split.Percentage:N1}%")</RadzenText>

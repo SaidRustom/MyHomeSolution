@@ -3,6 +3,7 @@ using BlazorUI.Components.Scheduler;
 using BlazorUI.Models.Common;
 using BlazorUI.Models.Enums;
 using BlazorUI.Models.Occurrences;
+using BlazorUI.Models.Realtime;
 using BlazorUI.Models.Tasks;
 using BlazorUI.Services.Contracts;
 using Microsoft.AspNetCore.Components;
@@ -29,6 +30,9 @@ public partial class SchedulerPage : IDisposable
     [Inject]
     NavigationManager NavigationManager { get; set; } = default!;
 
+    [Inject]
+    INotificationHubClient NotificationHubClient { get; set; } = default!;
+
     [CascadingParameter]
     private Task<AuthenticationState> AuthState { get; set; } = default!;
 
@@ -49,10 +53,16 @@ public partial class SchedulerPage : IDisposable
     int CompletedTodayCount { get; set; }
 
     // Filter state
+    SchedulerViewMode _filterViewMode;
     TaskCategory? _filterCategory;
     TaskPriority? _filterPriority;
     string? _filterAssignee;
     OccurrenceStatus? _filterStatus;
+    bool? _filterIsRecurring;
+    bool? _filterHasBill;
+
+    // Selected day for the panel (defaults to today)
+    DateOnly _selectedDate = DateOnly.FromDateTime(DateTime.Today);
 
     // Tracked scheduler date range
     DateOnly _rangeStart;
@@ -66,6 +76,8 @@ public partial class SchedulerPage : IDisposable
         _currentUserId = state.User.FindFirst(ClaimTypes.NameIdentifier)?.Value
             ?? state.User.FindFirst("sub")?.Value;
 
+        NotificationHubClient.OnUserNotification += HandleRealtimeNotification;
+
         await LoadDataAsync();
     }
 
@@ -73,8 +85,6 @@ public partial class SchedulerPage : IDisposable
     {
         IsLoading = true;
         Error = null;
-
-        var today = DateOnly.FromDateTime(DateTime.Today);
 
         // Load today's tasks for stat cards
         var todayResult = await TaskService.GetTodayTasksAsync(_cts.Token);
@@ -107,34 +117,53 @@ public partial class SchedulerPage : IDisposable
 
     async Task LoadAppointmentsAsync()
     {
+        // Map view mode to API filter flags
+        bool? assignedByMe = _filterViewMode == SchedulerViewMode.AssignedByMe ? true : null;
+        bool? myTasks = _filterViewMode == SchedulerViewMode.MyTasks ? true : null;
+        bool? @private = _filterViewMode == SchedulerViewMode.Private ? true : null;
+        bool? shared = _filterViewMode == SchedulerViewMode.Shared ? true : null;
+
         var result = await OccurrenceService.GetByDateRangeAsync(
             _rangeStart, _rangeEnd,
             assignedToUserId: _filterAssignee,
             status: _filterStatus,
+            assignedByMe: assignedByMe,
+            myTasks: myTasks,
+            @private: @private,
+            shared: shared,
+            isRecurring: _filterIsRecurring,
+            hasBill: _filterHasBill,
+            category: _filterCategory,
+            priority: _filterPriority,
             cancellationToken: _cts.Token);
 
         if (result.IsSuccess)
         {
-            var filtered = result.Value.AsEnumerable();
+            var today = DateOnly.FromDateTime(DateTime.Today);
 
-            if (_filterCategory.HasValue)
-                filtered = filtered.Where(o => o.TaskCategory == _filterCategory.Value);
-
-            if (_filterPriority.HasValue)
-                filtered = filtered.Where(o => o.TaskPriority == _filterPriority.Value);
-
-            _appointments = filtered.Select(o => new SchedulerAppointment
+            _appointments = result.Value.Select(o =>
             {
-                OccurrenceId = o.Id,
-                TaskId = o.TaskId,
-                Text = o.TaskTitle,
-                Start = o.DueDate.ToDateTime(TimeOnly.MinValue),
-                End = o.DueDate.ToDateTime(TimeOnly.MinValue).AddMinutes(o.EstimatedDurationMinutes ?? 60),
-                Status = o.Status,
-                Priority = o.TaskPriority,
-                Category = o.TaskCategory,
-                AssignedToUserId = o.AssignedToUserId,
-                BillId = o.BillId
+                var displayDate = (o.DueDate < today
+                    && o.Status is not OccurrenceStatus.Completed
+                    && o.Status is not OccurrenceStatus.Skipped)
+                    ? today
+                    : o.DueDate;
+
+                return new SchedulerAppointment
+                {
+                    OccurrenceId = o.Id,
+                    TaskId = o.TaskId,
+                    Text = o.Status is OccurrenceStatus.Overdue
+                        ? $"⚠ {o.TaskTitle}"
+                        : o.TaskTitle,
+                    Start = displayDate.ToDateTime(TimeOnly.MinValue),
+                    End = displayDate.ToDateTime(TimeOnly.MinValue).AddMinutes(o.EstimatedDurationMinutes ?? 60),
+                    Status = o.Status,
+                    Priority = o.TaskPriority,
+                    Category = o.TaskCategory,
+                    AssignedToUserId = o.AssignedToUserId,
+                    BillId = o.BillId
+                };
             }).ToList();
         }
     }
@@ -163,13 +192,20 @@ public partial class SchedulerPage : IDisposable
 
     async Task OnSlotSelectAsync(SchedulerSlotSelectEventArgs args)
     {
-        var dueDate = DateOnly.FromDateTime(args.Start);
-        await OpenCreateTaskDialogAsync(dueDate);
+        var clickedDate = DateOnly.FromDateTime(args.Start);
+        _selectedDate = clickedDate;
+        await InvokeAsync(StateHasChanged);
     }
 
     async Task OnAppointmentSelectAsync(SchedulerAppointmentSelectEventArgs<SchedulerAppointment> args)
     {
         await OpenOccurrenceDialogAsync(args.Data);
+    }
+
+    async Task SelectTodayAsync()
+    {
+        _selectedDate = DateOnly.FromDateTime(DateTime.Today);
+        await InvokeAsync(StateHasChanged);
     }
 
     async Task OpenCreateTaskDialogAsync(DateOnly? dueDate = null)
@@ -235,6 +271,12 @@ public partial class SchedulerPage : IDisposable
     }
 
     // Filter callbacks
+    async Task OnViewModeFilterChanged(SchedulerViewMode value)
+    {
+        _filterViewMode = value;
+        await LoadAppointmentsAsync();
+    }
+
     async Task OnCategoryFilterChanged(TaskCategory? value)
     {
         _filterCategory = value;
@@ -259,16 +301,31 @@ public partial class SchedulerPage : IDisposable
         await LoadAppointmentsAsync();
     }
 
+    async Task OnIsRecurringFilterChanged(bool? value)
+    {
+        _filterIsRecurring = value;
+        await LoadAppointmentsAsync();
+    }
+
+    async Task OnHasBillFilterChanged(bool? value)
+    {
+        _filterHasBill = value;
+        await LoadAppointmentsAsync();
+    }
+
     async Task ResetFiltersAsync()
     {
+        _filterViewMode = SchedulerViewMode.All;
         _filterCategory = null;
         _filterPriority = null;
         _filterAssignee = null;
         _filterStatus = null;
+        _filterIsRecurring = null;
+        _filterHasBill = null;
         await LoadAppointmentsAsync();
     }
 
-    async Task OnUpcomingActionAsync()
+    async Task OnPanelActionAsync()
     {
         await ReloadAllAsync();
     }
@@ -280,8 +337,21 @@ public partial class SchedulerPage : IDisposable
 
     public void Dispose()
     {
+        NotificationHubClient.OnUserNotification -= HandleRealtimeNotification;
         _cts.Cancel();
         _cts.Dispose();
+    }
+
+    void HandleRealtimeNotification(UserPushNotification push)
+    {
+        var entityType = push.RelatedEntityType?.ToLowerInvariant();
+        if (entityType is "householdtask" or "task" or "taskoccurrence" or "occurrence")
+        {
+            InvokeAsync(async () =>
+            {
+                await ReloadAllAsync();
+            });
+        }
     }
 }
 

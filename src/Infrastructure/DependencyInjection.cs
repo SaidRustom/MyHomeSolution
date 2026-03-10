@@ -26,13 +26,17 @@ public static class DependencyInjection
         services.AddEmailServices(configuration);
 
         services.AddSingleton<IDateTimeProvider, DateTimeProvider>();
+        services.AddSingleton<ITaskProcessingLock, TaskProcessingLock>();
         services.AddScoped<IShareService, ShareService>();
+        services.AddScoped<IExceptionLogService, ExceptionLogService>();
         services.AddSingleton<IFileStorageService>(sp =>
         {
             var env = sp.GetRequiredService<Microsoft.AspNetCore.Hosting.IWebHostEnvironment>();
             var basePath = Path.Combine(env.ContentRootPath, "uploads");
             return new LocalFileStorageService(basePath);
         });
+
+        services.AddExceptionAnalysis(configuration);
 
         return services;
     }
@@ -155,18 +159,27 @@ public static class DependencyInjection
         this IServiceCollection services, IConfiguration configuration)
     {
         services
-            .AddOptions<SendGridOptions>()
-            .Bind(configuration.GetSection(SendGridOptions.SectionName))
+            .AddOptions<MailgunOptions>()
+            .Bind(configuration.GetSection(MailgunOptions.SectionName))
             .ValidateDataAnnotations()
             .ValidateOnStart();
 
         services.AddSingleton<IEmailBackgroundQueue, EmailBackgroundQueue>();
 
-        services.AddHttpClient<IEmailService, SendGridEmailService>(client =>
+        services.AddHttpClient<IEmailService, MailgunEmailService>(client =>
         {
             client.Timeout = TimeSpan.FromSeconds(30);
         });
 
         services.AddHostedService<EmailBackgroundService>();
+    }
+
+    private static void AddExceptionAnalysis(
+        this IServiceCollection services, IConfiguration configuration)
+    {
+        services.AddHttpClient<IExceptionAnalysisService, OpenAiExceptionAnalysisService>(client =>
+        {
+            client.Timeout = TimeSpan.FromSeconds(60);
+        });
     }
 }

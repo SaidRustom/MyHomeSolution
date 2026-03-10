@@ -261,4 +261,18 @@ public sealed class IdentityService(
         var user = await userManager.FindByIdAsync(userId);
         return user?.EmailConfirmed ?? false;
     }
+
+    public async Task<(IdentityResultDto Result, string? Email, string? UserName)> DeleteUserAsync(
+        string userId, CancellationToken cancellationToken = default)
+    {
+        var user = await userManager.FindByIdAsync(userId);
+        if (user is null)
+            return (IdentityResultDto.Failure(["User not found."]), null, null);
+
+        var email = user.Email;
+        var userName = user.FirstName;
+
+        var result = await userManager.DeleteAsync(user);
+        return (result.ToResultDto(), email, userName);
+    }
 }

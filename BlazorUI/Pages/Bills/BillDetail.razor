@@ -16,10 +16,16 @@
     else if (Bill is not null)
     {
         <BillDetailPanel Bill="@Bill"
-                         OnEdit="EditBillAsync"
-                         OnDelete="DeleteBillAsync"
+                         OnEdit="@(_canEdit ? EditBillAsync : null)"
+                         OnDelete="@(_isOwner ? DeleteBillAsync : null)"
                          OnMarkSplitAsPaid="MarkSplitAsPaidAsync"
                          IsProcessing="@IsProcessing"
                          OnBack="GoBack" />
+
+        <BillPermissionPanel EntityId="@Bill.Id"
+                             EntityType="Bill"
+                             OwnerId="@Bill.CreatedByUserId"
+                             OwnerName="@Bill.CreatedBy"
+                             CanEdit="@_isOwner" />
     }
 </RadzenStack>

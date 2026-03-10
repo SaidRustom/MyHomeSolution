@@ -4,6 +4,7 @@ using MyHomeSolution.Application.Common.Events;
 using MyHomeSolution.Application.Common.Exceptions;
 using MyHomeSolution.Application.Common.Interfaces;
 using MyHomeSolution.Domain.Entities;
+using MyHomeSolution.Domain.Enums;
 
 namespace MyHomeSolution.Application.Features.Bills.Commands.UpdateBill;
 
@@ -32,11 +33,51 @@ public sealed class UpdateBillCommandHandler(
         bill.BillDate = request.BillDate;
         bill.Notes = request.Notes;
 
-        if (oldAmount != request.Amount)
+        // Update PaidByUserId if provided
+        if (!string.IsNullOrEmpty(request.PaidByUserId))
         {
-            foreach (var split in bill.Splits)
+            bill.PaidByUserId = request.PaidByUserId;
+        }
+
+        var splits = new List<BillSplit>();
+        // Sync splits if provided
+        if (request.Splits is { Count: > 0 })
+        {
+            // Remove existing splits
+            dbContext.BillSplits.RemoveRange(bill.Splits);
+            bill.Splits.Clear();
+
+            var hasCustomPercentages = request.Splits.Any(s => s.Percentage.HasValue);
+            var equalPercentage = Math.Round(100m / request.Splits.Count, 2);
+
+            foreach (var splitReq in request.Splits)
+            {
+                var percentage = hasCustomPercentages
+                    ? splitReq.Percentage!.Value
+                    : equalPercentage;
+
+                var splitAmount = Math.Round(request.Amount * percentage / 100m, 2);
+
+                splits.Add(new BillSplit
+                {
+                    BillId = bill.Id,
+                    UserId = splitReq.UserId,
+                    Percentage = percentage,
+                    Amount = splitAmount,
+                    Status = splitReq.UserId == bill.PaidByUserId ? SplitStatus.Paid : SplitStatus.Unpaid
+                });
+            }
+
+            dbContext.BillSplits.AddRange(splits);
+        }
+        else if (oldAmount != request.Amount)
+        {
+            // Recalculate amounts based on existing percentages
+            splits = bill.Splits.ToList();
+            foreach (var split in splits)
             {
                 split.Amount = Math.Round(request.Amount * split.Percentage / 100m, 2);
+                dbContext.BillSplits.Update(split);
             }
         }
 

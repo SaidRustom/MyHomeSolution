@@ -24,5 +24,7 @@ public sealed class BillItemConfiguration : IEntityTypeConfiguration<BillItem>
             .HasPrecision(18, 2);
 
         builder.HasIndex(i => i.BillId);
+
+        builder.HasQueryFilter(i => !i.Bill.IsDeleted);
     }
 }

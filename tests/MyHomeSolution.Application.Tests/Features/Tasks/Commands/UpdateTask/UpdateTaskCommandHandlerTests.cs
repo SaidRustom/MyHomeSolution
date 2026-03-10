@@ -16,7 +16,13 @@ public sealed class UpdateTaskCommandHandlerTests : IDisposable
 {
     private readonly TestDbContextFactory _factory = new();
     private readonly IPublisher _publisher = Substitute.For<IPublisher>();
+    private readonly ICurrentUserService _currentUserService = Substitute.For<ICurrentUserService>();
     private readonly IOccurrenceScheduler _occurrenceScheduler = Substitute.For<IOccurrenceScheduler>();
+
+    public UpdateTaskCommandHandlerTests()
+    {
+        _currentUserService.UserId.Returns("test-user");
+    }
 
     [Fact]
     public async Task Handle_ShouldUpdateExistingTask()
@@ -24,7 +30,7 @@ public sealed class UpdateTaskCommandHandlerTests : IDisposable
         var taskId = await SeedTask("Original Title", TaskPriority.Low, TaskCategory.General);
 
         using var context = _factory.CreateContext();
-        var handler = new UpdateTaskCommandHandler(context, _occurrenceScheduler, _publisher);
+        var handler = new UpdateTaskCommandHandler(context, _currentUserService, _occurrenceScheduler, _publisher);
         var command = new UpdateTaskCommand
         {
             Id = taskId,
@@ -55,7 +61,7 @@ public sealed class UpdateTaskCommandHandlerTests : IDisposable
     public async Task Handle_ShouldThrowNotFoundException_WhenTaskDoesNotExist()
     {
         using var context = _factory.CreateContext();
-        var handler = new UpdateTaskCommandHandler(context, _occurrenceScheduler, _publisher);
+        var handler = new UpdateTaskCommandHandler(context, _currentUserService, _occurrenceScheduler, _publisher);
         var command = new UpdateTaskCommand
         {
             Id = Guid.CreateVersion7(),
@@ -76,7 +82,7 @@ public sealed class UpdateTaskCommandHandlerTests : IDisposable
         var taskId = await SeedDeletedTask();
 
         using var context = _factory.CreateContext();
-        var handler = new UpdateTaskCommandHandler(context, _occurrenceScheduler, _publisher);
+        var handler = new UpdateTaskCommandHandler(context, _currentUserService, _occurrenceScheduler, _publisher);
         var command = new UpdateTaskCommand
         {
             Id = taskId,
@@ -97,7 +103,7 @@ public sealed class UpdateTaskCommandHandlerTests : IDisposable
         var taskId = await SeedTask("Active Task", TaskPriority.Medium, TaskCategory.Cleaning);
 
         using var context = _factory.CreateContext();
-        var handler = new UpdateTaskCommandHandler(context, _occurrenceScheduler, _publisher);
+        var handler = new UpdateTaskCommandHandler(context, _currentUserService, _occurrenceScheduler, _publisher);
         var command = new UpdateTaskCommand
         {
             Id = taskId,
@@ -120,7 +126,7 @@ public sealed class UpdateTaskCommandHandlerTests : IDisposable
         var taskId = await SeedTask("Original Title", TaskPriority.Low, TaskCategory.General);
 
         using var context = _factory.CreateContext();
-        var handler = new UpdateTaskCommandHandler(context, _occurrenceScheduler, _publisher);
+        var handler = new UpdateTaskCommandHandler(context, _currentUserService, _occurrenceScheduler, _publisher);
         var command = new UpdateTaskCommand
         {
             Id = taskId,
@@ -141,7 +147,7 @@ public sealed class UpdateTaskCommandHandlerTests : IDisposable
     public async Task Handle_ShouldNotPublishEvent_WhenTaskDoesNotExist()
     {
         using var context = _factory.CreateContext();
-        var handler = new UpdateTaskCommandHandler(context, _occurrenceScheduler, _publisher);
+        var handler = new UpdateTaskCommandHandler(context, _currentUserService, _occurrenceScheduler, _publisher);
         var command = new UpdateTaskCommand
         {
             Id = Guid.CreateVersion7(),
@@ -164,7 +170,7 @@ public sealed class UpdateTaskCommandHandlerTests : IDisposable
         var taskId = await SeedRecurringTask("Bill Task");
 
         using var context = _factory.CreateContext();
-        var handler = new UpdateTaskCommandHandler(context, _occurrenceScheduler, _publisher);
+        var handler = new UpdateTaskCommandHandler(context, _currentUserService, _occurrenceScheduler, _publisher);
         var command = new UpdateTaskCommand
         {
             Id = taskId,
@@ -201,7 +207,7 @@ public sealed class UpdateTaskCommandHandlerTests : IDisposable
         var taskId = await SeedRecurringTask("Recurring Task");
 
         using var context = _factory.CreateContext();
-        var handler = new UpdateTaskCommandHandler(context, _occurrenceScheduler, _publisher);
+        var handler = new UpdateTaskCommandHandler(context, _currentUserService, _occurrenceScheduler, _publisher);
         var command = new UpdateTaskCommand
         {
             Id = taskId,
@@ -219,7 +225,7 @@ public sealed class UpdateTaskCommandHandlerTests : IDisposable
         await handler.Handle(command, CancellationToken.None);
 
         await _occurrenceScheduler.Received(1)
-            .RegenerateOccurrencesAsync(taskId, Arg.Any<CancellationToken>());
+            .SyncOccurrencesAsync(taskId, Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -228,7 +234,7 @@ public sealed class UpdateTaskCommandHandlerTests : IDisposable
         var taskId = await SeedRecurringTask("Same Task");
 
         using var context = _factory.CreateContext();
-        var handler = new UpdateTaskCommandHandler(context, _occurrenceScheduler, _publisher);
+        var handler = new UpdateTaskCommandHandler(context, _currentUserService, _occurrenceScheduler, _publisher);
         var command = new UpdateTaskCommand
         {
             Id = taskId,
@@ -246,7 +252,7 @@ public sealed class UpdateTaskCommandHandlerTests : IDisposable
         await handler.Handle(command, CancellationToken.None);
 
         await _occurrenceScheduler.DidNotReceiveWithAnyArgs()
-            .RegenerateOccurrencesAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>());
+            .SyncOccurrencesAsync(Arg.Any<Guid>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -255,7 +261,7 @@ public sealed class UpdateTaskCommandHandlerTests : IDisposable
         var taskId = await SeedTask("Non-Recurring", TaskPriority.Low, TaskCategory.General);
 
         using var context = _factory.CreateContext();
-        var handler = new UpdateTaskCommandHandler(context, _occurrenceScheduler, _publisher);
+        var handler = new UpdateTaskCommandHandler(context, _currentUserService, _occurrenceScheduler, _publisher);
         var command = new UpdateTaskCommand
         {
             Id = taskId,
@@ -283,7 +289,7 @@ public sealed class UpdateTaskCommandHandlerTests : IDisposable
         task.RecurrencePattern.Assignees.Should().HaveCount(2);
 
         await _occurrenceScheduler.Received(1)
-            .RegenerateOccurrencesAsync(taskId, Arg.Any<CancellationToken>());
+            .SyncOccurrencesAsync(taskId, Arg.Any<CancellationToken>());
     }
 
     private async Task<Guid> SeedTask(string title, TaskPriority priority, TaskCategory category)

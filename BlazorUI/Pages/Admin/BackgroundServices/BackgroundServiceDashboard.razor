@@ -1,0 +1,170 @@
+@page "/admin/background-services"
+@attribute [Authorize(Roles = "Administrator")]
+
+<PageTitle>Background Services — MyHome</PageTitle>
+
+<RadzenStack Orientation="Orientation.Vertical" Gap="1.25rem">
+
+    <PageHeader Title="Background Services" Subtitle="Monitor and track all system background services" Icon="home_repair_service">
+        <Actions>
+            <RadzenButton Text="Refresh" Icon="refresh" Variant="Variant.Outlined" ButtonStyle="ButtonStyle.Secondary" Click="LoadServicesAsync" />
+        </Actions>
+    </PageHeader>
+
+    @if (Error is not null)
+    {
+        <ErrorAlert Problem="@Error" OnRetry="LoadServicesAsync" />
+    }
+
+    @if (IsLoading && Services.Count == 0)
+    {
+        <LoadingIndicator Text="Loading services…" />
+    }
+    else if (!IsLoading && Services.Count == 0)
+    {
+        <EmptyState Icon="dns"
+                    Title="No background services"
+                    Description="No background services have been registered yet." />
+    }
+    else
+    {
+        @* ── Service cards ──────────────────────────────────────────────── *@
+        <RadzenRow Gap="1rem" RowGap="1rem">
+            @foreach (var service in Services)
+            {
+                <RadzenColumn Size="12" SizeSM="6" SizeLG="4">
+                    <RadzenCard Variant="Variant.Outlined" class="rz-p-4"
+                                Style="@($"cursor: pointer; border-left: 4px solid {GetServiceStatusColor(service)}; transition: box-shadow 0.2s;")"
+                                @onclick="@(() => SelectService(service))">
+                        <RadzenStack Orientation="Orientation.Vertical" Gap="0.75rem">
+                            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
+                                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                                    <RadzenIcon Icon="@GetServiceIcon(service)" Style="@($"font-size: 1.5rem; color: {GetServiceStatusColor(service)};")" />
+                                    <RadzenText TextStyle="TextStyle.Subtitle1" class="rz-mb-0"><strong>@service.Name</strong></RadzenText>
+                                </RadzenStack>
+                                @if (service.IsEnabled)
+                                {
+                                    <RadzenBadge BadgeStyle="BadgeStyle.Success" Text="Active" Style="font-size: 0.65rem;" />
+                                }
+                                else
+                                {
+                                    <RadzenBadge BadgeStyle="BadgeStyle.Light" Text="Disabled" Style="font-size: 0.65rem;" />
+                                }
+                            </RadzenStack>
+
+                            <RadzenText TextStyle="TextStyle.Caption" class="rz-mb-0 rz-color-secondary" Style="line-height: 1.4;">@service.Description</RadzenText>
+
+                            @if (service.LatestLog is not null)
+                            {
+                                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween"
+                                             Style="background: var(--rz-base-200); padding: 0.5rem 0.75rem; border-radius: 0.375rem;">
+                                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.375rem">
+                                        <RadzenIcon Icon="@service.LatestLog.StatusIcon"
+                                                    Style="@($"font-size: 1rem; color: {service.LatestLog.StatusColor};")" />
+                                        <RadzenText TextStyle="TextStyle.Caption" class="rz-mb-0">@service.LatestLog.Status</RadzenText>
+                                    </RadzenStack>
+                                    <RadzenText TextStyle="TextStyle.Caption" class="rz-mb-0 rz-color-secondary">
+                                        @service.LatestLog.StartedAt.LocalDateTime.ToString("MMM dd, HH:mm")
+                                    </RadzenText>
+                                </RadzenStack>
+                            }
+                            else
+                            {
+                                <RadzenText TextStyle="TextStyle.Caption" class="rz-mb-0 rz-color-secondary" Style="font-style: italic;">No execution history</RadzenText>
+                            }
+                        </RadzenStack>
+                    </RadzenCard>
+                </RadzenColumn>
+            }
+        </RadzenRow>
+
+        @* ── Selected service detail & logs ────────────────────────────── *@
+        @if (SelectedService is not null)
+        {
+            <RadzenCard Variant="Variant.Outlined" class="rz-p-4">
+                <RadzenStack Orientation="Orientation.Vertical" Gap="1rem">
+                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween" Wrap="FlexWrap.Wrap">
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                            <RadzenIcon Icon="history" Style="color: var(--rz-primary);" />
+                            <RadzenText TextStyle="TextStyle.Subtitle1" class="rz-mb-0"><strong>@SelectedService.Name — Execution History</strong></RadzenText>
+                        </RadzenStack>
+                        <RadzenButton Text="Close" Icon="close" Variant="Variant.Text" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small"
+                                      Click="@(() => { SelectedService = null; StateHasChanged(); })" />
+                    </RadzenStack>
+
+                    @if (IsLoadingLogs && LogData.Items.Count == 0)
+                    {
+                        <LoadingIndicator Text="Loading logs…" />
+                    }
+                    else if (!IsLoadingLogs && LogData.Items.Count == 0)
+                    {
+                        <EmptyState Icon="event_note"
+                                    Title="No execution logs"
+                                    Description="This service has not run yet." />
+                    }
+                    else
+                    {
+                        <RadzenDataGrid Data="@LogData.Items" TItem="BackgroundServiceLogBriefDto"
+                                        Count="@LogData.TotalCount"
+                                        PageSize="@LogPageSize"
+                                        AllowPaging="true"
+                                        PagerHorizontalAlign="HorizontalAlign.Center"
+                                        LoadData="OnLogLoadDataAsync"
+                                        IsLoading="@IsLoadingLogs"
+                                        Responsive="true"
+                                        Density="Density.Compact">
+
+                            <Columns>
+                                <RadzenDataGridColumn TItem="BackgroundServiceLogBriefDto" Title="" Width="36px" Sortable="false" Filterable="false">
+                                    <Template Context="log">
+                                        <RadzenIcon Icon="@log.StatusIcon" Style="@($"color: {log.StatusColor}; font-size: 1.125rem;")" />
+                                    </Template>
+                                </RadzenDataGridColumn>
+
+                                <RadzenDataGridColumn TItem="BackgroundServiceLogBriefDto" Title="Status" Width="100px">
+                                    <Template Context="log">
+                                        <RadzenBadge Text="@log.Status"
+                                                     BadgeStyle="@GetLogBadgeStyle(log.Status)"
+                                                     Style="font-size: 0.65rem;" />
+                                    </Template>
+                                </RadzenDataGridColumn>
+
+                                <RadzenDataGridColumn TItem="BackgroundServiceLogBriefDto" Title="Started" Width="160px">
+                                    <Template Context="log">
+                                        <RadzenText TextStyle="TextStyle.Caption" class="rz-mb-0">@log.StartedAt.LocalDateTime.ToString("MMM dd, HH:mm:ss")</RadzenText>
+                                    </Template>
+                                </RadzenDataGridColumn>
+
+                                <RadzenDataGridColumn TItem="BackgroundServiceLogBriefDto" Title="Duration" Width="100px">
+                                    <Template Context="log">
+                                        <RadzenText TextStyle="TextStyle.Caption" class="rz-mb-0">@log.DurationDisplay</RadzenText>
+                                    </Template>
+                                </RadzenDataGridColumn>
+
+                                <RadzenDataGridColumn TItem="BackgroundServiceLogBriefDto" Title="Result">
+                                    <Template Context="log">
+                                        <RadzenText TextStyle="TextStyle.Caption" class="rz-mb-0"
+                                                    Style="max-width: 400px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                            @(log.ResultMessage ?? "—")
+                                        </RadzenText>
+                                    </Template>
+                                </RadzenDataGridColumn>
+
+                                <RadzenDataGridColumn TItem="BackgroundServiceLogBriefDto" Title="" Width="48px" Sortable="false" Filterable="false" TextAlign="TextAlign.Center">
+                                    <Template Context="log">
+                                        @if (log.ExceptionLogId.HasValue)
+                                        {
+                                            <RadzenButton Icon="bug_report" Variant="Variant.Text" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small"
+                                                          title="View Exception"
+                                                          Click="@(() => ViewExceptionAsync(log.ExceptionLogId.Value))" />
+                                        }
+                                    </Template>
+                                </RadzenDataGridColumn>
+                            </Columns>
+                        </RadzenDataGrid>
+                    }
+                </RadzenStack>
+            </RadzenCard>
+        }
+    }
+</RadzenStack>

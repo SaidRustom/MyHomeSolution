@@ -63,6 +63,29 @@
         @* Occurrence details *@
         <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
             <RadzenText TextStyle="TextStyle.Subtitle2" class="rz-mb-0"><strong>Occurrence Details</strong></RadzenText>
+
+            @* Assigned to *@
+            @if (!string.IsNullOrEmpty(Occurrence.AssignedToUserId))
+            {
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem"
+                             Style="padding: 0.5rem 0.75rem; background: var(--rz-base-100); border-radius: var(--rz-border-radius);">
+                    @if (!string.IsNullOrEmpty(Occurrence.AssignedToUserAvatarUrl))
+                    {
+                        <RadzenImage Path="@Occurrence.AssignedToUserAvatarUrl" Style="width: 28px; height: 28px; border-radius: 50%; object-fit: cover;" />
+                    }
+                    else
+                    {
+                        <div style="width: 28px; height: 28px; border-radius: 50%; background: var(--rz-primary-lighter); display: flex; align-items: center; justify-content: center;">
+                            <RadzenIcon Icon="person" Style="font-size: 0.875rem; color: var(--rz-primary);" />
+                        </div>
+                    }
+                    <RadzenStack Orientation="Orientation.Vertical" Gap="0">
+                        <RadzenText TextStyle="TextStyle.Caption" class="rz-mb-0 rz-color-secondary">Assigned to</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0"><strong>@(Occurrence.AssignedToUserFullName ?? Occurrence.AssignedToUserId)</strong></RadzenText>
+                    </RadzenStack>
+                </RadzenStack>
+            }
+
             <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" Wrap="FlexWrap.Wrap">
                 <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.25rem">
                     <RadzenIcon Icon="event" Style="font-size: 1rem;" />
@@ -76,6 +99,29 @@
                     </RadzenStack>
                 }
             </RadzenStack>
+
+            @* Completed by *@
+            @if (!string.IsNullOrEmpty(Occurrence.CompletedByUserId))
+            {
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem"
+                             Style="padding: 0.5rem 0.75rem; background: var(--rz-success-lighter); border-radius: var(--rz-border-radius);">
+                    @if (!string.IsNullOrEmpty(Occurrence.CompletedByUserAvatarUrl))
+                    {
+                        <RadzenImage Path="@Occurrence.CompletedByUserAvatarUrl" Style="width: 28px; height: 28px; border-radius: 50%; object-fit: cover;" />
+                    }
+                    else
+                    {
+                        <div style="width: 28px; height: 28px; border-radius: 50%; background: var(--rz-success-lighter); display: flex; align-items: center; justify-content: center;">
+                            <RadzenIcon Icon="check_circle" Style="font-size: 0.875rem; color: var(--rz-success);" />
+                        </div>
+                    }
+                    <RadzenStack Orientation="Orientation.Vertical" Gap="0">
+                        <RadzenText TextStyle="TextStyle.Caption" class="rz-mb-0 rz-color-secondary">Completed by</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0"><strong>@(Occurrence.CompletedByUserFullName ?? Occurrence.CompletedByUserId)</strong></RadzenText>
+                    </RadzenStack>
+                </RadzenStack>
+            }
+
             @if (!string.IsNullOrEmpty(Occurrence.Notes))
             {
                 <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0 rz-color-secondary">
@@ -128,11 +174,11 @@
         }
 
         @* Action buttons *@
-        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem" class="rz-pt-4" Style="border-top: 1px solid var(--rz-base-200);">
+        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Center" Gap="0.5rem" class="rz-pt-4" Style="border-top: 1px solid var(--rz-base-200);">
             @if (Occurrence.Status == OccurrenceStatus.Pending || Occurrence.Status == OccurrenceStatus.Overdue)
             {
-                <RadzenButton Text="Skip" Icon="skip_next" Variant="Variant.Outlined" ButtonStyle="ButtonStyle.Light" Click="SkipAsync" IsBusy="@IsBusy" />
-                <RadzenButton Text="Reschedule" Icon="event" Variant="Variant.Outlined" ButtonStyle="ButtonStyle.Warning" Click="@(() => { _showReschedule = true; _showNotesInput = false; })" Disabled="@IsBusy" />
+                <RadzenButton Text="Skip" Icon="skip_next" Variant="Variant.Outlined" ButtonStyle="ButtonStyle.Secondary" Click="SkipAsync" IsBusy="@IsBusy" />
+                <RadzenButton Text="Reschedule" Icon="event" Variant="Variant.Outlined" ButtonStyle="ButtonStyle.Warning" Click="@(() => { _showReschedule = true; _showNotesInput = false; })" Disabled="@IsBusy" /> 
                 <RadzenButton Text="Start" Icon="play_arrow" ButtonStyle="ButtonStyle.Info" Click="StartAsync" IsBusy="@IsBusy" />
                 <RadzenButton Text="Complete" Icon="check" ButtonStyle="ButtonStyle.Success" Click="CompleteAsync" IsBusy="@IsBusy" />
             }
@@ -141,8 +187,7 @@
                 <RadzenButton Text="Skip" Icon="skip_next" Variant="Variant.Outlined" ButtonStyle="ButtonStyle.Light" Click="SkipAsync" IsBusy="@IsBusy" />
                 <RadzenButton Text="Complete" Icon="check" ButtonStyle="ButtonStyle.Success" Click="CompleteAsync" IsBusy="@IsBusy" />
             }
-
-            <RadzenButton Text="View Task" Icon="open_in_new" Variant="Variant.Text" ButtonStyle="ButtonStyle.Primary" Click="NavigateToTask" />
         </RadzenStack>
+        <RadzenButton Text="View Task" Icon="open_in_new" Variant="Variant.Text" ButtonStyle="ButtonStyle.Primary" Click="NavigateToTask" />
     }
 </RadzenStack>

@@ -27,37 +27,51 @@ public sealed class TaskDeletedNotificationHandler(
 
         var deleter = task.DeletedBy ?? task.LastModifiedBy;
 
-        if (string.IsNullOrEmpty(deleter)
-            || string.IsNullOrEmpty(task.AssignedToUserId)
-            || task.AssignedToUserId == deleter)
+        if (string.IsNullOrEmpty(deleter))
             return;
 
-        var entity = new Notification
+        // Build description with cascade info
+        var description = $"The task '{notification.Title}' has been deleted.";
+        if (notification.DeletedBillCount > 0)
         {
-            Title = $"Task deleted: {task.Title}",
-            Description = $"The task '{task.Title}' has been deleted.",
-            Type = NotificationType.TaskDeleted,
-            FromUserId = deleter,
-            ToUserId = task.AssignedToUserId,
-            RelatedEntityId = task.Id,
-            RelatedEntityType = EntityTypes.HouseholdTask
-        };
+            description += $" {notification.DeletedOccurrenceCount} future occurrence(s) and {notification.DeletedBillCount} unpaid bill(s) were also removed.";
+        }
 
-        dbContext.Notifications.Add(entity);
-        await dbContext.SaveChangesAsync(cancellationToken);
+        // Collect all users who should be notified
+        var usersToNotify = new HashSet<string>(notification.AffectedUserIds);
+        if (!string.IsNullOrEmpty(task.AssignedToUserId))
+            usersToNotify.Add(task.AssignedToUserId);
+        usersToNotify.Remove(deleter);
 
-        await realtimeService.SendUserNotificationAsync(
-            entity.ToUserId,
-            new UserPushNotification
+        foreach (var userId in usersToNotify)
+        {
+            var entity = new Notification
             {
-                EventType = nameof(NotificationCreatedEvent),
-                NotificationId = entity.Id,
-                Title = entity.Title,
-                Description = entity.Description,
-                RelatedEntityId = entity.RelatedEntityId,
-                RelatedEntityType = entity.RelatedEntityType,
-                OccurredAt = dateTimeProvider.UtcNow
-            },
-            cancellationToken);
+                Title = $"Task deleted: {notification.Title}",
+                Description = description,
+                Type = NotificationType.TaskDeleted,
+                FromUserId = deleter,
+                ToUserId = userId,
+                RelatedEntityId = task.Id,
+                RelatedEntityType = EntityTypes.HouseholdTask
+            };
+
+            dbContext.Notifications.Add(entity);
+            await dbContext.SaveChangesAsync(cancellationToken);
+
+            await realtimeService.SendUserNotificationAsync(
+                entity.ToUserId,
+                new UserPushNotification
+                {
+                    EventType = nameof(NotificationCreatedEvent),
+                    NotificationId = entity.Id,
+                    Title = entity.Title,
+                    Description = entity.Description,
+                    RelatedEntityId = entity.RelatedEntityId,
+                    RelatedEntityType = entity.RelatedEntityType,
+                    OccurredAt = dateTimeProvider.UtcNow
+                },
+                cancellationToken);
+        }
     }
 }

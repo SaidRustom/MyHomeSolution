@@ -1,5 +1,6 @@
 ﻿
 using BlazorUI.Components.Common;
+using BlazorUI.Components.Settings;
 using BlazorUI.Models.Users;
 using BlazorUI.Services.Contracts;
 using Microsoft.AspNetCore.Components;
@@ -11,6 +12,8 @@ namespace BlazorUI.Pages;
 public partial class Settings
 {
     [Inject] private IUserService UserService { get; set; } = default!;
+    [Inject] private IAuthService AuthService { get; set; } = default!;
+    [Inject] private DialogService DialogService { get; set; } = default!;
     [Inject] private NavigationManager Navigation { get; set; } = default!;
     [Inject] private IJSRuntime JS { get; set; } = default!;
 
@@ -199,5 +202,59 @@ public partial class Settings
         var first = ProfileModel.FirstName?.Length > 0 ? ProfileModel.FirstName[0].ToString().ToUpper() : "";
         var last = ProfileModel.LastName?.Length > 0 ? ProfileModel.LastName[0].ToString().ToUpper() : "";
         return $"{first}{last}";
+    }
+
+    // Delete account
+    private bool IsDeletingAccount { get; set; }
+    private string? DeleteAccountError { get; set; }
+
+    private async Task OpenDeleteAccountDialogAsync()
+    {
+        var confirmationText = await DialogService.OpenAsync<DeleteAccountConfirmDialog>(
+            "Delete Account",
+            [],
+            new DialogOptions
+            {
+                Width = "480px",
+                CloseDialogOnOverlayClick = false,
+                ShowClose = true
+            });
+
+        if (confirmationText is true)
+        {
+            await ExecuteDeleteAccountAsync();
+        }
+    }
+
+    private async Task ExecuteDeleteAccountAsync()
+    {
+        IsDeletingAccount = true;
+        DeleteAccountError = null;
+        StateHasChanged();
+
+        try
+        {
+            var result = await UserService.DeleteAccountAsync();
+
+            if (result.IsSuccess)
+            {
+                await AuthService.LogoutAsync();
+                Navigation.NavigateTo("/login", forceLoad: true);
+            }
+            else
+            {
+                DeleteAccountError = result.Problem.Detail is { Length: > 0 }
+                    ? result.Problem.Detail
+                    : "Failed to delete account. Please try again.";
+            }
+        }
+        catch
+        {
+            DeleteAccountError = "An unexpected error occurred. Please try again.";
+        }
+        finally
+        {
+            IsDeletingAccount = false;
+        }
     }
 }

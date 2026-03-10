@@ -9,6 +9,7 @@ using MyHomeSolution.Infrastructure;
 using MyHomeSolution.Infrastructure.Hubs;
 using MyHomeSolution.Infrastructure.Identity;
 using MyHomeSolution.Infrastructure.Persistence;
+using MyHomeSolution.Infrastructure.Services;
 using Serilog;
 
 Log.Logger = new LoggerConfiguration()
@@ -87,6 +88,7 @@ try
         await db.Database.MigrateAsync();
 
         await IdentityDataSeeder.SeedRolesAsync(scope.ServiceProvider);
+        await BackgroundServiceSeeder.SeedAsync(scope.ServiceProvider);
 
         var seedConfig = app.Configuration.GetSection("SeedAdmin");
         var seedEmail = seedConfig["Email"];

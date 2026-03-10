@@ -1,0 +1,28 @@
+@using BlazorUI.Models.Enums
+
+<RadzenStack Orientation="Orientation.Vertical" Gap="1rem" class="rz-p-2">
+    <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0">
+        Select a connection to share with and choose their permission level.
+    </RadzenText>
+
+    <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
+        <RadzenLabel Text="Share with" />
+        <FriendPicker SelectedUserId="@_selectedUserId"
+                      SelectedUserIdChanged="@(val => _selectedUserId = val)"
+                      Placeholder="Select a person…" />
+    </RadzenStack>
+
+    <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
+        <RadzenLabel Text="Permission" />
+        <RadzenDropDown TValue="SharePermission"
+                        @bind-Value="_permission"
+                        Data="@PermissionOptions"
+                        Style="width: 100%;" />
+    </RadzenStack>
+
+    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem" class="rz-pt-2">
+        <RadzenButton Text="Cancel" Variant="Variant.Text" ButtonStyle="ButtonStyle.Secondary" Click="CancelAsync" />
+        <RadzenButton Text="Share" Icon="share" ButtonStyle="ButtonStyle.Primary" Click="ShareAsync"
+                      IsBusy="@_isBusy" Disabled="@(string.IsNullOrEmpty(_selectedUserId))" />
+    </RadzenStack>
+</RadzenStack>

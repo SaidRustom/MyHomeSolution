@@ -26,14 +26,25 @@ public sealed class GetUpcomingOccurrencesQueryHandler(
                 && !s.IsDeleted)
             .Select(s => s.EntityId);
 
+        // When a date range is provided, scope to that range (plus overdue);
+        // otherwise fall back to "today and forward" for general upcoming.
+        var rangeStart = request.StartDate ?? today;
+        var rangeEnd = request.EndDate;
+
         var query = dbContext.TaskOccurrences
             .AsNoTracking()
             .Where(o => !o.IsDeleted
-                && o.DueDate >= today
                 && !o.HouseholdTask.IsDeleted
-                && o.HouseholdTask.IsActive
-                && o.Status == OccurrenceStatus.Pending)
+                && o.HouseholdTask.IsActive)
             .Where(o => o.HouseholdTask.CreatedBy == userId || sharedTaskIds.Contains(o.HouseholdTaskId))
+            .Where(o =>
+                // Within requested range
+                (o.DueDate >= rangeStart && (rangeEnd == null || o.DueDate <= rangeEnd)
+                    && o.Status == OccurrenceStatus.Pending)
+                // Overdue: past-due occurrences not completed/skipped
+                || (o.DueDate < today
+                    && o.Status != OccurrenceStatus.Completed
+                    && o.Status != OccurrenceStatus.Skipped))
             .OrderBy(o => o.DueDate)
             .ThenByDescending(o => o.HouseholdTask.Priority)
             .Select(o => new CalendarOccurrenceDto
