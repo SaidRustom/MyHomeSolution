@@ -22,6 +22,11 @@
                          IsProcessing="@IsProcessing"
                          OnBack="GoBack" />
 
+        @* History & Permissions row *@
+        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" Wrap="FlexWrap.Wrap">
+            <RadzenButton Text="View History" Icon="history" Variant="Variant.Outlined" ButtonStyle="ButtonStyle.Info" Size="ButtonSize.Small" Click="ShowHistoryAsync" />
+        </RadzenStack>
+
         <BillPermissionPanel EntityId="@Bill.Id"
                              EntityType="Bill"
                              OwnerId="@Bill.CreatedByUserId"

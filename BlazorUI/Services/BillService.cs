@@ -22,6 +22,7 @@ public sealed class BillService(HttpClient httpClient)
         DateTimeOffset? toDate = null,
         string? sortBy = null,
         string? sortDirection = null,
+        bool? isFullyPaid = null,
         CancellationToken cancellationToken = default)
     {
         var query = BuildQueryString(
@@ -33,7 +34,8 @@ public sealed class BillService(HttpClient httpClient)
             ("fromDate", fromDate?.ToString("O")),
             ("toDate", toDate?.ToString("O")),
             ("sortBy", sortBy),
-            ("sortDirection", sortDirection));
+            ("sortDirection", sortDirection),
+            ("isFullyPaid", isFullyPaid?.ToString()));
 
         return GetAsync<PaginatedList<BillBriefDto>>($"{BasePath}{query}", cancellationToken);
     }

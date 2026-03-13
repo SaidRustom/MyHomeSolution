@@ -25,7 +25,7 @@ public sealed class MarkSplitAsPaidCommandHandlerTests : IDisposable
     }
 
     [Fact]
-    public async Task Handle_ShouldMarkSplitAsPaid()
+    public async Task Handle_ShouldMarkAllSplitsAsPaid()
     {
         var (bill, split) = await SeedBillWithUnpaidSplit();
 
@@ -37,9 +37,29 @@ public sealed class MarkSplitAsPaidCommandHandlerTests : IDisposable
             new MarkSplitAsPaidCommand(bill.Id, split.Id), CancellationToken.None);
 
         using var assertContext = _factory.CreateContext();
-        var updated = await assertContext.BillSplits.FirstAsync(s => s.Id == split.Id);
-        updated.Status.Should().Be(SplitStatus.Paid);
-        updated.PaidAt.Should().NotBeNull();
+        var allSplits = await assertContext.BillSplits.Where(s => s.BillId == bill.Id).ToListAsync();
+        allSplits.Should().AllSatisfy(s => s.Status.Should().Be(SplitStatus.Paid));
+        allSplits.Should().AllSatisfy(s => s.PaidAt.Should().NotBeNull());
+    }
+
+    [Fact]
+    public async Task Handle_ShouldSetOwedToUserId_ForOtherSplits()
+    {
+        var (bill, split) = await SeedBillWithUnpaidSplit();
+
+        using var context = _factory.CreateContext();
+        var handler = new MarkSplitAsPaidCommandHandler(
+            context, _currentUserService, _dateTimeProvider, _publisher);
+
+        await handler.Handle(
+            new MarkSplitAsPaidCommand(bill.Id, split.Id), CancellationToken.None);
+
+        using var assertContext = _factory.CreateContext();
+        var otherSplit = await assertContext.BillSplits.FirstAsync(s => s.BillId == bill.Id && s.UserId == "user-1");
+        otherSplit.OwedToUserId.Should().Be("user-2"); // user-2 paid, so user-1 owes user-2
+
+        var payerSplit = await assertContext.BillSplits.FirstAsync(s => s.BillId == bill.Id && s.UserId == "user-2");
+        payerSplit.OwedToUserId.Should().BeNull(); // payer doesn't owe themselves
     }
 
     [Fact]
@@ -58,7 +78,8 @@ public sealed class MarkSplitAsPaidCommandHandlerTests : IDisposable
             Arg.Is<BillSplitPaidEvent>(e =>
                 e.BillId == bill.Id &&
                 e.SplitId == split.Id &&
-                e.PaidByUserId == "user-2"),
+                e.PaidByUserId == "user-2" &&
+                e.Amount == 100m),
             Arg.Any<CancellationToken>());
     }
 
@@ -91,8 +112,12 @@ public sealed class MarkSplitAsPaidCommandHandlerTests : IDisposable
             new MarkSplitAsPaidCommand(bill.Id, split.Id), CancellationToken.None);
 
         using var assertContext = _factory.CreateContext();
-        var updated = await assertContext.BillSplits.FirstAsync(s => s.Id == split.Id);
-        updated.Status.Should().Be(SplitStatus.Paid);
+        var allSplits = await assertContext.BillSplits.Where(s => s.BillId == bill.Id).ToListAsync();
+        allSplits.Should().AllSatisfy(s => s.Status.Should().Be(SplitStatus.Paid));
+
+        // user-2's split should have OwedToUserId = user-1 (the payer)
+        var user2Split = allSplits.First(s => s.UserId == "user-2");
+        user2Split.OwedToUserId.Should().Be("user-1");
     }
 
     [Fact]
@@ -131,7 +156,7 @@ public sealed class MarkSplitAsPaidCommandHandlerTests : IDisposable
         bill.Splits.Add(new BillSplit
         {
             BillId = bill.Id, UserId = "user-1",
-            Percentage = 50m, Amount = 50m, Status = SplitStatus.Paid
+            Percentage = 50m, Amount = 50m, Status = SplitStatus.Unpaid
         });
         bill.Splits.Add(split);
         context.Bills.Add(bill);

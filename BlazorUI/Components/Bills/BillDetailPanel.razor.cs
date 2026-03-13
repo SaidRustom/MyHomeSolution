@@ -45,6 +45,9 @@ public partial class BillDetailPanel
 
     bool HasItems => Bill.Items.Count > 0;
 
+    bool IsFullyPaid => Bill.Splits.Count == 0
+        || Bill.Splits.All(s => s.Status != Models.Enums.SplitStatus.Unpaid);
+
     decimal PaidAmount => Bill.Splits
         .Where(s => s.Status != Models.Enums.SplitStatus.Unpaid)
         .Sum(s => s.Amount);
@@ -54,6 +57,17 @@ public partial class BillDetailPanel
     double PaidPercentage => Bill.Amount > 0
         ? (double)(PaidAmount / Bill.Amount * 100)
         : 0;
+
+    /// <summary>Outstanding debts: splits that have OwedToUserId set (user owes the payer).</summary>
+    List<DebtEntry> OutstandingDebts => Bill.Splits
+        .Where(s => !string.IsNullOrEmpty(s.OwedToUserId))
+        .Select(s => new DebtEntry
+        {
+            DebtorName = s.UserFullName ?? s.UserId,
+            CreditorName = s.OwedToUserFullName ?? s.OwedToUserId!,
+            Amount = s.Amount
+        })
+        .ToList();
 
     async Task EditAsync() => await OnEdit.InvokeAsync();
 
@@ -96,4 +110,11 @@ public partial class BillDetailPanel
             StateHasChanged();
         }
     }
+}
+
+public sealed class DebtEntry
+{
+    public required string DebtorName { get; init; }
+    public required string CreditorName { get; init; }
+    public decimal Amount { get; init; }
 }

@@ -44,11 +44,11 @@
                    OnClear="OnClearFiltersAsync" />
 
     @* Data grid *@
-    @if (IsLoading && FilteredBillData.Items.Count == 0)
+    @if (IsLoading && BillData.Items.Count == 0)
     {
         <LoadingIndicator Text="Loading bills…" />
     }
-    else if (!IsLoading && FilteredBillData.Items.Count == 0)
+    else if (!IsLoading && BillData.Items.Count == 0)
     {
         <EmptyState Icon="receipt_long"
                     Title="No bills found"
@@ -58,7 +58,7 @@
     }
     else
     {
-        <BillDataGrid Data="@FilteredBillData"
+        <BillDataGrid Data="@BillData"
                       IsLoading="@IsLoading"
                       PageSize="@PageSize"
                       OnLoadData="OnLoadDataAsync"

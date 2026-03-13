@@ -131,7 +131,9 @@ public sealed class GetTaskByIdQueryHandler(
                         Category = o.Bill.Category,
                         BillDate = o.Bill.BillDate,
                         TotalSplits = o.Bill.Splits.Count,
-                        PaidSplits = o.Bill.Splits.Count(s => s.Status == SplitStatus.Paid)
+                        PaidSplits = o.Bill.Splits.Count(s => s.Status == SplitStatus.Paid),
+                        IsFullyPaid = o.Bill.Splits.Count == 0
+                            || o.Bill.Splits.All(s => s.Status == SplitStatus.Paid || s.Status == SplitStatus.Settled)
                     }
                     : null
             }).ToList()

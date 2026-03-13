@@ -36,6 +36,7 @@ public sealed class BillsController(ISender sender) : ControllerBase
         [FromQuery] DateTimeOffset? toDate = null,
         [FromQuery] string? sortBy = null,
         [FromQuery] string? sortDirection = null,
+        [FromQuery] bool? isFullyPaid = null,
         CancellationToken cancellationToken = default)
     {
         var query = new GetBillsQuery
@@ -48,7 +49,8 @@ public sealed class BillsController(ISender sender) : ControllerBase
             FromDate = fromDate,
             ToDate = toDate,
             SortBy = sortBy,
-            SortDirection = sortDirection
+            SortDirection = sortDirection,
+            IsFullyPaid = isFullyPaid
         };
 
         var result = await sender.Send(query, cancellationToken);

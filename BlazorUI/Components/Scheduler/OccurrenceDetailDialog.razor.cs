@@ -381,6 +381,46 @@ public partial class OccurrenceDetailDialog
         }
     }
 
+    async Task RevertAsync()
+    {
+        if (Occurrence is null) return;
+
+        var confirmed = await DialogService.OpenAsync<ConfirmDialog>(
+            "Reopen Occurrence",
+            new Dictionary<string, object>
+            {
+                { nameof(ConfirmDialog.Message), $"This will revert the occurrence from '{Occurrence.Status}' back to Pending/Overdue. The completion data will be cleared. Continue?" },
+                { nameof(ConfirmDialog.ConfirmText), "Reopen" },
+                { nameof(ConfirmDialog.ConfirmStyle), ButtonStyle.Warning },
+                { nameof(ConfirmDialog.ConfirmIcon), "replay" }
+            },
+            new DialogOptions { Width = "450px", CloseDialogOnOverlayClick = false });
+
+        if (confirmed is not true) return;
+
+        IsBusy = true;
+
+        var result = await OccurrenceService.RevertAsync(Occurrence.Id, _actionNotes);
+
+        if (result.IsSuccess)
+        {
+            Notifications.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Info,
+                Summary = "Occurrence Reopened",
+                Detail = $"'{Task?.Title}' occurrence has been reverted to pending.",
+                Duration = 4000
+            });
+            DialogService.Close(true);
+        }
+        else
+        {
+            Error = result.Problem.ToUserMessage();
+        }
+
+        IsBusy = false;
+    }
+
     static StatusSeverity GetStatusSeverity(OccurrenceStatus status) => status switch
     {
         OccurrenceStatus.Completed => StatusSeverity.Success,

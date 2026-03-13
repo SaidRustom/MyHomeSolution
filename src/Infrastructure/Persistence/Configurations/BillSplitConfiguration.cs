@@ -14,6 +14,9 @@ public sealed class BillSplitConfiguration : IEntityTypeConfiguration<BillSplit>
             .HasMaxLength(450)
             .IsRequired();
 
+        builder.Property(s => s.OwedToUserId)
+            .HasMaxLength(450);
+
         builder.Property(s => s.Percentage)
             .HasPrecision(5, 2);
 

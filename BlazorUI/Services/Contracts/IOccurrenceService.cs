@@ -49,4 +49,7 @@ public interface IOccurrenceService
 
     Task<ApiResult> UpdateNotesAsync(
         Guid id, string? notes, CancellationToken cancellationToken = default);
+
+    Task<ApiResult> RevertAsync(
+        Guid id, string? notes = null, CancellationToken cancellationToken = default);
 }

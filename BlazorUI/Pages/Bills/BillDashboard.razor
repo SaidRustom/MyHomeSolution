@@ -24,6 +24,32 @@
     }
     else
     {
+        @* User scope filter bar *@
+        <RadzenCard Variant="Variant.Outlined" class="rz-p-3">
+            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.75rem" Wrap="FlexWrap.Wrap">
+                <RadzenIcon Icon="people" Style="color: var(--rz-primary);" />
+                <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0"><strong>View:</strong></RadzenText>
+                <RadzenSelectBar TValue="UserScopeFilter" @bind-Value="@_userScope" Change="OnUserScopeChangedAsync" Size="ButtonSize.Small">
+                    <Items>
+                        <RadzenSelectBarItem Text="All Users" Value="UserScopeFilter.All" Icon="groups" />
+                        <RadzenSelectBarItem Text="Me Only" Value="UserScopeFilter.MeOnly" Icon="person" />
+                    </Items>
+                </RadzenSelectBar>
+                @if (_userScope == UserScopeFilter.All && ScopeUserOptions.Count > 0)
+                {
+                    <RadzenDropDown TValue="string?"
+                                    Data="@ScopeUserOptions"
+                                    @bind-Value="@_selectedScopeUserId"
+                                    TextProperty="DisplayName"
+                                    ValueProperty="UserId"
+                                    AllowClear="true"
+                                    Placeholder="Filter by user…"
+                                    Style="min-width: 200px;"
+                                    Change="@(_ => OnScopeUserChangedAsync())" />
+                }
+            </RadzenStack>
+        </RadzenCard>
+
         @* Date range selector *@
         <RadzenCard Variant="Variant.Outlined" class="rz-p-3">
             <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.75rem" Wrap="FlexWrap.Wrap">
@@ -118,45 +144,74 @@
         }
 
         @* Balances section *@
-        <RadzenCard Variant="Variant.Outlined" class="rz-p-4">
-            <RadzenStack Orientation="Orientation.Vertical" Gap="1rem">
-                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
-                    <RadzenIcon Icon="account_balance" Style="color: var(--rz-primary);" />
-                    <RadzenText TextStyle="TextStyle.Subtitle1" class="rz-mb-0"><strong>Balances</strong></RadzenText>
-                </RadzenStack>
-
-                @if (Balances.Count == 0)
-                {
-                    <EmptyState Icon="account_balance" Title="No balances" Description="You don't have any outstanding balances." />
-                }
-                else
-                {
-                    <RadzenRow Gap="1rem" RowGap="1rem">
-                        @foreach (var balance in Balances)
+        @if (_userScope != UserScopeFilter.MeOnly)
+        {
+            <RadzenCard Variant="Variant.Outlined" class="rz-p-4">
+                <RadzenStack Orientation="Orientation.Vertical" Gap="1rem">
+                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                        <RadzenIcon Icon="account_balance" Style="color: var(--rz-primary);" />
+                        <RadzenText TextStyle="TextStyle.Subtitle1" class="rz-mb-0"><strong>Balances</strong></RadzenText>
+                        @if (!string.IsNullOrEmpty(_selectedScopeUserId))
                         {
-                            <RadzenColumn Size="12" SizeSM="6" SizeLG="4">
-                                <BalanceCard Balance="@balance" />
-                            </RadzenColumn>
+                            <RadzenBadge BadgeStyle="BadgeStyle.Info" IsPill="true" Variant="Variant.Flat"
+                                         Text="@($"Filtered: {ScopeUserOptions.FirstOrDefault(u => u.UserId == _selectedScopeUserId)?.DisplayName ?? _selectedScopeUserId}")" />
                         }
-                    </RadzenRow>
-                }
-            </RadzenStack>
-        </RadzenCard>
+                    </RadzenStack>
 
-        @* Bills tabs — Recent & Upcoming *@
+                    @if (FilteredBalances.Count == 0)
+                    {
+                        <EmptyState Icon="account_balance" Title="No balances" Description="You don't have any outstanding balances." />
+                    }
+                    else
+                    {
+                        <RadzenRow Gap="1rem" RowGap="1rem">
+                            @foreach (var balance in FilteredBalances)
+                            {
+                                <RadzenColumn Size="12" SizeSM="6" SizeLG="4">
+                                    <BalanceCard Balance="@balance" />
+                                </RadzenColumn>
+                            }
+                        </RadzenRow>
+                    }
+                </RadzenStack>
+            </RadzenCard>
+        }
+
+        @* Bills tabs — Recently Paid & Upcoming *@
         <RadzenCard Variant="Variant.Outlined" class="rz-p-4">
             <RadzenTabs>
                 <Tabs>
-                    @* Recent / Past Bills Tab *@
-                    <RadzenTabsItem Text="@($"Recent Bills ({PastBills.Count})")" Icon="receipt_long">
+                    @* Recently Paid Bills Tab *@
+                    <RadzenTabsItem Text="@($"Recently Paid ({PastBills.Count})")" Icon="paid">
                         <RadzenStack Orientation="Orientation.Vertical" Gap="1rem" class="rz-pt-2">
-                            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.End">
+                            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween" Wrap="FlexWrap.Wrap" Gap="0.5rem">
+                                <RadzenDropDown TValue="RecentBillsFilter"
+                                                @bind-Value="@_recentFilter"
+                                                Data="@(Enum.GetValues<RecentBillsFilter>())"
+                                                Style="width: 180px;">
+                                    <Template Context="filter">
+                                        @(filter switch
+                                        {
+                                            RecentBillsFilter.PaidByMe => "Paid by Me",
+                                            RecentBillsFilter.PaidByOthers => "Paid by Others",
+                                            _ => "All"
+                                        })
+                                    </Template>
+                                    <ValueTemplate Context="filter">
+                                        @(filter switch
+                                        {
+                                            RecentBillsFilter.PaidByMe => "Paid by Me",
+                                            RecentBillsFilter.PaidByOthers => "Paid by Others",
+                                            _ => "All"
+                                        })
+                                    </ValueTemplate>
+                                </RadzenDropDown>
                                 <RadzenButton Text="View All" Icon="arrow_forward" Variant="Variant.Text" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small" Click="NavigateToBills" />
                             </RadzenStack>
 
                             @if (PastBills.Count == 0)
                             {
-                                <EmptyState Icon="receipt_long" Title="No recent bills" Description="Create your first bill to see it here." />
+                                <EmptyState Icon="paid" Title="No recently paid bills" Description="No bills match the selected filter." />
                             }
                             else
                             {
@@ -175,9 +230,54 @@
                     @* Upcoming Bills Tab *@
                     <RadzenTabsItem Text="@($"Upcoming ({UpcomingBills.Count})")" Icon="upcoming">
                         <RadzenStack Orientation="Orientation.Vertical" Gap="1rem" class="rz-pt-2">
+                            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.75rem" Wrap="FlexWrap.Wrap">
+                                <RadzenDropDown TValue="UpcomingPaidByFilter"
+                                                @bind-Value="@_upcomingPaidByFilter"
+                                                Data="@(Enum.GetValues<UpcomingPaidByFilter>())"
+                                                Style="width: 180px;">
+                                    <Template Context="filter">
+                                        @(filter switch
+                                        {
+                                            UpcomingPaidByFilter.Me => "To be paid by: Me",
+                                            UpcomingPaidByFilter.Others => "To be paid by: Others",
+                                            _ => "To be paid by: All"
+                                        })
+                                    </Template>
+                                    <ValueTemplate Context="filter">
+                                        @(filter switch
+                                        {
+                                            UpcomingPaidByFilter.Me => "To be paid by: Me",
+                                            UpcomingPaidByFilter.Others => "To be paid by: Others",
+                                            _ => "To be paid by: All"
+                                        })
+                                    </ValueTemplate>
+                                </RadzenDropDown>
+                                <RadzenDropDown TValue="UpcomingWithinFilter"
+                                                @bind-Value="@_upcomingWithinFilter"
+                                                Data="@(Enum.GetValues<UpcomingWithinFilter>())"
+                                                Style="width: 180px;">
+                                    <Template Context="filter">
+                                        @(filter switch
+                                        {
+                                            UpcomingWithinFilter.Week => "Within: 1 Week",
+                                            UpcomingWithinFilter.TwoWeeks => "Within: 2 Weeks",
+                                            _ => "Within: 1 Month"
+                                        })
+                                    </Template>
+                                    <ValueTemplate Context="filter">
+                                        @(filter switch
+                                        {
+                                            UpcomingWithinFilter.Week => "Within: 1 Week",
+                                            UpcomingWithinFilter.TwoWeeks => "Within: 2 Weeks",
+                                            _ => "Within: 1 Month"
+                                        })
+                                    </ValueTemplate>
+                                </RadzenDropDown>
+                            </RadzenStack>
+
                             @if (UpcomingBills.Count == 0)
                             {
-                                <EmptyState Icon="upcoming" Title="No upcoming bills" Description="No future bills scheduled." />
+                                <EmptyState Icon="upcoming" Title="No upcoming bills" Description="No unpaid bills within the selected timeframe." />
                             }
                             else
                             {

@@ -76,6 +76,7 @@ public sealed record OccurrenceBillBriefDto
     public DateTimeOffset BillDate { get; init; }
     public int TotalSplits { get; init; }
     public int PaidSplits { get; init; }
+    public bool IsFullyPaid { get; init; }
 }
 
 public sealed record TodayTaskDto

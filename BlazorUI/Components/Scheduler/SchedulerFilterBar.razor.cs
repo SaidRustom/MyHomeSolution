@@ -86,6 +86,29 @@ public partial class SchedulerFilterBar
         || IsRecurring.HasValue
         || HasBill.HasValue;
 
+    int ActiveFilterCount
+    {
+        get
+        {
+            var count = 0;
+            if (ViewMode != SchedulerViewMode.All) count++;
+            if (Category.HasValue) count++;
+            if (Priority.HasValue) count++;
+            if (Status.HasValue) count++;
+            if (!string.IsNullOrEmpty(AssignedToUserId)) count++;
+            if (IsRecurring.HasValue) count++;
+            if (HasBill.HasValue) count++;
+            return count;
+        }
+    }
+
+    bool _mobileExpanded;
+
+    void ToggleMobileFilters()
+    {
+        _mobileExpanded = !_mobileExpanded;
+    }
+
     string GetViewModeLabel(SchedulerViewMode mode) => mode switch
     {
         SchedulerViewMode.All => "All Tasks",

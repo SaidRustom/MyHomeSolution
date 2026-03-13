@@ -17,7 +17,7 @@ namespace MyHomeSolution.Infrastructure.Persistence.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.3")
+                .HasAnnotation("ProductVersion", "10.0.5")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -438,6 +438,10 @@ namespace MyHomeSolution.Infrastructure.Persistence.Migrations
 
                     b.Property<Guid>("BillId")
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("OwedToUserId")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<DateTimeOffset?>("PaidAt")
                         .HasColumnType("datetimeoffset");

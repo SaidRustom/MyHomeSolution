@@ -106,4 +106,10 @@ public sealed class OccurrenceService(HttpClient httpClient)
     {
         return PutAsync($"{BasePath}/{id}/notes", new { Notes = notes }, cancellationToken);
     }
+
+    public Task<ApiResult> RevertAsync(
+        Guid id, string? notes = null, CancellationToken cancellationToken = default)
+    {
+        return PostAsync($"{BasePath}/{id}/revert", new { Notes = notes }, cancellationToken);
+    }
 }

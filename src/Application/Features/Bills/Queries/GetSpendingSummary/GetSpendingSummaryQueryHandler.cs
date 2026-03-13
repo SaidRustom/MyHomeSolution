@@ -46,16 +46,24 @@ public sealed class GetSpendingSummaryQueryHandler(
         var totalSpent = billList.Where(b => b.PaidByUserId == userId).Sum(b => b.Amount);
 
         var totalOwed = billList
-            .Where(b => b.PaidByUserId == userId)
             .SelectMany(b => b.Splits)
-            .Where(s => s.UserId != userId && s.Status != SplitStatus.Paid)
-            .Sum(s => s.Amount);
+            .Where(s => s.OwedToUserId == userId && s.UserId != userId)
+            .Sum(s => s.Amount)
+            + billList
+                .Where(b => b.PaidByUserId == userId)
+                .SelectMany(b => b.Splits)
+                .Where(s => s.UserId != userId && s.Status == SplitStatus.Unpaid && s.OwedToUserId == null)
+                .Sum(s => s.Amount);
 
         var totalOwing = billList
-            .Where(b => b.PaidByUserId != userId)
             .SelectMany(b => b.Splits)
-            .Where(s => s.UserId == userId && s.Status != SplitStatus.Paid)
-            .Sum(s => s.Amount);
+            .Where(s => s.UserId == userId && s.OwedToUserId != null && s.OwedToUserId != userId)
+            .Sum(s => s.Amount)
+            + billList
+                .Where(b => b.PaidByUserId != userId)
+                .SelectMany(b => b.Splits)
+                .Where(s => s.UserId == userId && s.Status == SplitStatus.Unpaid && s.OwedToUserId == null)
+                .Sum(s => s.Amount);
 
         var byCategory = billList
             .GroupBy(b => b.Category)
@@ -78,17 +86,27 @@ public sealed class GetSpendingSummaryQueryHandler(
 
         var byUser = allUserIds.Select(otherUserId =>
         {
+            // What the other user owes me (I paid and they have OwedToUserId = me)
             var paidByMe = billList
-                .Where(b => b.PaidByUserId == userId)
                 .SelectMany(b => b.Splits)
-                .Where(s => s.UserId == otherUserId && s.Status != SplitStatus.Paid)
-                .Sum(s => s.Amount);
+                .Where(s => s.OwedToUserId == userId && s.UserId == otherUserId)
+                .Sum(s => s.Amount)
+                + billList
+                    .Where(b => b.PaidByUserId == userId)
+                    .SelectMany(b => b.Splits)
+                    .Where(s => s.UserId == otherUserId && s.Status == SplitStatus.Unpaid && s.OwedToUserId == null)
+                    .Sum(s => s.Amount);
 
+            // What I owe the other user (they paid and my split has OwedToUserId = them)
             var paidByThem = billList
-                .Where(b => b.PaidByUserId == otherUserId)
                 .SelectMany(b => b.Splits)
-                .Where(s => s.UserId == userId && s.Status != SplitStatus.Paid)
-                .Sum(s => s.Amount);
+                .Where(s => s.UserId == userId && s.OwedToUserId == otherUserId)
+                .Sum(s => s.Amount)
+                + billList
+                    .Where(b => b.PaidByUserId == otherUserId)
+                    .SelectMany(b => b.Splits)
+                    .Where(s => s.UserId == userId && s.Status == SplitStatus.Unpaid && s.OwedToUserId == null)
+                    .Sum(s => s.Amount);
 
             return new UserSpendingDto
             {

@@ -57,6 +57,14 @@ public sealed class GetBillsQueryHandler(
         if (request.ToDate.HasValue)
             query = query.Where(b => b.BillDate <= request.ToDate.Value);
 
+        if (request.IsFullyPaid.HasValue)
+        {
+            if (request.IsFullyPaid.Value)
+                query = query.Where(b => b.Splits.Count == 0 || b.Splits.All(s => s.Status == SplitStatus.Paid || s.Status == SplitStatus.Settled));
+            else
+                query = query.Where(b => b.Splits.Count > 0 && b.Splits.Any(s => s.Status != SplitStatus.Paid && s.Status != SplitStatus.Settled));
+        }
+
         var sortBy = request.SortBy?.ToLowerInvariant();
         var descending = string.Equals(request.SortDirection, "desc", StringComparison.OrdinalIgnoreCase);
 

@@ -10,11 +10,14 @@
                 </RadzenStack>
             </RadzenStack>
             <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.25rem">
+                @if (Bill.IsFullyPaid)
+                {
+                    <RadzenIcon Icon="check_circle" Style="font-size: 1.25rem; color: var(--rz-success);" title="Fully paid" />
+                }
                 @if (Bill.HasReceipt)
                 {
                     <RadzenIcon Icon="receipt_long" Style="font-size: 1rem; color: var(--rz-success);" title="Has receipt" />
                 }
-                <RadzenButton Icon="more_vert" Variant="Variant.Text" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small" />
             </RadzenStack>
         </RadzenStack>
 
@@ -34,9 +37,27 @@
             </RadzenStack>
 
             <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
-                <RadzenBadge BadgeStyle="BadgeStyle.Info" IsPill="true" Text="@($"{Bill.SplitCount} split(s)")" Variant="Variant.Flat" />
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.375rem">
+                    @if (Bill.IsFullyPaid)
+                    {
+                        <RadzenBadge BadgeStyle="BadgeStyle.Success" IsPill="true" Variant="Variant.Flat" Text="Paid" />
+                    }
+                    else
+                    {
+                        <RadzenBadge BadgeStyle="BadgeStyle.Warning" IsPill="true" Variant="Variant.Flat" Text="Unpaid" />
+                    }
+                    <RadzenBadge BadgeStyle="BadgeStyle.Info" IsPill="true" Text="@($"{Bill.SplitCount} split(s)")" Variant="Variant.Flat" />
+                </RadzenStack>
                 <DateDisplay Date="@Bill.CreatedAt" ShowRelative="true" />
             </RadzenStack>
+
+            @if (!string.IsNullOrEmpty(Bill.PaidByUserFullName))
+            {
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.25rem" class="rz-mt-2">
+                    <RadzenIcon Icon="person" Style="font-size: 0.875rem; color: var(--rz-text-secondary-color);" />
+                    <RadzenText TextStyle="TextStyle.Caption" class="rz-color-secondary rz-mb-0">Paid by @Bill.PaidByUserFullName</RadzenText>
+                </RadzenStack>
+            }
         </div>
 
         @* Card footer actions *@

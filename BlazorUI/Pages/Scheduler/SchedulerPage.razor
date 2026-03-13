@@ -77,7 +77,7 @@
                                      SlotSelect="OnSlotSelectAsync"
                                      AppointmentSelect="OnAppointmentSelectAsync"
                                      AppointmentRender="OnAppointmentRender"
-                                     Style="height: 640px;">
+                                     class="scheduler-calendar">
                         <RadzenMonthView />
                     </RadzenScheduler>
                 </RadzenCard>
@@ -90,3 +90,15 @@
         </RadzenRow>
     }
 </RadzenStack>
+
+<style>
+    .scheduler-calendar {
+        height: 640px;
+    }
+
+    @@media (max-width: 768px) {
+        .scheduler-calendar {
+            height: 400px;
+        }
+    }
+</style>

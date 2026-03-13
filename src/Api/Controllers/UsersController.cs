@@ -277,6 +277,30 @@ public sealed class UsersController(ISender sender) : ControllerBase
         return File(result.Value.Content, result.Value.ContentType);
     }
 
+    // ── Get avatar by user id ───────────────────────────────────────────────
+
+    [HttpGet("{id}/avatar")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetUserAvatar(
+        string id,
+        [FromServices] IFileStorageService fileStorage,
+        CancellationToken cancellationToken)
+    {
+        var user = await sender.Send(new GetUserByIdQuery(id), cancellationToken);
+
+        if (user?.AvatarUrl is null)
+            return NotFound();
+
+        var fileName = Path.GetFileName(user.AvatarUrl);
+        var result = await fileStorage.DownloadAsync("avatars", fileName, cancellationToken);
+
+        if (result is null)
+            return NotFound();
+
+        return File(result.Value.Content, result.Value.ContentType);
+    }
+
     private string GetCurrentUserId()
     {
         return User.FindFirstValue(ClaimTypes.NameIdentifier)

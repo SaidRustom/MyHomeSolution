@@ -82,6 +82,14 @@ public static class ServiceCollectionExtensions
             ConfigureClient(client, apiSettings))
             .AddHttpMessageHandler<AuthTokenHandler>();
 
+        services.AddHttpClient<IAvatarService, AvatarService>(client =>
+            ConfigureClient(client, apiSettings))
+            .AddHttpMessageHandler<AuthTokenHandler>();
+
+        services.AddHttpClient<IAuditService, AuditService>(client =>
+            ConfigureClient(client, apiSettings))
+            .AddHttpMessageHandler<AuthTokenHandler>();
+
         return services;
     }
 

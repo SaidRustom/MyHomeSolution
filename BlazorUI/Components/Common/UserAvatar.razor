@@ -1,0 +1,11 @@
+@if (!string.IsNullOrWhiteSpace(_dataUrl))
+{
+    <img src="@_dataUrl" alt="@(FallbackName ?? "User")"
+         style="width: @SizePx; height: @SizePx; border-radius: 50%; object-fit: cover; flex-shrink: 0;" />
+}
+else
+{
+    <div style="width: @SizePx; height: @SizePx; border-radius: 50%; background: @Background; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+        <RadzenIcon Icon="@FallbackIcon" Style="@($"font-size: {IconSize}; color: {IconColor};")" />
+    </div>
+}

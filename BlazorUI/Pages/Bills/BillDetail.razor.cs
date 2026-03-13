@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using BlazorUI.Components.Bills;
+using BlazorUI.Components.Common;
 using BlazorUI.Models.Bills;
 using BlazorUI.Models.Common;
 using BlazorUI.Models.Enums;
@@ -207,6 +208,29 @@ public partial class BillDetail : IDisposable
     void GoBack()
     {
         NavigationManager.NavigateTo("/bills");
+    }
+
+    async Task ShowHistoryAsync()
+    {
+        if (Bill is null) return;
+
+        await DialogService.OpenAsync<EntityHistoryDialog>(
+            $"History — {Bill.Title}",
+            new Dictionary<string, object>
+            {
+                { nameof(EntityHistoryDialog.EntityName), "Bill" },
+                { nameof(EntityHistoryDialog.EntityId), Bill.Id.ToString() },
+                { nameof(EntityHistoryDialog.EntityTitle), Bill.Title }
+            },
+            new DialogOptions
+            {
+                Width = "700px",
+                Height = "600px",
+                Resizable = true,
+                Draggable = true,
+                CloseDialogOnOverlayClick = true,
+                ShowClose = true
+            });
     }
 
     public void Dispose()

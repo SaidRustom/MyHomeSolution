@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using MyHomeSolution.Application.Common.Models;
 using MyHomeSolution.Application.Features.Occurrences.Commands.CompleteOccurrence;
 using MyHomeSolution.Application.Features.Occurrences.Commands.RescheduleOccurrence;
+using MyHomeSolution.Application.Features.Occurrences.Commands.RevertOccurrence;
 using MyHomeSolution.Application.Features.Occurrences.Commands.SkipOccurrence;
 using MyHomeSolution.Application.Features.Occurrences.Commands.StartOccurrence;
 using MyHomeSolution.Application.Features.Occurrences.Commands.UpdateOccurrenceNotes;
@@ -186,6 +187,24 @@ public sealed class OccurrencesController(ISender sender) : ControllerBase
         await sender.Send(command, cancellationToken);
         return NoContent();
     }
+
+    [HttpPost("{id:guid}/revert")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> Revert(
+        Guid id, [FromBody] RevertOccurrenceRequest? request,
+        CancellationToken cancellationToken)
+    {
+        var command = new RevertOccurrenceCommand
+        {
+            OccurrenceId = id,
+            Notes = request?.Notes
+        };
+
+        await sender.Send(command, cancellationToken);
+        return NoContent();
+    }
 }
 
 public sealed record StartOccurrenceRequest(string? Notes);
@@ -193,3 +212,4 @@ public sealed record CompleteOccurrenceRequest(string? Notes);
 public sealed record SkipOccurrenceRequest(string? Notes, bool ZeroLinkedBillBalance = false);
 public sealed record UpdateOccurrenceNotesRequest(string? Notes);
 public sealed record RescheduleOccurrenceRequest(DateOnly NewDueDate, string? Notes);
+public sealed record RevertOccurrenceRequest(string? Notes);

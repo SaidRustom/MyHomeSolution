@@ -1,0 +1,174 @@
+@using BlazorUI.Models.AuditLogs
+
+<RadzenStack Orientation="Orientation.Vertical" Gap="1rem" class="rz-p-4" Style="max-height: 70vh; overflow-y: auto;">
+    @if (IsLoading)
+    {
+        <RadzenStack AlignItems="AlignItems.Center" class="rz-p-8">
+            <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Medium" />
+            <RadzenText TextStyle="TextStyle.Body2" class="rz-mt-2 rz-color-secondary">Loading history…</RadzenText>
+        </RadzenStack>
+    }
+    else if (Error is not null)
+    {
+        <RadzenAlert AlertStyle="AlertStyle.Danger" Variant="Variant.Flat" Shade="Shade.Lighter">
+            @Error
+        </RadzenAlert>
+    }
+    else if (History.Count == 0)
+    {
+        <RadzenStack AlignItems="AlignItems.Center" class="rz-p-8" Gap="0.75rem">
+            <RadzenIcon Icon="history" Style="font-size: 3rem; color: var(--rz-text-disabled-color);" />
+            <RadzenText TextStyle="TextStyle.Body1" class="rz-mb-0" Style="font-weight: 500;">No history available</RadzenText>
+            <RadzenText TextStyle="TextStyle.Body2" class="rz-color-secondary rz-mb-0">Changes to this entity will appear here.</RadzenText>
+        </RadzenStack>
+    }
+    else
+    {
+        @* Timeline *@
+        <div class="entity-history-timeline">
+            @foreach (var log in History)
+            {
+                <div class="timeline-entry">
+                    <div class="timeline-indicator">
+                        <div class="timeline-dot @GetDotClass(log.ActionType)">
+                            <RadzenIcon Icon="@GetActionIcon(log.ActionType)" Style="font-size: 0.75rem; color: white;" />
+                        </div>
+                        <div class="timeline-line"></div>
+                    </div>
+                    <div class="timeline-content">
+                        <RadzenCard Variant="Variant.Outlined" class="rz-p-3" Style="flex: 1;">
+                            <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
+                                @* Header *@
+                                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween" Wrap="FlexWrap.Wrap" Gap="0.5rem">
+                                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                                        <UserAvatar UserId="@log.UserId" AvatarUrl="has-avatar" FallbackName="@log.UserFullName" Size="28px" />
+                                        <RadzenStack Orientation="Orientation.Vertical" Gap="0">
+                                            <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0">
+                                                <strong>@(log.UserFullName ?? "System")</strong>
+                                                <span class="rz-color-secondary"> @GetActionLabel(log.ActionType)</span>
+                                            </RadzenText>
+                                        </RadzenStack>
+                                    </RadzenStack>
+                                    <RadzenText TextStyle="TextStyle.Caption" class="rz-mb-0 rz-color-secondary" Style="white-space: nowrap;">
+                                        @FormatTimestamp(log.Timestamp)
+                                    </RadzenText>
+                                </RadzenStack>
+
+                                @* Changes *@
+                                @if (log.Changes.Count > 0)
+                                {
+                                    <div style="background: var(--rz-base-background); border-radius: var(--rz-border-radius); overflow: hidden;">
+                                        @foreach (var change in log.Changes)
+                                        {
+                                            <div style="padding: 0.375rem 0.75rem; border-bottom: 1px solid var(--rz-base-200);">
+                                                <RadzenStack Orientation="Orientation.Vertical" Gap="0.125rem">
+                                                    <RadzenText TextStyle="TextStyle.Caption" class="rz-mb-0" Style="font-weight: 600; color: var(--rz-text-secondary-color);">
+                                                        @FormatPropertyName(change.PropertyName)
+                                                    </RadzenText>
+                                                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem" Wrap="FlexWrap.Wrap">
+                                                        @if (log.ActionType == AuditActionType.Create)
+                                                        {
+                                                            <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0" Style="color: var(--rz-success);">
+                                                                @TruncateValue(change.NewValue)
+                                                            </RadzenText>
+                                                        }
+                                                        else if (!string.IsNullOrEmpty(change.OldValue))
+                                                        {
+                                                            <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0" Style="text-decoration: line-through; color: var(--rz-danger-light);">
+                                                                @TruncateValue(change.OldValue)
+                                                            </RadzenText>
+                                                            <RadzenIcon Icon="arrow_forward" Style="font-size: 0.75rem; color: var(--rz-text-disabled-color);" />
+                                                            <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0" Style="color: var(--rz-success);">
+                                                                @TruncateValue(change.NewValue)
+                                                            </RadzenText>
+                                                        }
+                                                        else
+                                                        {
+                                                            <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0" Style="color: var(--rz-success);">
+                                                                @TruncateValue(change.NewValue)
+                                                            </RadzenText>
+                                                        }
+                                                    </RadzenStack>
+                                                </RadzenStack>
+                                            </div>
+                                        }
+                                    </div>
+                                }
+                                else if (log.ActionType == AuditActionType.Delete)
+                                {
+                                    <RadzenText TextStyle="TextStyle.Caption" class="rz-mb-0 rz-color-secondary" Style="font-style: italic;">
+                                        Entity was deleted
+                                    </RadzenText>
+                                }
+                            </RadzenStack>
+                        </RadzenCard>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+
+    @* Close button *@
+    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" class="rz-pt-2">
+        <RadzenButton Text="Close" Variant="Variant.Text" ButtonStyle="ButtonStyle.Secondary" Click="Close" />
+    </RadzenStack>
+</RadzenStack>
+
+<style>
+    .entity-history-timeline {
+        position: relative;
+    }
+
+    .timeline-entry {
+        display: flex;
+        gap: 0.75rem;
+        position: relative;
+    }
+
+    .timeline-indicator {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        flex-shrink: 0;
+    }
+
+    .timeline-dot {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        z-index: 1;
+    }
+
+    .timeline-dot.dot-create {
+        background: var(--rz-success);
+    }
+
+    .timeline-dot.dot-update {
+        background: var(--rz-info);
+    }
+
+    .timeline-dot.dot-delete {
+        background: var(--rz-danger);
+    }
+
+    .timeline-line {
+        width: 2px;
+        flex: 1;
+        background: var(--rz-base-300);
+        min-height: 1rem;
+    }
+
+    .timeline-entry:last-child .timeline-line {
+        display: none;
+    }
+
+    .timeline-content {
+        flex: 1;
+        padding-bottom: 1rem;
+        min-width: 0;
+    }
+</style>

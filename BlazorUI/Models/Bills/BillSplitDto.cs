@@ -12,4 +12,6 @@ public sealed record BillSplitDto
     public decimal Amount { get; init; }
     public SplitStatus Status { get; init; }
     public DateTimeOffset? PaidAt { get; init; }
+    public string? OwedToUserId { get; init; }
+    public string? OwedToUserFullName { get; init; }
 }

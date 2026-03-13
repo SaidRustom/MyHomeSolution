@@ -39,6 +39,7 @@ public sealed class GetBillByIdQueryHandler(
             throw new ForbiddenAccessException();
 
         var allUserIds = bill.Splits.Select(s => s.UserId)
+            .Concat(bill.Splits.Where(s => s.OwedToUserId is not null).Select(s => s.OwedToUserId!))
             .Append(bill.PaidByUserId)
             .Where(id => !string.IsNullOrEmpty(id))
             .Distinct()
@@ -125,7 +126,11 @@ public sealed class GetBillByIdQueryHandler(
                 Percentage = s.Percentage,
                 Amount = s.Amount,
                 Status = s.Status,
-                PaidAt = s.PaidAt
+                PaidAt = s.PaidAt,
+                OwedToUserId = s.OwedToUserId,
+                OwedToUserFullName = s.OwedToUserId is not null
+                    ? nameMap.GetValueOrDefault(s.OwedToUserId)
+                    : null
             }).ToList(),
             Items = bill.Items.Select(i => new BillItemDto
             {

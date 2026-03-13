@@ -68,6 +68,13 @@ public partial class BillList : IDisposable
         IsLoading = true;
         Error = null;
 
+        bool? isFullyPaid = PaymentFilter switch
+        {
+            BillPaymentFilter.Paid => true,
+            BillPaymentFilter.Unpaid => false,
+            _ => null
+        };
+
         var result = await BillService.GetBillsAsync(
             pageNumber: _currentPage,
             pageSize: PageSize,
@@ -77,6 +84,7 @@ public partial class BillList : IDisposable
             toDate: ToDate,
             sortBy: _sortBy,
             sortDirection: _sortDirection,
+            isFullyPaid: isFullyPaid,
             cancellationToken: _cts.Token);
 
         if (result.IsSuccess)
@@ -120,30 +128,6 @@ public partial class BillList : IDisposable
         ToDate = null;
         PaymentFilter = BillPaymentFilter.All;
         await LoadBillsAsync();
-    }
-
-    PaginatedList<BillBriefDto> FilteredBillData
-    {
-        get
-        {
-            if (PaymentFilter == BillPaymentFilter.All)
-                return BillData;
-
-            var filtered = PaymentFilter switch
-            {
-                BillPaymentFilter.Paid => BillData.Items.Where(b => b.IsFullyPaid).ToList(),
-                BillPaymentFilter.Unpaid => BillData.Items.Where(b => !b.IsFullyPaid).ToList(),
-                _ => BillData.Items.ToList()
-            };
-
-            return new PaginatedList<BillBriefDto>
-            {
-                Items = filtered,
-                TotalCount = filtered.Count,
-                PageNumber = 1,
-                TotalPages = 1
-            };
-        }
     }
 
     async Task OnPaymentFilterChanged()

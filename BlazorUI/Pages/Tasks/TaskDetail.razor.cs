@@ -380,9 +380,79 @@ public partial class TaskDetail : IDisposable
         _busyOccurrenceId = null;
     }
 
+    async Task RevertOccurrenceAsync(Guid occurrenceId)
+    {
+        _busyOccurrenceId = occurrenceId;
+
+        var occurrence = Task?.Occurrences.FirstOrDefault(o => o.Id == occurrenceId);
+        var statusText = occurrence?.Status.ToString() ?? "current";
+
+        var confirmed = await DialogService.OpenAsync<ConfirmDialog>(
+            "Reopen Occurrence",
+            new Dictionary<string, object>
+            {
+                { nameof(ConfirmDialog.Message), $"This will revert the occurrence from '{statusText}' back to Pending/Overdue. The completion data will be cleared. Continue?" },
+                { nameof(ConfirmDialog.ConfirmText), "Reopen" },
+                { nameof(ConfirmDialog.ConfirmStyle), ButtonStyle.Warning },
+                { nameof(ConfirmDialog.ConfirmIcon), "replay" }
+            },
+            new DialogOptions { Width = "450px", CloseDialogOnOverlayClick = false });
+
+        if (confirmed is true)
+        {
+            var result = await OccurrenceService.RevertAsync(occurrenceId, cancellationToken: _cts.Token);
+
+            if (result.IsSuccess)
+            {
+                Notifications.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Info,
+                    Summary = "Occurrence Reopened",
+                    Duration = 3000
+                });
+                await LoadTaskAsync();
+            }
+            else
+            {
+                Notifications.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Error,
+                    Summary = "Error",
+                    Detail = result.Problem.ToUserMessage(),
+                    Duration = 5000
+                });
+            }
+        }
+
+        _busyOccurrenceId = null;
+    }
+
     void NavigateToBill(Guid billId)
     {
         NavigationManager.NavigateTo($"/bills/{billId}");
+    }
+
+    async Task ShowHistoryAsync()
+    {
+        if (Task is null) return;
+
+        await DialogService.OpenAsync<EntityHistoryDialog>(
+            $"History — {Task.Title}",
+            new Dictionary<string, object>
+            {
+                { nameof(EntityHistoryDialog.EntityName), "HouseholdTask" },
+                { nameof(EntityHistoryDialog.EntityId), Task.Id.ToString() },
+                { nameof(EntityHistoryDialog.EntityTitle), Task.Title }
+            },
+            new DialogOptions
+            {
+                Width = "700px",
+                Height = "600px",
+                Resizable = true,
+                Draggable = true,
+                CloseDialogOnOverlayClick = true,
+                ShowClose = true
+            });
     }
 
     async Task OpenNotesEditorAsync(Guid occurrenceId, string? currentNotes)
