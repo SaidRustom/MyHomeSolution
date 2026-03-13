@@ -244,7 +244,12 @@
                 Install App
             </RadzenText>
 
-            <RadzenButton Text="Install PWA" Icon="download" Click="@(() => JS.InvokeVoidAsync("installPWA"))" />
+            <RadzenButton id="installBtn" Style="display:none;" Text="Install PWA" Icon="download" />
+            <div id="iosInstallHelp" style="display:none; padding:12px; margin-top:10px;">
+                <p><strong>Install this app on your iPhone:</strong></p>
+                <p>1. Tap the <strong>Share</strong> button in Safari</p>
+                <p>2. Select <strong>Add to Home Screen</strong></p>
+            </div>
         </RadzenStack>
     </RadzenCard>
 
@@ -282,18 +287,50 @@
 
 
 <script>
-        let deferredPrompt;
+    let deferredPrompt = null;
 
+    const installBtn = document.getElementById('installBtn');
+    const iosInstallHelp = document.getElementById('iosInstallHelp');
+
+    const isIos = /iphone|ipad|ipod/i.test(window.navigator.userAgent);
+    const isInStandaloneMode =
+      window.matchMedia('(display-mode: standalone)').matches ||
+      window.navigator.standalone === true;
+
+    // Chrome / Edge / Android install prompt
     window.addEventListener('beforeinstallprompt', (e) => {
-        e.preventDefault();
-        deferredPrompt = e;
+      e.preventDefault();
+      deferredPrompt = e;
+      installBtn.style.display = 'inline-block';
     });
 
-    window.installPWA = async () => {
-        if (deferredPrompt) {
-            deferredPrompt.prompt();
-            await deferredPrompt.userChoice;
-            deferredPrompt = null;
-        }
-    };
+    installBtn.addEventListener('click', async () => {
+      // Android / supported browsers
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        await deferredPrompt.userChoice;
+        deferredPrompt = null;
+        installBtn.style.display = 'none';
+        return;
+      }
+
+      // iPhone / iPad Safari
+      if (isIos && !isInStandaloneMode) {
+        iosInstallHelp.style.display = 'block';
+        return;
+      }
+    });
+
+    // Show install UI on iPhone if not already installed
+    window.addEventListener('load', () => {
+      if (isIos && !isInStandaloneMode) {
+        installBtn.style.display = 'inline-block';
+      }
+    });
+
+    // Hide install button if already installed
+    window.addEventListener('appinstalled', () => {
+      installBtn.style.display = 'none';
+      iosInstallHelp.style.display = 'none';
+    });
 </script>
