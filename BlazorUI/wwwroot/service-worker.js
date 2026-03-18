@@ -3,8 +3,8 @@
 // be reflected on the first load after each change).
 self.addEventListener('fetch', () => { });
 
-/*
-const CACHE_NAME = 'blazor-cache-v1';
+
+const CACHE_NAME = 'blazor-cache-v2';
 const urlsToCache = [
     '/',
     'index.html',
@@ -25,4 +25,3 @@ self.addEventListener('fetch', event => {
             .then(response => response || fetch(event.request))
     );
 });
-*/
