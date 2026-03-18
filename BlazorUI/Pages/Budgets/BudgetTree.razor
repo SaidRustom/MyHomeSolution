@@ -1,0 +1,166 @@
+@page "/budgets/tree"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize]
+
+<PageTitle>Budget Tree</PageTitle>
+
+<RadzenStack Orientation="Orientation.Vertical" Gap="1.25rem">
+
+    @* Page header *@
+    <PageHeader Title="Budget Tree" Subtitle="Hierarchical view of all budgets" Icon="account_tree">
+        <Actions>
+            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.375rem">
+                <RadzenButton Text="Dashboard" Icon="dashboard" Variant="Variant.Outlined"
+                              ButtonStyle="ButtonStyle.Secondary"
+                              Click="@(() => NavigationManager.NavigateTo("/budgets/dashboard"))" Size="ButtonSize.Small" />
+                <RadzenButton Text="All Budgets" Icon="list" Variant="Variant.Outlined"
+                              ButtonStyle="ButtonStyle.Secondary"
+                              Click="@(() => NavigationManager.NavigateTo("/budgets"))" Size="ButtonSize.Small" />
+            </RadzenStack>
+        </Actions>
+    </PageHeader>
+
+    @if (IsLoading)
+    {
+        <LoadingIndicator Text="Loading budget tree…" />
+    }
+    else if (Error is not null)
+    {
+        <ErrorAlert Problem="@Error" OnRetry="LoadTreeAsync" />
+    }
+    else if (TreeData.Count == 0)
+    {
+        <EmptyState Icon="account_tree" Title="No budgets found"
+                    Description="Create your first budget to see it here."
+                    ActionText="Create Budget"
+                    OnAction="@(() => NavigationManager.NavigateTo("/budgets"))" />
+    }
+    else
+    {
+        @* Legend *@
+        <RadzenCard Variant="Variant.Outlined" class="rz-p-3">
+            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1.25rem" Wrap="FlexWrap.Wrap">
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.375rem">
+                    <div style="width: 12px; height: 12px; border-radius: 50%; background: var(--rz-success);"></div>
+                    <RadzenText TextStyle="TextStyle.Caption" class="rz-mb-0">On Track (0–59%)</RadzenText>
+                </RadzenStack>
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.375rem">
+                    <div style="width: 12px; height: 12px; border-radius: 50%; background: var(--rz-warning);"></div>
+                    <RadzenText TextStyle="TextStyle.Caption" class="rz-mb-0">Warning (60–79%)</RadzenText>
+                </RadzenStack>
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.375rem">
+                    <div style="width: 12px; height: 12px; border-radius: 50%; background: var(--rz-danger);"></div>
+                    <RadzenText TextStyle="TextStyle.Caption" class="rz-mb-0">Over Budget (80%+)</RadzenText>
+                </RadzenStack>
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.375rem">
+                    <RadzenIcon Icon="swap_horiz" Style="font-size: 0.875rem; color: var(--rz-info);" />
+                    <RadzenText TextStyle="TextStyle.Caption" class="rz-mb-0">Transfer Flow</RadzenText>
+                </RadzenStack>
+            </RadzenStack>
+        </RadzenCard>
+
+        @* Tree *@
+        <RadzenStack Orientation="Orientation.Vertical" Gap="1rem">
+            @foreach (var node in TreeData)
+            {
+                @RenderTreeNode(node, 0)
+            }
+        </RadzenStack>
+    }
+</RadzenStack>
+
+@code {
+    RenderFragment RenderTreeNode(BudgetTreeNodeDto node, int depth) => __builder =>
+    {
+        var marginLeft = depth * 2;
+        <div style="margin-left: @(marginLeft)rem;">
+            <RadzenCard Variant="Variant.Outlined" class="rz-p-3 rz-mb-2"
+                        Style="cursor: pointer; transition: box-shadow 0.15s;"
+                        @onclick="@(() => NavigateToBudget(node.Id))">
+                <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
+                    @* Header row *@
+                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center"
+                                 JustifyContent="JustifyContent.SpaceBetween" Wrap="FlexWrap.Wrap" Gap="0.5rem">
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                            @if (depth > 0)
+                            {
+                                <RadzenIcon Icon="subdirectory_arrow_right" Style="font-size: 1rem; color: var(--rz-secondary);" />
+                            }
+                            <div style="width: 32px; height: 32px; border-radius: 50%; background: color-mix(in srgb, var(--rz-primary) 12%, transparent); display: flex; align-items: center; justify-content: center;">
+                                <RadzenIcon Icon="@GetCategoryIcon(node.Category)" Style="font-size: 1rem; color: var(--rz-primary);" />
+                            </div>
+                            <RadzenStack Orientation="Orientation.Vertical" Gap="0">
+                                <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0"><strong>@node.Name</strong></RadzenText>
+                                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.25rem">
+                                    <RadzenBadge Text="@node.Category.ToString()" BadgeStyle="BadgeStyle.Info"
+                                                 IsPill="true" Variant="Variant.Flat" Style="font-size: 0.6rem;" />
+                                    <RadzenBadge Text="@node.Period.ToString()" BadgeStyle="BadgeStyle.Light"
+                                                 IsPill="true" Variant="Variant.Outlined" Style="font-size: 0.6rem;" />
+                                </RadzenStack>
+                            </RadzenStack>
+                        </RadzenStack>
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.75rem">
+                            @* Transfer flow indicator *@
+                            @if (node.NetTransferAmount != 0)
+                            {
+                                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.25rem">
+                                    <RadzenIcon Icon="@(node.NetTransferAmount > 0 ? "arrow_downward" : "arrow_upward")"
+                                                Style="@($"font-size: 0.875rem; color: {(node.NetTransferAmount > 0 ? "var(--rz-success)" : "var(--rz-warning)")};")"/>
+                                    <RadzenText TextStyle="TextStyle.Caption" class="rz-mb-0"
+                                                Style="@($"color: {(node.NetTransferAmount > 0 ? "var(--rz-success)" : "var(--rz-warning)")};")">
+                                        $@Math.Abs(node.NetTransferAmount).ToString("N2")
+                                        @(node.NetTransferAmount > 0 ? "in" : "out")
+                                    </RadzenText>
+                                </RadzenStack>
+                            }
+                            <RadzenBadge Text="@GetStatusLabel(node.PercentUsed)"
+                                         BadgeStyle="@GetStatusBadgeStyle(node.PercentUsed)"
+                                         IsPill="true" Variant="Variant.Flat" />
+                        </RadzenStack>
+                    </RadzenStack>
+
+                    @* Stats row *@
+                    <RadzenRow Gap="0.5rem" RowGap="0.5rem">
+                        <RadzenColumn Size="12" SizeSM="3">
+                            <RadzenStack Orientation="Orientation.Vertical" Gap="0">
+                                <RadzenText TextStyle="TextStyle.Caption" class="rz-mb-0 rz-color-secondary">Budget</RadzenText>
+                                <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0"><strong>$@node.Amount.ToString("N2")</strong></RadzenText>
+                            </RadzenStack>
+                        </RadzenColumn>
+                        <RadzenColumn Size="12" SizeSM="3">
+                            <RadzenStack Orientation="Orientation.Vertical" Gap="0">
+                                <RadzenText TextStyle="TextStyle.Caption" class="rz-mb-0 rz-color-secondary">Spent</RadzenText>
+                                <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0" Style="color: var(--rz-danger);"><strong>$@node.CurrentPeriodSpent.ToString("N2")</strong></RadzenText>
+                            </RadzenStack>
+                        </RadzenColumn>
+                        <RadzenColumn Size="12" SizeSM="3">
+                            <RadzenStack Orientation="Orientation.Vertical" Gap="0">
+                                <RadzenText TextStyle="TextStyle.Caption" class="rz-mb-0 rz-color-secondary">Remaining</RadzenText>
+                                <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0"
+                                            Style="@($"color: {(node.CurrentPeriodRemaining >= 0 ? "var(--rz-success)" : "var(--rz-danger)")};")">
+                                    <strong>$@node.CurrentPeriodRemaining.ToString("N2")</strong>
+                                </RadzenText>
+                            </RadzenStack>
+                        </RadzenColumn>
+                        <RadzenColumn Size="12" SizeSM="3">
+                            <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem">
+                                <RadzenText TextStyle="TextStyle.Caption" class="rz-mb-0 rz-color-secondary">@node.PercentUsed.ToString("N0")% used</RadzenText>
+                                <RadzenProgressBar Value="@((double)Math.Min(node.PercentUsed, 100))"
+                                                   Max="100" ShowValue="false"
+                                                   Style="@($"height: 6px; --rz-progressbar-fill-background: {GetStatusColor(node.PercentUsed)};")" />
+                            </RadzenStack>
+                        </RadzenColumn>
+                    </RadzenRow>
+                </RadzenStack>
+            </RadzenCard>
+
+            @* Render children recursively *@
+            @if (node.Children.Count > 0)
+            {
+                @foreach (var child in node.Children)
+                {
+                    @RenderTreeNode(child, depth + 1)
+                }
+            }
+        </div>
+    };
+}

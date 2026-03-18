@@ -32,6 +32,11 @@ public sealed class ApplicationDbContext(
     public DbSet<ExceptionLog> ExceptionLogs => Set<ExceptionLog>();
     public DbSet<BackgroundServiceDefinition> BackgroundServiceDefinitions => Set<BackgroundServiceDefinition>();
     public DbSet<BackgroundServiceLog> BackgroundServiceLogs => Set<BackgroundServiceLog>();
+    public DbSet<Budget> Budgets => Set<Budget>();
+    public DbSet<BudgetOccurrence> BudgetOccurrences => Set<BudgetOccurrence>();
+    public DbSet<BudgetTransfer> BudgetTransfers => Set<BudgetTransfer>();
+    public DbSet<BillBudgetLink> BillBudgetLinks => Set<BillBudgetLink>();
+    public DbSet<BillRelatedItem> BillRelatedItems => Set<BillRelatedItem>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
 
     protected override void OnModelCreating(ModelBuilder builder)

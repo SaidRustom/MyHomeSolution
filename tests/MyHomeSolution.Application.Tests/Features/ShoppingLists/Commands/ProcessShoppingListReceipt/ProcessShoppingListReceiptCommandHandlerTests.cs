@@ -1,4 +1,5 @@
 using FluentAssertions;
+using MediatR;
 using Microsoft.EntityFrameworkCore;
 using MyHomeSolution.Application.Common.Events;
 using MyHomeSolution.Application.Common.Exceptions;
@@ -15,6 +16,7 @@ namespace MyHomeSolution.Application.Tests.Features.ShoppingLists.Commands.Proce
 public sealed class ProcessShoppingListReceiptCommandHandlerTests : IDisposable
 {
     private readonly TestDbContextFactory _factory = new();
+    private readonly IMediator _mediator = Substitute.For<IMediator>();
     private readonly ICurrentUserService _currentUserService = Substitute.For<ICurrentUserService>();
     private readonly IReceiptAnalysisService _receiptAnalysisService = Substitute.For<IReceiptAnalysisService>();
     private readonly IFileStorageService _fileStorageService = Substitute.For<IFileStorageService>();
@@ -677,7 +679,7 @@ public sealed class ProcessShoppingListReceiptCommandHandlerTests : IDisposable
     }
 
     private ProcessShoppingListReceiptCommandHandler CreateHandler(TestDbContext context) =>
-        new(context, _currentUserService, _receiptAnalysisService,
+        new(_mediator, context, _currentUserService, _receiptAnalysisService,
             _fileStorageService, _dateTimeProvider, _publisher);
 
     private static ProcessShoppingListReceiptCommand CreateCommand(Guid shoppingListId) =>

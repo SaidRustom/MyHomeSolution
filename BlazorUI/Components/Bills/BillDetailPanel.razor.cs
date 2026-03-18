@@ -13,19 +13,10 @@ public partial class BillDetailPanel
     public BillDetailDto Bill { get; set; } = default!;
 
     [Parameter]
-    public EventCallback OnEdit { get; set; }
-
-    [Parameter]
-    public EventCallback OnDelete { get; set; }
-
-    [Parameter]
     public EventCallback<BillSplitDto> OnMarkSplitAsPaid { get; set; }
 
     [Parameter]
     public bool IsProcessing { get; set; }
-
-    [Parameter]
-    public EventCallback OnBack { get; set; }
 
     private string? ReceiptDataUrl { get; set; }
     private bool IsLoadingReceipt { get; set; }
@@ -54,6 +45,10 @@ public partial class BillDetailPanel
 
     decimal UnpaidAmount => Bill.Amount - PaidAmount;
 
+    int PaidSplitCount => Bill.Splits.Count(s => s.Status != Models.Enums.SplitStatus.Unpaid);
+
+    int UnpaidSplitCount => Bill.Splits.Count(s => s.Status == Models.Enums.SplitStatus.Unpaid);
+
     double PaidPercentage => Bill.Amount > 0
         ? (double)(PaidAmount / Bill.Amount * 100)
         : 0;
@@ -69,24 +64,34 @@ public partial class BillDetailPanel
         })
         .ToList();
 
-    async Task EditAsync() => await OnEdit.InvokeAsync();
-
-    async Task DeleteAsync() => await OnDelete.InvokeAsync();
-
-    async Task GoBackAsync() => await OnBack.InvokeAsync();
-
     async Task MarkSplitAsPaidAsync(BillSplitDto split) =>
         await OnMarkSplitAsPaid.InvokeAsync(split);
 
-    string GetTaskLink()
-    {
-        var url = $"/tasks/{Bill.RelatedTaskId}";
-        if (Bill.RelatedOccurrenceId.HasValue)
+    string? RelatedEntityLink => Bill.RelatedEntityId.HasValue
+        ? Bill.RelatedEntityType switch
         {
-            url += $"?occurrenceId={Bill.RelatedOccurrenceId}";
+            "TaskOccurrence" => $"/tasks/{Bill.RelatedEntityId}",
+            "HouseholdTask" => $"/tasks/{Bill.RelatedEntityId}",
+            "ShoppingList" => $"/shopping-lists/{Bill.RelatedEntityId}",
+            _ => null
         }
-        return url;
-    }
+        : null;
+
+    string RelatedEntityIcon => Bill.RelatedEntityType switch
+    {
+        "TaskOccurrence" => "task_alt",
+        "HouseholdTask" => "task_alt",
+        "ShoppingList" => "shopping_cart",
+        _ => "link"
+    };
+
+    string RelatedEntityLabel => Bill.RelatedEntityType switch
+    {
+        "TaskOccurrence" => "Linked Task Occurrence",
+        "HouseholdTask" => "Linked Task",
+        "ShoppingList" => "Linked Shopping List",
+        _ => "Linked Entity"
+    };
 
     async Task ViewReceiptAsync()
     {

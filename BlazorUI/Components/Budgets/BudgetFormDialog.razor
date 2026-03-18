@@ -1,0 +1,108 @@
+<RadzenTemplateForm TItem="BudgetFormModel" Data="@Model" Submit="OnSubmitAsync">
+    <RadzenStack Orientation="Orientation.Vertical" Gap="1rem" class="rz-p-4">
+
+        @if (ErrorMessage is not null)
+        {
+            <RadzenAlert AlertStyle="AlertStyle.Danger" Variant="Variant.Flat" Shade="Shade.Lighter"
+                         AllowClose="true" Close="@(() => ErrorMessage = null)">
+                @ErrorMessage
+            </RadzenAlert>
+        }
+
+        @* Name *@
+        <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem">
+            <RadzenLabel Text="Name" Component="Name" />
+            <RadzenTextBox Name="Name" @bind-Value="@Model.Name" Placeholder="e.g. Monthly Groceries" Style="width: 100%;" />
+            <RadzenRequiredValidator Component="Name" Text="Budget name is required" />
+        </RadzenStack>
+
+        @* Amount & Currency *@
+        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.75rem" Wrap="FlexWrap.Wrap">
+            <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem" Style="flex: 1; min-width: 200px;">
+                <RadzenLabel Text="Amount" Component="Amount" />
+                <RadzenNumeric TValue="decimal" Name="Amount" @bind-Value="@Model.Amount"
+                               Placeholder="0.00" Style="width: 100%;" Min="0.01m" />
+                <RadzenNumericRangeValidator Component="Amount" Min="0.01" Text="Amount must be greater than 0" />
+            </RadzenStack>
+            <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem" Style="width: 120px;">
+                <RadzenLabel Text="Currency" Component="Currency" />
+                <RadzenTextBox Name="Currency" @bind-Value="@Model.Currency" Style="width: 100%;" />
+            </RadzenStack>
+        </RadzenStack>
+
+        @* Category & Period *@
+        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.75rem" Wrap="FlexWrap.Wrap">
+            <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem" Style="flex: 1; min-width: 200px;">
+                <RadzenLabel Text="Category" Component="Category" />
+                <RadzenDropDown TValue="BudgetCategory" Name="Category" @bind-Value="@Model.Category"
+                                Data="@Categories" Style="width: 100%;" />
+            </RadzenStack>
+            <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem" Style="flex: 1; min-width: 200px;">
+                <RadzenLabel Text="Period" Component="Period" />
+                <RadzenDropDown TValue="BudgetPeriod" Name="Period" @bind-Value="@Model.Period"
+                                Data="@Periods" Style="width: 100%;" />
+            </RadzenStack>
+        </RadzenStack>
+
+        @* Start Date & End Date *@
+        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.75rem" Wrap="FlexWrap.Wrap">
+            <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem" Style="flex: 1; min-width: 200px;">
+                <RadzenLabel Text="Start Date" Component="StartDate" />
+                <RadzenDatePicker TValue="DateTimeOffset" Name="StartDate" @bind-Value="@Model.StartDate"
+                                  DateFormat="MMM dd, yyyy" Style="width: 100%;" />
+            </RadzenStack>
+            <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem" Style="flex: 1; min-width: 200px;">
+                <RadzenLabel Text="End Date (Optional)" Component="EndDate" />
+                <RadzenDatePicker TValue="DateTimeOffset?" Name="EndDate" @bind-Value="@Model.EndDate"
+                                  DateFormat="MMM dd, yyyy" Style="width: 100%;" Placeholder="No end date" />
+            </RadzenStack>
+        </RadzenStack>
+
+        @* Description *@
+        <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem">
+            <RadzenLabel Text="Description" Component="Description" />
+            <RadzenTextArea Name="Description" @bind-Value="@Model.Description"
+                            Placeholder="Optional description…" Rows="2" Style="width: 100%;" />
+        </RadzenStack>
+
+        @* Is Recurring toggle *@
+        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+            <RadzenSwitch @bind-Value="@Model.IsRecurring" />
+            <RadzenLabel Text="Recurring budget" Style="margin: 0;" />
+        </RadzenStack>
+
+        @* Parent Budget *@
+        <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem">
+            <RadzenLabel Text="Parent Budget (Optional)" />
+            <RadzenDropDown TValue="Guid?"
+                            Data="@FilteredParentBudgets"
+                            @bind-Value="@Model.ParentBudgetId"
+                            TextProperty="Name"
+                            ValueProperty="Id"
+                            AllowClear="true"
+                            AllowFiltering="true"
+                            FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                            Placeholder="Select parent budget…"
+                            Style="width: 100%;">
+                <Template Context="budget">
+                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                        <RadzenBadge Text="@((budget as BudgetBriefDto)?.Category.ToString())"
+                                     BadgeStyle="BadgeStyle.Info" IsPill="true" Variant="Variant.Flat" />
+                        <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0">
+                            @((budget as BudgetBriefDto)?.Name)
+                        </RadzenText>
+                    </RadzenStack>
+                </Template>
+            </RadzenDropDown>
+        </RadzenStack>
+
+        @* Footer buttons *@
+        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End"
+                     Gap="0.5rem" class="rz-pt-4" Style="border-top: 1px solid var(--rz-base-200);">
+            <RadzenButton Text="Cancel" Variant="Variant.Flat" ButtonStyle="ButtonStyle.Light"
+                          Click="Cancel" ButtonType="ButtonType.Button" Disabled="@IsBusy" />
+            <RadzenButton Text="@SubmitText" Icon="save" ButtonStyle="ButtonStyle.Primary"
+                          ButtonType="ButtonType.Submit" IsBusy="@IsBusy" />
+        </RadzenStack>
+    </RadzenStack>
+</RadzenTemplateForm>

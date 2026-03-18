@@ -23,7 +23,7 @@ public sealed class OpenAiReceiptAnalysisService(
     };
 
     private const string SystemPrompt = """
-        You are a receipt parser. Analyze the receipt image and extract structured data.
+        You are a precise receipt parser. Analyze the receipt image and extract structured data.
         Return ONLY valid JSON with no markdown formatting, no code fences, no extra text.
         Use this exact schema:
         {
@@ -33,9 +33,11 @@ public sealed class OpenAiReceiptAnalysisService(
           "currency": "3-letter ISO currency code",
           "items": [
             {
-              "name": "simplified item name",
+              "name": "simplified item name (with brand)",
+              "generic_name": "generic item name without brand",
               "price": number,
-              "quantity": integer
+              "quantity": integer,
+              "is_taxable": boolean
             }
           ],
           "subtotal": number,
@@ -43,12 +45,23 @@ public sealed class OpenAiReceiptAnalysisService(
           "total": number
         }
         Rules:
-        - Simplify item names to be human-readable (e.g. "ORG BNS CHKN BRST" → "Organic Boneless Chicken Breast").
-        - price is the line total (unit price × quantity). Do not duplicate: if the receipt shows qty and a line total, use the line total as price. 
+        - "name": Simplify item names to be human-readable (e.g. "ORG BNS CHKN BRST" → "Organic Boneless Chicken Breast"). Keep brand names here.
+        - "generic_name": A plain generic name without any brand. Drop brand names entirely (e.g. "Organic Banana" from "Dole Organic Banana", "Chicken Breast" from "Maple Leaf Chicken Breast", "Paper Towels" from "Bounty Paper Towels").
+        - price is the line total (unit price × quantity). Do not duplicate: if the receipt shows qty and a line total, use the line total as price.
         - discount is the total discount amount (positive number). Use 0 if none.
+        - "is_taxable": In Ontario, Canada, most basic groceries (fresh produce, dairy, bread, meat, etc.) are zero-rated (HST exempt). Prepared foods, snacks, candy, carbonated drinks, alcohol, household items, cleaning supplies, personal care, and non-food items are taxable. Set true if the item is taxable under Ontario HST rules.
         - If currency is ambiguous, default to "CAD".
-        - If the date is missing, use "0001-01-01T00:00:00+00:00".
-        """;
+        - If the date is missing, use the current date and time.
+
+        ACCURACY IS CRITICAL:
+        - The sum of all item prices MUST equal the subtotal. Verify this before responding.
+        - The total MUST equal subtotal - discount + tax. Read the receipt's printed total and use it exactly.
+        - If a value is hard to read or ambiguous, prefer the receipt's printed subtotal/total over your own calculation.
+        - Do NOT guess or fabricate prices. If an item's price is unreadable, skip that item entirely rather than entering an incorrect value.
+        - Do NOT invent items that are not clearly visible on the receipt.
+        - quantity should be 1 unless the receipt explicitly shows a different quantity for the line item.
+        - If the receipt image is too blurry, cut off, or otherwise unreadable, return fewer items rather than guessing. It is better to be incomplete than inaccurate.
+        """ ;
 
     public async Task<ReceiptAnalysisResult> AnalyzeAsync(
         Stream imageStream, string contentType, CancellationToken cancellationToken = default)
@@ -177,15 +190,17 @@ public sealed class OpenAiReceiptAnalysisService(
             StoreName = parsed.StoreName ?? "Unknown Store",
             StoreAddress = parsed.StoreAddress,
             TransactionDate = parsed.TransactionDate,
-            Currency = string.IsNullOrWhiteSpace(parsed.Currency) ? "USD" : parsed.Currency,
+            Currency = string.IsNullOrWhiteSpace(parsed.Currency) ? "CAD" : parsed.Currency,
             Subtotal = parsed.Subtotal,
             Discount = parsed.Discount,
             Total = parsed.Total,
             Items = parsed.Items?.Select(i => new ReceiptLineItem
             {
                 Name = i.Name ?? "Unknown Item",
+                GenericName = i.GenericName,
                 Price = i.Price,
-                Quantity = i.Quantity < 1 ? 1 : i.Quantity
+                Quantity = i.Quantity < 1 ? 1 : i.Quantity,
+                IsTaxable = i.IsTaxable
             }).ToList() ?? []
         };
     }
@@ -232,10 +247,16 @@ public sealed class OpenAiReceiptAnalysisService(
         [JsonPropertyName("name")]
         public string? Name { get; init; }
 
+        [JsonPropertyName("generic_name")]
+        public string? GenericName { get; init; }
+
         [JsonPropertyName("price")]
         public decimal Price { get; init; }
 
         [JsonPropertyName("quantity")]
         public int Quantity { get; init; } = 1;
+
+        [JsonPropertyName("is_taxable")]
+        public bool IsTaxable { get; init; }
     }
 }

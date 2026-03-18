@@ -27,6 +27,9 @@ public static class BackgroundServiceSeeder
 
         public static readonly Guid EmailBackground =
             Guid.Parse("a1b2c3d4-0003-0003-0003-000000000003");
+
+        public static readonly Guid BudgetOccurrenceGenerator =
+            Guid.Parse("a1b2c3d4-0004-0004-0004-000000000004");
     }
 
     public static async Task SeedAsync(IServiceProvider serviceProvider)
@@ -51,7 +54,12 @@ public static class BackgroundServiceSeeder
             (ServiceIds.EmailBackground,
              "Email Sender",
              "Processes the background email queue and sends emails via the configured email provider.",
-             typeof(EmailBackgroundService).FullName!)
+             typeof(EmailBackgroundService).FullName!),
+
+            (ServiceIds.BudgetOccurrenceGenerator,
+             "Budget Occurrence Generator",
+             "Creates new budget occurrences when recurring budget periods expire and handles fund carryover.",
+             typeof(BudgetOccurrenceGeneratorService).FullName!)
         };
 
         foreach (var (id, name, description, typeName) in definitions)

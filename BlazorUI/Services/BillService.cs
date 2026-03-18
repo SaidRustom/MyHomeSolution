@@ -23,6 +23,9 @@ public sealed class BillService(HttpClient httpClient)
         string? sortBy = null,
         string? sortDirection = null,
         bool? isFullyPaid = null,
+        string? splitWithUserId = null,
+        bool? hasLinkedTask = null,
+        Guid? shoppingListId = null,
         CancellationToken cancellationToken = default)
     {
         var query = BuildQueryString(
@@ -35,7 +38,10 @@ public sealed class BillService(HttpClient httpClient)
             ("toDate", toDate?.ToString("O")),
             ("sortBy", sortBy),
             ("sortDirection", sortDirection),
-            ("isFullyPaid", isFullyPaid?.ToString()));
+            ("isFullyPaid", isFullyPaid?.ToString()),
+            ("splitWithUserId", splitWithUserId),
+            ("hasLinkedTask", hasLinkedTask?.ToString()),
+            ("shoppingListId", shoppingListId?.ToString()));
 
         return GetAsync<PaginatedList<BillBriefDto>>($"{BasePath}{query}", cancellationToken);
     }
@@ -137,7 +143,7 @@ public sealed class BillService(HttpClient httpClient)
     public async Task<ApiResult<BillDetailDto>> CreateBillFromReceiptAsync(
         Stream fileStream, string fileName, string contentType,
         BillCategory category = BillCategory.General,
-        List<string>? splitUserIds = null,
+        List<SplitRequest>? splits = null,
         CancellationToken cancellationToken = default)
     {
         using var content = new MultipartFormDataContent();
@@ -146,8 +152,12 @@ public sealed class BillService(HttpClient httpClient)
         content.Add(streamContent, "file", fileName);
 
         var queryParts = new List<string> { $"category={category}" };
-        if (splitUserIds is { Count: > 0 })
-            queryParts.Add($"splitUserIds={string.Join(",", splitUserIds)}");
+        if (splits is { Count: > 0 })
+        {
+            var encoded = string.Join(",", splits.Select(s =>
+                s.Percentage.HasValue ? $"{s.UserId}:{s.Percentage.Value}" : s.UserId));
+            queryParts.Add($"splitUserIds={encoded}");
+        }
 
         var queryString = string.Join("&", queryParts);
 

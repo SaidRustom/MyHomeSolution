@@ -1,5 +1,6 @@
 <RadzenCard Variant="Variant.Outlined" class="rz-p-3">
     <RadzenStack Orientation="Orientation.Vertical" Gap="0.75rem">
+        @* Primary filters row *@
         <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Wrap="FlexWrap.Wrap" Gap="0.5rem">
             @* Search *@
             <div style="flex: 1; min-width: 200px;">
@@ -42,13 +43,75 @@
             </div>
 
             @* Action buttons *@
-            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.375rem">
+            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.375rem" AlignItems="AlignItems.Center">
                 <RadzenButton Text="Search" Icon="search" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Medium" Click="ApplyFiltersAsync" />
                 @if (HasActiveFilters)
                 {
                     <RadzenButton Text="Clear" Icon="clear" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Medium" Click="ClearFiltersAsync" />
                 }
+                <RadzenButton Icon="@(_expandAdvanced ? "expand_less" : "tune")"
+                              Variant="Variant.Text"
+                              ButtonStyle="@(HasAdvancedFilters ? ButtonStyle.Info : ButtonStyle.Secondary)"
+                              Size="ButtonSize.Medium"
+                              title="Advanced filters"
+                              Click="@(() => _expandAdvanced = !_expandAdvanced)" />
             </RadzenStack>
         </RadzenStack>
+
+        @* Advanced filters — collapsible *@
+        @if (_expandAdvanced)
+        {
+            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.End" Wrap="FlexWrap.Wrap" Gap="0.75rem"
+                         Style="border-top: 1px solid var(--rz-base-200); padding-top: 0.75rem;">
+                @* Split with user *@
+                <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem" Style="min-width: 200px; flex: 1;">
+                    <RadzenLabel Text="Split With" />
+                    <FriendPicker SelectedUserId="@SplitWithUserId"
+                                  SelectedUserIdChanged="OnSplitWithUserChanged"
+                                  Placeholder="Any user…"
+                                  Style="width: 100%;" />
+                </RadzenStack>
+
+                @* Paid by user *@
+                <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem" Style="min-width: 200px; flex: 1;">
+                    <RadzenLabel Text="Paid By" />
+                    <FriendPicker SelectedUserId="@PaidByUserId"
+                                  SelectedUserIdChanged="OnPaidByUserChanged"
+                                  Placeholder="Any user…"
+                                  Style="width: 100%;" />
+                </RadzenStack>
+
+                @* Linked to task *@
+                <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem" Style="min-width: 170px;">
+                    <RadzenLabel Text="Linked to Task" />
+                    <RadzenDropDown TValue="object"
+                                    Data="@(new[] { new { Value = true, Label = "Yes" }, new { Value = false, Label = "No" } })"
+                                    Value="@HasLinkedTask"
+                                    Change="@OnHasLinkedTaskChanged"
+                                    TextProperty="Label"
+                                    ValueProperty="Value"
+                                    AllowClear="true"
+                                    Placeholder="Any"
+                                    Style="width: 100%;" />
+                </RadzenStack>
+
+                @* Shopping list *@
+                @if (ShoppingLists.Count > 0)
+                {
+                    <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem" Style="min-width: 200px; flex: 1;">
+                        <RadzenLabel Text="Shopping List" />
+                        <RadzenDropDown TValue="object"
+                                        Data="@ShoppingLists"
+                                        Value="@ShoppingListId"
+                                        Change="@OnShoppingListChanged"
+                                        TextProperty="Title"
+                                        ValueProperty="Id"
+                                        AllowClear="true"
+                                        Placeholder="Any list"
+                                        Style="width: 100%;" />
+                    </RadzenStack>
+                }
+            </RadzenStack>
+        }
     </RadzenStack>
 </RadzenCard>

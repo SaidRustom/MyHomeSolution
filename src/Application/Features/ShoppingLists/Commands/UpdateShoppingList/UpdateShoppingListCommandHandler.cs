@@ -26,6 +26,7 @@ public sealed class UpdateShoppingListCommandHandler(
         shoppingList.Description = request.Description;
         shoppingList.Category = request.Category;
         shoppingList.DueDate = request.DueDate;
+        shoppingList.DefaultBudgetId = request.DefaultBudgetId;
 
         await dbContext.SaveChangesAsync(cancellationToken);
 

@@ -22,7 +22,7 @@ public sealed class OccurrenceOverdueNotificationHandler(
 
         var entity = new Notification
         {
-            Title = "Task overdue",
+            Title = "Task overdue: " + notification.TaskTitle,
             Description = $"An occurrence of '{notification.TaskTitle}' is overdue.",
             Type = NotificationType.OccurrenceOverdue,
             FromUserId = "system",

@@ -23,6 +23,7 @@ public sealed class GetBillByIdQueryHandler(
             .AsNoTracking()
             .Include(b => b.Splits)
             .Include(b => b.Items)
+            .Include(b => b.RelatedItems)
             .Where(b => !b.IsDeleted)
             .FirstOrDefaultAsync(b => b.Id == request.Id, cancellationToken)
             ?? throw new NotFoundException(nameof(Bill), request.Id);
@@ -58,39 +59,29 @@ public sealed class GetBillByIdQueryHandler(
             avatarMap[uid] = detail?.AvatarUrl;
         }
 
-        // Resolve related task information
-        string? relatedTaskName = null;
-        Guid? relatedTaskId = null;
-        Guid? relatedOccurrenceId = null;
+        // Resolve related entity name (legacy single relation)
+        string? relatedEntityName = null;
 
         if (bill.RelatedEntityId.HasValue)
         {
-            if (string.Equals(bill.RelatedEntityType, "TaskOccurrence", StringComparison.OrdinalIgnoreCase))
-            {
-                var occ = await dbContext.TaskOccurrences
-                    .AsNoTracking()
-                    .Include(o => o.HouseholdTask)
-                    .FirstOrDefaultAsync(o => o.Id == bill.RelatedEntityId.Value, cancellationToken);
+            relatedEntityName = await ResolveEntityNameAsync(
+                bill.RelatedEntityType, bill.RelatedEntityId.Value, cancellationToken);
+        }
 
-                if (occ is not null)
-                {
-                    relatedTaskName = occ.HouseholdTask.Title;
-                    relatedTaskId = occ.HouseholdTaskId;
-                    relatedOccurrenceId = occ.Id;
-                }
-            }
-            else if (string.Equals(bill.RelatedEntityType, "HouseholdTask", StringComparison.OrdinalIgnoreCase))
-            {
-                var task = await dbContext.HouseholdTasks
-                    .AsNoTracking()
-                    .FirstOrDefaultAsync(t => t.Id == bill.RelatedEntityId.Value, cancellationToken);
+        // Resolve related items names
+        var relatedItemDtos = new List<BillRelatedItemDto>();
+        foreach (var ri in bill.RelatedItems)
+        {
+            var name = ri.RelatedEntityName
+                ?? await ResolveEntityNameAsync(ri.RelatedEntityType, ri.RelatedEntityId, cancellationToken);
 
-                if (task is not null)
-                {
-                    relatedTaskName = task.Title;
-                    relatedTaskId = task.Id;
-                }
-            }
+            relatedItemDtos.Add(new BillRelatedItemDto
+            {
+                Id = ri.Id,
+                RelatedEntityId = ri.RelatedEntityId,
+                RelatedEntityType = ri.RelatedEntityType,
+                RelatedEntityName = name
+            });
         }
 
         return new BillDetailDto
@@ -108,10 +99,9 @@ public sealed class GetBillByIdQueryHandler(
             ReceiptUrl = bill.ReceiptUrl,
             RelatedEntityId = bill.RelatedEntityId,
             RelatedEntityType = bill.RelatedEntityType,
-            RelatedTaskName = relatedTaskName,
-            RelatedTaskId = relatedTaskId,
-            RelatedOccurrenceId = relatedOccurrenceId,
+            RelatedEntityName = relatedEntityName,
             Notes = bill.Notes,
+            RelatedItems = relatedItemDtos,
             CreatedAt = bill.CreatedAt,
             CreatedByUserId = bill.CreatedBy,
             CreatedBy = bill.CreatedBy == null ? null : nameMap.GetValueOrDefault(bill.CreatedBy),
@@ -139,8 +129,53 @@ public sealed class GetBillByIdQueryHandler(
                 Quantity = i.Quantity,
                 UnitPrice = i.UnitPrice,
                 Price = i.Price,
-                Discount = i.Discount
+                Discount = i.Discount,
+                IsTaxable = i.IsTaxable,
+                TaxAmount = i.TaxAmount,
+                ShoppingListId = i.ShoppingListId
             }).ToList()
         };
+    }
+
+    private async Task<string?> ResolveEntityNameAsync(
+        string? entityType, Guid entityId, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrEmpty(entityType))
+            return null;
+
+        if (string.Equals(entityType, EntityTypes.TaskOccurrence, StringComparison.OrdinalIgnoreCase))
+        {
+            var occ = await dbContext.TaskOccurrences
+                .AsNoTracking()
+                .Include(o => o.HouseholdTask)
+                .FirstOrDefaultAsync(o => o.Id == entityId, cancellationToken);
+            return occ?.HouseholdTask.Title;
+        }
+
+        if (string.Equals(entityType, EntityTypes.HouseholdTask, StringComparison.OrdinalIgnoreCase))
+        {
+            var task = await dbContext.HouseholdTasks
+                .AsNoTracking()
+                .FirstOrDefaultAsync(t => t.Id == entityId, cancellationToken);
+            return task?.Title;
+        }
+
+        if (string.Equals(entityType, EntityTypes.ShoppingList, StringComparison.OrdinalIgnoreCase))
+        {
+            var list = await dbContext.ShoppingLists
+                .AsNoTracking()
+                .FirstOrDefaultAsync(l => l.Id == entityId, cancellationToken);
+            return list?.Title;
+        }
+
+        if (string.Equals(entityType, EntityTypes.Budget, StringComparison.OrdinalIgnoreCase))
+        {
+            var budget = await dbContext.Budgets
+                .AsNoTracking()
+                .FirstOrDefaultAsync(b => b.Id == entityId, cancellationToken);
+            return budget?.Name;
+        }
+
+        return null;
     }
 }

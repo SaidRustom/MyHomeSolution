@@ -37,6 +37,10 @@ public sealed class BillsController(ISender sender) : ControllerBase
         [FromQuery] string? sortBy = null,
         [FromQuery] string? sortDirection = null,
         [FromQuery] bool? isFullyPaid = null,
+        [FromQuery] string? splitWithUserId = null,
+        [FromQuery] bool? hasLinkedTask = null,
+        [FromQuery] Guid? shoppingListId = null,
+        [FromQuery] Guid? budgetId = null,
         CancellationToken cancellationToken = default)
     {
         var query = new GetBillsQuery
@@ -50,7 +54,11 @@ public sealed class BillsController(ISender sender) : ControllerBase
             ToDate = toDate,
             SortBy = sortBy,
             SortDirection = sortDirection,
-            IsFullyPaid = isFullyPaid
+            IsFullyPaid = isFullyPaid,
+            SplitWithUserId = splitWithUserId,
+            HasLinkedTask = hasLinkedTask,
+            ShoppingListId = shoppingListId,
+            BudgetId = budgetId
         };
 
         var result = await sender.Send(query, cancellationToken);
@@ -212,7 +220,13 @@ public sealed class BillsController(ISender sender) : ControllerBase
 
         return splitUserIds
             .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-            .Select(id => new ReceiptSplitRequest { UserId = id })
+            .Select(entry =>
+            {
+                var parts = entry.Split(':', 2);
+                var userId = parts[0];
+                decimal? percentage = parts.Length > 1 && decimal.TryParse(parts[1], out var pct) ? pct : null;
+                return new ReceiptSplitRequest { UserId = userId, Percentage = percentage };
+            })
             .ToList();
     }
 }

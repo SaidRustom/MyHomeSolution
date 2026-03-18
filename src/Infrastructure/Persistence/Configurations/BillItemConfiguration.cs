@@ -23,7 +23,12 @@ public sealed class BillItemConfiguration : IEntityTypeConfiguration<BillItem>
         builder.Property(i => i.Discount)
             .HasPrecision(18, 2);
 
+        builder.Property(i => i.TaxAmount)
+            .HasPrecision(18, 2);
+
         builder.HasIndex(i => i.BillId);
+        builder.HasIndex(i => i.ShoppingListId)
+            .HasFilter("ShoppingListId IS NOT NULL");
 
         builder.HasQueryFilter(i => !i.Bill.IsDeleted);
     }

@@ -345,7 +345,7 @@ public partial class SchedulerPage : IDisposable
     void HandleRealtimeNotification(UserPushNotification push)
     {
         var entityType = push.RelatedEntityType?.ToLowerInvariant();
-        if (entityType is "householdtask" or "task" or "taskoccurrence" or "occurrence")
+        if (entityType is "householdtask" or "task" or "taskoccurrence" or "occurrence" or "bill")
         {
             InvokeAsync(async () =>
             {

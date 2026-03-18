@@ -26,6 +26,11 @@ public sealed class TestDbContext(DbContextOptions<TestDbContext> options)
     public DbSet<ExceptionLog> ExceptionLogs => Set<ExceptionLog>();
     public DbSet<BackgroundServiceDefinition> BackgroundServiceDefinitions => Set<BackgroundServiceDefinition>();
     public DbSet<BackgroundServiceLog> BackgroundServiceLogs => Set<BackgroundServiceLog>();
+    public DbSet<Budget> Budgets => Set<Budget>();
+    public DbSet<BudgetOccurrence> BudgetOccurrences => Set<BudgetOccurrence>();
+    public DbSet<BudgetTransfer> BudgetTransfers => Set<BudgetTransfer>();
+    public DbSet<BillBudgetLink> BillBudgetLinks => Set<BillBudgetLink>();
+    public DbSet<BillRelatedItem> BillRelatedItems => Set<BillRelatedItem>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -195,6 +200,11 @@ public sealed class TestDbContext(DbContextOptions<TestDbContext> options)
             entity.Ignore(sl => sl.AuditLogs);
             entity.Ignore(sl => sl.Bills);
 
+            entity.HasOne(sl => sl.DefaultBudget)
+                .WithMany()
+                .HasForeignKey(sl => sl.DefaultBudgetId)
+                .OnDelete(DeleteBehavior.SetNull);
+
             entity.HasMany(sl => sl.Items)
                 .WithOne(si => si.ShoppingList)
                 .HasForeignKey(si => si.ShoppingListId)
@@ -216,6 +226,97 @@ public sealed class TestDbContext(DbContextOptions<TestDbContext> options)
             entity.Property(uc => uc.RequesterId).HasMaxLength(450).IsRequired();
             entity.Property(uc => uc.AddresseeId).HasMaxLength(450).IsRequired();
             entity.Ignore(uc => uc.AuditLogs);
+        });
+
+        modelBuilder.Entity<Budget>(entity =>
+        {
+            entity.HasKey(b => b.Id);
+            entity.Property(b => b.Name).HasMaxLength(256).IsRequired();
+            entity.Property(b => b.Description).HasMaxLength(2000);
+            entity.Property(b => b.Amount).HasColumnType("TEXT");
+            entity.Property(b => b.Currency).HasMaxLength(3).IsRequired();
+            entity.Ignore(b => b.AuditLogs);
+            entity.Ignore(b => b.RowVersion);
+
+            entity.HasOne(b => b.ParentBudget)
+                .WithMany(b => b.ChildBudgets)
+                .HasForeignKey(b => b.ParentBudgetId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasMany(b => b.Occurrences)
+                .WithOne(o => o.Budget)
+                .HasForeignKey(o => o.BudgetId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasMany(b => b.BillLinks)
+                .WithOne(l => l.Budget)
+                .HasForeignKey(l => l.BudgetId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<BudgetOccurrence>(entity =>
+        {
+            entity.HasKey(o => o.Id);
+            entity.Property(o => o.AllocatedAmount).HasColumnType("TEXT");
+            entity.Property(o => o.SpentAmount).HasColumnType("TEXT");
+            entity.Property(o => o.Balance).HasColumnType("TEXT");
+            entity.Property(o => o.CarryoverAmount).HasColumnType("TEXT");
+            entity.Property(o => o.Notes).HasMaxLength(2000);
+
+            entity.HasMany(o => o.BillLinks)
+                .WithOne(l => l.BudgetOccurrence)
+                .HasForeignKey(l => l.BudgetOccurrenceId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasMany(o => o.OutgoingTransfers)
+                .WithOne(t => t.SourceOccurrence)
+                .HasForeignKey(t => t.SourceOccurrenceId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasMany(o => o.IncomingTransfers)
+                .WithOne(t => t.DestinationOccurrence)
+                .HasForeignKey(t => t.DestinationOccurrenceId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<BudgetTransfer>(entity =>
+        {
+            entity.HasKey(t => t.Id);
+            entity.Property(t => t.Amount).HasColumnType("TEXT");
+            entity.Property(t => t.Reason).HasMaxLength(1000);
+            entity.Ignore(t => t.AuditLogs);
+        });
+
+        modelBuilder.Entity<BillBudgetLink>(entity =>
+        {
+            entity.HasKey(l => l.Id);
+
+            entity.HasOne(l => l.Bill)
+                .WithOne(b => b.BudgetLink)
+                .HasForeignKey<BillBudgetLink>(l => l.BillId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(l => l.Budget)
+                .WithMany(b => b.BillLinks)
+                .HasForeignKey(l => l.BudgetId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(l => l.BudgetOccurrence)
+                .WithMany(o => o.BillLinks)
+                .HasForeignKey(l => l.BudgetOccurrenceId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<BillRelatedItem>(entity =>
+        {
+            entity.HasKey(r => r.Id);
+            entity.Property(r => r.RelatedEntityType).HasMaxLength(256).IsRequired();
+            entity.Property(r => r.RelatedEntityName).HasMaxLength(512);
+
+            entity.HasOne(r => r.Bill)
+                .WithMany(b => b.RelatedItems)
+                .HasForeignKey(r => r.BillId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
     }
 }

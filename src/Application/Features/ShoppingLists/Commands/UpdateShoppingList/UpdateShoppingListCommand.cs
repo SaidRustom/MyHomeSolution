@@ -12,6 +12,7 @@ public sealed record UpdateShoppingListCommand : IRequest, IRequireEditAccess
     public string? Description { get; init; }
     public ShoppingListCategory Category { get; init; }
     public DateOnly? DueDate { get; init; }
+    public Guid? DefaultBudgetId { get; init; }
 
     public string ResourceType => EntityTypes.ShoppingList;
     public Guid ResourceId => Id;

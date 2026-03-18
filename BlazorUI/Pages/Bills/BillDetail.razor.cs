@@ -210,6 +210,22 @@ public partial class BillDetail : IDisposable
         NavigationManager.NavigateTo("/bills");
     }
 
+    string GetCategoryIcon() => Bill?.Category switch
+    {
+        BillCategory.Groceries => "shopping_cart",
+        BillCategory.Utilities => "bolt",
+        BillCategory.Rent => "home",
+        BillCategory.Maintenance => "build",
+        BillCategory.Supplies => "inventory_2",
+        BillCategory.Internet => "wifi",
+        BillCategory.Insurance => "shield",
+        BillCategory.Furniture => "chair",
+        BillCategory.Cleaning => "cleaning_services",
+        BillCategory.Other => "more_horiz",
+        BillCategory.General => "receipt_long",
+        _ => "receipt_long"
+    };
+
     async Task ShowHistoryAsync()
     {
         if (Bill is null) return;

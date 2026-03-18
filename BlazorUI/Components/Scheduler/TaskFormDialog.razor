@@ -141,6 +141,32 @@
                             <RadzenText TextStyle="TextStyle.Caption" class="rz-mb-0 rz-color-secondary">Must be a user the task is shared with. If left blank, bills will be created unpaid.</RadzenText>
                         </RadzenStack>
 
+                        @* Default Budget *@
+                        <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem">
+                            <RadzenLabel Text="Default Budget (Optional)" />
+                            <RadzenDropDown TValue="Guid?"
+                                            Data="@AvailableBudgets.Items"
+                                            @bind-Value="@Model.DefaultBudgetId"
+                                            TextProperty="Name"
+                                            ValueProperty="Id"
+                                            AllowClear="true"
+                                            AllowFiltering="true"
+                                            FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                                            Placeholder="Select budget…"
+                                            Style="width: 100%;">
+                                <Template Context="budget">
+                                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                                        <RadzenBadge Text="@((budget as BlazorUI.Models.Budgets.BudgetBriefDto)?.Category.ToString())"
+                                                     BadgeStyle="BadgeStyle.Info" IsPill="true" Variant="Variant.Flat" Style="font-size: 0.6rem;" />
+                                        <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0">@((budget as BlazorUI.Models.Budgets.BudgetBriefDto)?.Name)</RadzenText>
+                                    </RadzenStack>
+                                </Template>
+                            </RadzenDropDown>
+                            <RadzenText TextStyle="TextStyle.Caption" class="rz-mb-0 rz-color-secondary">
+                                Auto-created bills will be linked to this budget.
+                            </RadzenText>
+                        </RadzenStack>
+
                         @* Bill split editor — shown when task is shared with other users *@
                         @if (ShowBillSplitSection)
                         {

@@ -24,4 +24,5 @@ public sealed record CreateTaskCommand : IRequest<Guid>
     public BillCategory? DefaultBillCategory { get; init; }
     public string? DefaultBillTitle { get; init; }
     public string? DefaultBillPaidByUserId { get; init; }
+    public Guid? DefaultBudgetId { get; init; }
 }

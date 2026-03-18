@@ -3,6 +3,7 @@ using BlazorUI.Models.Bills;
 using BlazorUI.Models.Common;
 using BlazorUI.Models.Enums;
 using BlazorUI.Models.Realtime;
+using BlazorUI.Models.ShoppingLists;
 using BlazorUI.Services.Contracts;
 using Microsoft.AspNetCore.Components;
 using Radzen;
@@ -14,6 +15,9 @@ public partial class BillList : IDisposable
 {
     [Inject]
     IBillService BillService { get; set; } = default!;
+
+    [Inject]
+    IShoppingListService ShoppingListService { get; set; } = default!;
 
     [Inject]
     NavigationManager NavigationManager { get; set; } = default!;
@@ -46,9 +50,15 @@ public partial class BillList : IDisposable
     // Filter state
     string? SearchTerm { get; set; }
     BillCategory? SelectedCategory { get; set; }
-    DateTimeOffset? FromDate { get; set; }
-    DateTimeOffset? ToDate { get; set; }
+    DateTimeOffset? FromDate { get; set; } = DateTimeOffset.UtcNow.AddDays(-5);
+    DateTimeOffset? ToDate { get; set; } = DateTimeOffset.UtcNow.AddDays(5);
     BillPaymentFilter PaymentFilter { get; set; } = BillPaymentFilter.All;
+    string? SplitWithUserId { get; set; }
+    string? PaidByUserId { get; set; }
+    bool? HasLinkedTask { get; set; }
+    Guid? ShoppingListId { get; set; }
+
+    IReadOnlyList<ShoppingListBriefDto> ShoppingLists { get; set; } = [];
 
     int _currentPage = 1;
     const int PageSize = 20;
@@ -60,7 +70,17 @@ public partial class BillList : IDisposable
     protected override async Task OnInitializedAsync()
     {
         NotificationHubClient.OnUserNotification += HandleRealtimeNotification;
+        await LoadShoppingListsAsync();
         await LoadBillsAsync();
+    }
+
+    async Task LoadShoppingListsAsync()
+    {
+        var result = await ShoppingListService.GetShoppingListsAsync(
+            pageNumber: 1, pageSize: 100, cancellationToken: _cts.Token);
+
+        if (result.IsSuccess)
+            ShoppingLists = result.Value.Items.ToList();
     }
 
     async Task LoadBillsAsync()
@@ -79,12 +99,16 @@ public partial class BillList : IDisposable
             pageNumber: _currentPage,
             pageSize: PageSize,
             category: SelectedCategory,
+            paidByUserId: PaidByUserId,
             searchTerm: SearchTerm,
             fromDate: FromDate,
             toDate: ToDate,
             sortBy: _sortBy,
             sortDirection: _sortDirection,
             isFullyPaid: isFullyPaid,
+            splitWithUserId: SplitWithUserId,
+            hasLinkedTask: HasLinkedTask,
+            shoppingListId: ShoppingListId,
             cancellationToken: _cts.Token);
 
         if (result.IsSuccess)
@@ -127,6 +151,10 @@ public partial class BillList : IDisposable
         FromDate = null;
         ToDate = null;
         PaymentFilter = BillPaymentFilter.All;
+        SplitWithUserId = null;
+        PaidByUserId = null;
+        HasLinkedTask = null;
+        ShoppingListId = null;
         await LoadBillsAsync();
     }
 

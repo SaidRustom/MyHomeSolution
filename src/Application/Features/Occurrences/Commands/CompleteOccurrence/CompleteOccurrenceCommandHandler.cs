@@ -66,6 +66,72 @@ public sealed class CompleteOccurrenceCommandHandler(
             RelatedEntityType = EntityTypes.TaskOccurrence
         };
 
+        // Add task as a related item
+        bill.RelatedItems.Add(new BillRelatedItem
+        {
+            BillId = bill.Id,
+            RelatedEntityId = task.Id,
+            RelatedEntityType = EntityTypes.HouseholdTask,
+            RelatedEntityName = task.Title
+        });
+
+        // Link to the task's default budget
+        if (task.DefaultBudgetId.HasValue)
+        {
+            var budgetExists = await dbContext.Budgets
+                .AnyAsync(b => b.Id == task.DefaultBudgetId.Value && !b.IsDeleted, cancellationToken);
+
+            if (budgetExists)
+            {
+                // Find the active occurrence, or fall back to the most recent
+                var budgetOccurrence = await dbContext.BudgetOccurrences
+                    .Where(o => o.BudgetId == task.DefaultBudgetId.Value
+                        && o.PeriodStart <= bill.BillDate && o.PeriodEnd >= bill.BillDate)
+                    .FirstOrDefaultAsync(cancellationToken);
+
+                var usedFallback = false;
+                if (budgetOccurrence is null)
+                {
+                    budgetOccurrence = await dbContext.BudgetOccurrences
+                        .Where(o => o.BudgetId == task.DefaultBudgetId.Value)
+                        .OrderByDescending(o => o.PeriodStart)
+                        .FirstOrDefaultAsync(cancellationToken);
+                    usedFallback = budgetOccurrence is not null;
+                }
+
+                if (budgetOccurrence is not null)
+                {
+                    bill.BudgetLink = new BillBudgetLink
+                    {
+                        BillId = bill.Id,
+                        BudgetId = task.DefaultBudgetId.Value,
+                        BudgetOccurrenceId = budgetOccurrence.Id
+                    };
+
+                    bill.RelatedItems.Add(new BillRelatedItem
+                    {
+                        BillId = bill.Id,
+                        RelatedEntityId = task.DefaultBudgetId.Value,
+                        RelatedEntityType = EntityTypes.Budget
+                    });
+
+                    if (usedFallback && !string.IsNullOrEmpty(currentUserId))
+                    {
+                        dbContext.Notifications.Add(new Notification
+                        {
+                            Title = "No Active Budget Period",
+                            Description = $"Bill '{bill.Title}' was linked to the most recent budget period because no active period was found for the budget.",
+                            Type = NotificationType.BudgetThresholdReached,
+                            FromUserId = currentUserId,
+                            ToUserId = currentUserId,
+                            RelatedEntityId = task.DefaultBudgetId.Value,
+                            RelatedEntityType = EntityTypes.Budget
+                        });
+                    }
+                }
+            }
+        }
+
         // Gather all users who share this task
         var sharedUserIds = await dbContext.EntityShares
             .AsNoTracking()

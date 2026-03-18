@@ -15,6 +15,8 @@ public sealed record ReceiptAnalysisResult
 public sealed record ReceiptLineItem
 {
     public required string Name { get; init; }
+    public string? GenericName { get; init; }
     public decimal Price { get; init; }
     public int Quantity { get; init; } = 1;
+    public bool IsTaxable { get; init; }
 }

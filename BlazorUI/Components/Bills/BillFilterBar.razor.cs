@@ -1,5 +1,6 @@
 using BlazorUI.Models.Bills;
 using BlazorUI.Models.Enums;
+using BlazorUI.Models.ShoppingLists;
 using Microsoft.AspNetCore.Components;
 
 namespace BlazorUI.Components.Bills;
@@ -31,6 +32,33 @@ public partial class BillFilterBar
     public EventCallback<DateTimeOffset?> ToDateChanged { get; set; }
 
     [Parameter]
+    public string? SplitWithUserId { get; set; }
+
+    [Parameter]
+    public EventCallback<string?> SplitWithUserIdChanged { get; set; }
+
+    [Parameter]
+    public string? PaidByUserId { get; set; }
+
+    [Parameter]
+    public EventCallback<string?> PaidByUserIdChanged { get; set; }
+
+    [Parameter]
+    public bool? HasLinkedTask { get; set; }
+
+    [Parameter]
+    public EventCallback<bool?> HasLinkedTaskChanged { get; set; }
+
+    [Parameter]
+    public Guid? ShoppingListId { get; set; }
+
+    [Parameter]
+    public EventCallback<Guid?> ShoppingListIdChanged { get; set; }
+
+    [Parameter]
+    public IReadOnlyList<ShoppingListBriefDto> ShoppingLists { get; set; } = [];
+
+    [Parameter]
     public EventCallback OnSearch { get; set; }
 
     [Parameter]
@@ -38,11 +66,23 @@ public partial class BillFilterBar
 
     IEnumerable<BillCategory> Categories => Enum.GetValues<BillCategory>();
 
+    bool _expandAdvanced;
+
     bool HasActiveFilters =>
         !string.IsNullOrEmpty(SearchTerm) ||
         SelectedCategory.HasValue ||
         FromDate.HasValue ||
-        ToDate.HasValue;
+        ToDate.HasValue ||
+        !string.IsNullOrEmpty(SplitWithUserId) ||
+        !string.IsNullOrEmpty(PaidByUserId) ||
+        HasLinkedTask.HasValue ||
+        ShoppingListId.HasValue;
+
+    bool HasAdvancedFilters =>
+        !string.IsNullOrEmpty(SplitWithUserId) ||
+        !string.IsNullOrEmpty(PaidByUserId) ||
+        HasLinkedTask.HasValue ||
+        ShoppingListId.HasValue;
 
     async Task OnSearchTermChanged(string? value)
     {
@@ -69,6 +109,32 @@ public partial class BillFilterBar
         await ToDateChanged.InvokeAsync(value);
     }
 
+    async Task OnSplitWithUserChanged(string? value)
+    {
+        SplitWithUserId = value;
+        await SplitWithUserIdChanged.InvokeAsync(value);
+    }
+
+    async Task OnPaidByUserChanged(string? value)
+    {
+        PaidByUserId = value;
+        await PaidByUserIdChanged.InvokeAsync(value);
+    }
+
+    async Task OnHasLinkedTaskChanged(object? value)
+    {
+        var linked = value is bool b ? b : (bool?)null;
+        HasLinkedTask = linked;
+        await HasLinkedTaskChanged.InvokeAsync(linked);
+    }
+
+    async Task OnShoppingListChanged(object? value)
+    {
+        var id = value is Guid g ? g : (Guid?)null;
+        ShoppingListId = id;
+        await ShoppingListIdChanged.InvokeAsync(id);
+    }
+
     async Task ApplyFiltersAsync()
     {
         await OnSearch.InvokeAsync();
@@ -80,11 +146,19 @@ public partial class BillFilterBar
         SelectedCategory = null;
         FromDate = null;
         ToDate = null;
+        SplitWithUserId = null;
+        PaidByUserId = null;
+        HasLinkedTask = null;
+        ShoppingListId = null;
 
         await SearchTermChanged.InvokeAsync(null);
         await SelectedCategoryChanged.InvokeAsync(null);
         await FromDateChanged.InvokeAsync(null);
         await ToDateChanged.InvokeAsync(null);
+        await SplitWithUserIdChanged.InvokeAsync(null);
+        await PaidByUserIdChanged.InvokeAsync(null);
+        await HasLinkedTaskChanged.InvokeAsync(null);
+        await ShoppingListIdChanged.InvokeAsync(null);
         await OnClear.InvokeAsync();
     }
 }

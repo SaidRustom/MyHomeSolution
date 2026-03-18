@@ -1,0 +1,149 @@
+<RadzenStack Orientation="Orientation.Vertical" Gap="1.25rem" class="rz-p-4">
+
+    @if (ErrorMessage is not null)
+    {
+        <RadzenAlert AlertStyle="AlertStyle.Danger" Variant="Variant.Flat" Shade="Shade.Lighter"
+                     AllowClose="true" Close="@(() => ErrorMessage = null)">
+            @ErrorMessage
+        </RadzenAlert>
+    }
+
+    @* Source section *@
+    <RadzenFieldset Text="Source (From)" AllowCollapse="false">
+        <RadzenStack Orientation="Orientation.Vertical" Gap="0.75rem">
+            <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem">
+                <RadzenLabel Text="Budget" />
+                <RadzenDropDown TValue="Guid?"
+                                Data="@AllBudgets.Items"
+                                Value="@SourceBudgetId"
+                                TextProperty="Name"
+                                ValueProperty="Id"
+                                AllowClear="true"
+                                AllowFiltering="true"
+                                FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                                Placeholder="Select source budget…"
+                                Style="width: 100%;"
+                                Change="OnSourceBudgetChanged" />
+            </RadzenStack>
+            @if (SourceOccurrences.Count > 0)
+            {
+                <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem">
+                    <RadzenLabel Text="Period" />
+                    <RadzenDropDown TValue="Guid?"
+                                    @bind-Value="@SourceOccurrenceId"
+                                    Data="@SourceOccurrences"
+                                    ValueProperty="Id"
+                                    AllowClear="true"
+                                    Placeholder="Select period…"
+                                    Style="width: 100%;">
+                        <Template Context="occ">
+                            @FormatOccurrenceLabel((BudgetOccurrenceDto)occ)
+                        </Template>
+                    </RadzenDropDown>
+                </RadzenStack>
+                @if (SelectedSourceOccurrence is not null)
+                {
+                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                        <RadzenIcon Icon="account_balance_wallet" Style="color: var(--rz-info); font-size: 1rem;" />
+                        <RadzenText TextStyle="TextStyle.Caption" class="rz-mb-0">
+                            Available: <strong>$@SelectedSourceOccurrence.RemainingAmount.ToString("N2")</strong>
+                        </RadzenText>
+                    </RadzenStack>
+                }
+            }
+        </RadzenStack>
+    </RadzenFieldset>
+
+    @* Transfer arrow *@
+    <RadzenStack AlignItems="AlignItems.Center">
+        <RadzenIcon Icon="swap_vert" Style="font-size: 2rem; color: var(--rz-primary);" />
+    </RadzenStack>
+
+    @* Destination section *@
+    <RadzenFieldset Text="Destination (To)" AllowCollapse="false">
+        <RadzenStack Orientation="Orientation.Vertical" Gap="0.75rem">
+            <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem">
+                <RadzenLabel Text="Budget" />
+                <RadzenDropDown TValue="Guid?"
+                                Data="@AllBudgets.Items"
+                                Value="@DestBudgetId"
+                                TextProperty="Name"
+                                ValueProperty="Id"
+                                AllowClear="true"
+                                AllowFiltering="true"
+                                FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                                Placeholder="Select destination budget…"
+                                Style="width: 100%;"
+                                Change="OnDestBudgetChanged" />
+            </RadzenStack>
+            @if (DestOccurrences.Count > 0)
+            {
+                <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem">
+                    <RadzenLabel Text="Period" />
+                    <RadzenDropDown TValue="Guid?"
+                                    @bind-Value="@DestOccurrenceId"
+                                    Data="@DestOccurrences"
+                                    ValueProperty="Id"
+                                    AllowClear="true"
+                                    Placeholder="Select period…"
+                                    Style="width: 100%;">
+                        <Template Context="occ">
+                            @FormatOccurrenceLabel((BudgetOccurrenceDto)occ)
+                        </Template>
+                    </RadzenDropDown>
+                </RadzenStack>
+                @if (SelectedDestOccurrence is not null)
+                {
+                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                        <RadzenIcon Icon="account_balance_wallet" Style="color: var(--rz-info); font-size: 1rem;" />
+                        <RadzenText TextStyle="TextStyle.Caption" class="rz-mb-0">
+                            Current: <strong>$@SelectedDestOccurrence.RemainingAmount.ToString("N2")</strong>
+                        </RadzenText>
+                    </RadzenStack>
+                }
+            }
+        </RadzenStack>
+    </RadzenFieldset>
+
+    @* Amount & Reason *@
+    <RadzenStack Orientation="Orientation.Vertical" Gap="0.75rem">
+        <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem">
+            <RadzenLabel Text="Transfer Amount" Component="TransferAmount" />
+            <RadzenNumeric TValue="decimal" Name="TransferAmount" @bind-Value="@Amount"
+                           Placeholder="0.00" Style="width: 100%;" Min="0.01m" />
+        </RadzenStack>
+        <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem">
+            <RadzenLabel Text="Reason (Optional)" />
+            <RadzenTextBox @bind-Value="@Reason" Placeholder="Why are you transferring funds?"
+                           Style="width: 100%;" />
+        </RadzenStack>
+    </RadzenStack>
+
+    @* Preview *@
+    @if (SelectedSourceOccurrence is not null && SelectedDestOccurrence is not null && Amount > 0)
+    {
+        <RadzenCard Variant="Variant.Flat" class="rz-p-3" Style="border-left: 3px solid var(--rz-info);">
+            <RadzenStack Orientation="Orientation.Vertical" Gap="0.375rem">
+                <RadzenText TextStyle="TextStyle.Caption" class="rz-mb-0 rz-color-secondary"><strong>Transfer Preview</strong></RadzenText>
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.375rem" Wrap="FlexWrap.Wrap">
+                    <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0">
+                        Source remaining: <strong>$@((SelectedSourceOccurrence.RemainingAmount - Amount).ToString("N2"))</strong>
+                    </RadzenText>
+                    <RadzenIcon Icon="arrow_forward" Style="color: var(--rz-info);" />
+                    <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0">
+                        Destination remaining: <strong>$@((SelectedDestOccurrence.RemainingAmount + Amount).ToString("N2"))</strong>
+                    </RadzenText>
+                </RadzenStack>
+            </RadzenStack>
+        </RadzenCard>
+    }
+
+    @* Footer *@
+    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End"
+                 Gap="0.5rem" class="rz-pt-2" Style="border-top: 1px solid var(--rz-base-200);">
+        <RadzenButton Text="Cancel" Variant="Variant.Flat" ButtonStyle="ButtonStyle.Light"
+                      Click="Cancel" ButtonType="ButtonType.Button" Disabled="@IsBusy" />
+        <RadzenButton Text="Transfer Funds" Icon="swap_horiz" ButtonStyle="ButtonStyle.Primary"
+                      Click="OnSubmitAsync" IsBusy="@IsBusy" />
+    </RadzenStack>
+</RadzenStack>

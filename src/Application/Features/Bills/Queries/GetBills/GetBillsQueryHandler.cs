@@ -65,6 +65,24 @@ public sealed class GetBillsQueryHandler(
                 query = query.Where(b => b.Splits.Count > 0 && b.Splits.Any(s => s.Status != SplitStatus.Paid && s.Status != SplitStatus.Settled));
         }
 
+        if (!string.IsNullOrWhiteSpace(request.SplitWithUserId))
+            query = query.Where(b => b.Splits.Any(s => s.UserId == request.SplitWithUserId));
+
+        if (request.HasLinkedTask.HasValue)
+        {
+            if (request.HasLinkedTask.Value)
+                query = query.Where(b => b.RelatedEntityId != null && b.RelatedEntityType != null);
+            else
+                query = query.Where(b => b.RelatedEntityId == null || b.RelatedEntityType == null);
+        }
+
+        if (request.ShoppingListId.HasValue)
+            query = query.Where(b => b.RelatedEntityId == request.ShoppingListId.Value
+                && b.RelatedEntityType == EntityTypes.ShoppingList);
+
+        if (request.BudgetId.HasValue)
+            query = query.Where(b => b.BudgetLink != null && b.BudgetLink.BudgetId == request.BudgetId.Value);
+
         var sortBy = request.SortBy?.ToLowerInvariant();
         var descending = string.Equals(request.SortDirection, "desc", StringComparison.OrdinalIgnoreCase);
 
@@ -89,6 +107,7 @@ public sealed class GetBillsQueryHandler(
                 HasReceipt = b.ReceiptUrl != null,
                 SplitCount = b.Splits.Count,
                 IsFullyPaid = b.Splits.Count == 0 || b.Splits.All(s => s.Status == SplitStatus.Paid || s.Status == SplitStatus.Settled),
+                HasLinkedTask = b.RelatedEntityId != null && b.RelatedEntityType != null,
                 CreatedAt = b.CreatedAt
             });
 

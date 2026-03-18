@@ -51,6 +51,12 @@
                         <RadzenPanelMenuItem Click="@(()=>NavigateTo("/bills/dashboard"))" Text="Dashboard" Icon="dashboard" />
                         <RadzenPanelMenuItem Click="@(()=>NavigateTo("/bills"))" Text="All Bills" Icon="list" />
                         </RadzenPanelMenuItem>
+                        <RadzenPanelMenuItem Text="Budgets" Icon="account_balance_wallet">
+                        <RadzenPanelMenuItem Click="@(()=>NavigateTo("/budgets/dashboard"))" Text="Dashboard" Icon="dashboard" />
+                        <RadzenPanelMenuItem Click="@(()=>NavigateTo("/budgets"))" Text="All Budgets" Icon="list" />
+                        <RadzenPanelMenuItem Click="@(()=>NavigateTo("/budgets/tree"))" Text="Tree View" Icon="account_tree" />
+                        </RadzenPanelMenuItem>
+                        <RadzenPanelMenuItem Click="@(()=>NavigateTo("/shopping-lists"))" Text="Shopping Lists" Icon="shopping_cart" />
                         <RadzenPanelMenuItem Click="@(()=>NavigateTo("/connections"))" Text="Connections" Icon="people" />
                     <RadzenPanelMenuItem Click="@(()=>NavigateTo("/settings"))" Text="Settings" Icon="settings" />
                     <AuthorizeView Roles="Administrator">

@@ -9,12 +9,12 @@ else
         <Columns>
             <RadzenDataGridColumn TItem="BillItemDto" Property="Name" Title="Item" />
             <RadzenDataGridColumn TItem="BillItemDto" Property="Quantity" Title="Qty" Width="60px" TextAlign="TextAlign.Center" />
-            <RadzenDataGridColumn TItem="BillItemDto" Title="Unit Price" Width="110px" TextAlign="TextAlign.End">
+            <RadzenDataGridColumn TItem="BillItemDto" Title="Unit Price" Width="110px" TextAlign="TextAlign.Center">
                 <Template Context="item">
                     <CurrencyDisplay Amount="@item.UnitPrice" />
                 </Template>
             </RadzenDataGridColumn>
-            <RadzenDataGridColumn TItem="BillItemDto" Title="Discount" Width="100px" TextAlign="TextAlign.End">
+            <RadzenDataGridColumn TItem="BillItemDto" Title="Discount" Width="100px" TextAlign="TextAlign.Center">
                 <Template Context="item">
                     @if (item.Discount > 0)
                     {
@@ -26,7 +26,23 @@ else
                     }
                 </Template>
             </RadzenDataGridColumn>
-            <RadzenDataGridColumn TItem="BillItemDto" Title="Price" Width="110px" TextAlign="TextAlign.End">
+            <RadzenDataGridColumn TItem="BillItemDto" Title="Tax" Width="90px" TextAlign="TextAlign.Center">
+                <Template Context="item">
+                    @if (item.IsTaxable && item.TaxAmount > 0)
+                    {
+                        <RadzenStack Orientation="Orientation.Vertical" Gap="0" AlignItems="AlignItems.Center">
+                            <CurrencyDisplay Amount="@item.TaxAmount" />
+                            <RadzenBadge BadgeStyle="BadgeStyle.Warning" IsPill="true" Variant="Variant.Flat"
+                                         Text="HST" Style="font-size: 0.625rem;" />
+                        </RadzenStack>
+                    }
+                    else
+                    {
+                        <span class="rz-color-secondary">—</span>
+                    }
+                </Template>
+            </RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="BillItemDto" Title="Price" Width="110px" TextAlign="TextAlign.Center">
                 <Template Context="item">
                     <strong><CurrencyDisplay Amount="@item.Price" /></strong>
                 </Template>
@@ -42,6 +58,15 @@ else
                 <RadzenText TextStyle="TextStyle.Caption" class="rz-color-secondary rz-mb-0">Total Discount</RadzenText>
                 <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0 rz-color-success">
                     -<CurrencyDisplay Amount="@TotalDiscount" />
+                </RadzenText>
+            </RadzenStack>
+        }
+        @if (TotalTax > 0)
+        {
+            <RadzenStack Orientation="Orientation.Vertical" AlignItems="AlignItems.End" Gap="0">
+                <RadzenText TextStyle="TextStyle.Caption" class="rz-color-secondary rz-mb-0">Tax (HST)</RadzenText>
+                <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0">
+                    <CurrencyDisplay Amount="@TotalTax" />
                 </RadzenText>
             </RadzenStack>
         }

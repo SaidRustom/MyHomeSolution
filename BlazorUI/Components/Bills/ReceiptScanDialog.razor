@@ -1,5 +1,4 @@
 @using BlazorUI.Components.Common
-@using BlazorUI.Components.Connections
 @using BlazorUI.Models.Enums
 
 <RadzenStack Orientation="Orientation.Vertical" Gap="1rem" class="rz-p-4" Style="min-width: 450px;">
@@ -43,13 +42,9 @@
     </RadzenStack>
 
     @* Split with friends *@
-    <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem">
-        <RadzenLabel Text="Split With (optional)" />
-        <FriendPicker Multiple="true"
-                      @bind-SelectedUserIds="SelectedSplitUserIds"
-                      Placeholder="Select friends to split with…"
-                      Disabled="@IsProcessing" />
-    </RadzenStack>
+    <RadzenFieldset Text="Bill Splits (optional)" AllowCollapse="true">
+        <BillSplitEditor Splits="@Splits" BillAmount="0" CurrentUserId="@CurrentUserId" />
+    </RadzenFieldset>
 
     @* Processing indicator *@
     @if (IsProcessing)

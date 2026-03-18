@@ -22,6 +22,11 @@ public interface IApplicationDbContext
     DbSet<ExceptionLog> ExceptionLogs { get; }
     DbSet<BackgroundServiceDefinition> BackgroundServiceDefinitions { get; }
     DbSet<BackgroundServiceLog> BackgroundServiceLogs { get; }
+    DbSet<Budget> Budgets { get; }
+    DbSet<BudgetOccurrence> BudgetOccurrences { get; }
+    DbSet<BudgetTransfer> BudgetTransfers { get; }
+    DbSet<BillBudgetLink> BillBudgetLinks { get; }
+    DbSet<BillRelatedItem> BillRelatedItems { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

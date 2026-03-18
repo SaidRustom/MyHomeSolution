@@ -1,46 +1,49 @@
 @if (Splits.Count == 0)
 {
-    <RadzenText TextStyle="TextStyle.Body2" class="rz-color-secondary rz-mb-0 rz-text-align-center rz-p-4">No splits for this bill.</RadzenText>
+    <div class="split-empty">
+        <RadzenIcon Icon="group_off" Style="font-size: 2rem; display: block; margin-bottom: 0.375rem;" />
+        No splits for this bill.
+    </div>
 }
 else
 {
-    <RadzenDataList Data="@Splits" TItem="BillSplitDto" Style="border: none;">
-        <Template Context="split">
-            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween"
-                         Wrap="FlexWrap.Wrap" Gap="0.75rem" class="rz-py-2" Style="border-bottom: 1px solid var(--rz-base-200);">
-                @* User & percentage *@
-                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.75rem" Style="flex: 1; min-width: 200px;">
+    <div class="split-list">
+        @foreach (var split in Splits)
+        {
+            <div class="@GetCardClass(split)">
+                @* User info *@
+                <div class="split-user">
                     <UserAvatar UserId="@split.UserId" AvatarUrl="@split.UserAvatarUrl" FallbackName="@split.UserFullName" Size="36px" />
-                    <RadzenStack Orientation="Orientation.Vertical" Gap="0">
-                        <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0"><strong>@(split.UserFullName ?? split.UserId)</strong></RadzenText>
-                        <RadzenText TextStyle="TextStyle.Caption" class="rz-color-secondary rz-mb-0">@($"{split.Percentage:N1}%")</RadzenText>
-                    </RadzenStack>
-                </RadzenStack>
+                    <div class="split-user-info">
+                        <div class="split-user-name">@(split.UserFullName ?? split.UserId)</div>
+                        <div class="split-user-pct">@($"{split.Percentage:N1}%") of total</div>
+                    </div>
+                </div>
+
+                @* Owed-to pill *@
+                @if (!string.IsNullOrEmpty(split.OwedToUserId))
+                {
+                    <span class="split-owed-pill">
+                        <RadzenIcon Icon="arrow_forward" Style="font-size: 0.6875rem;" />
+                        Owes <strong>@(split.OwedToUserFullName ?? "payer")</strong>
+                    </span>
+                }
 
                 @* Amount *@
-                <RadzenStack Orientation="Orientation.Vertical" AlignItems="AlignItems.End" Gap="0" Style="min-width: 100px;">
-                    <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0" Style="font-variant-numeric: tabular-nums;">
-                        <strong><CurrencyDisplay Amount="@split.Amount" /></strong>
-                    </RadzenText>
+                <div class="split-amount">
+                    <div class="split-amount-value">
+                        <CurrencyDisplay Amount="@split.Amount" Currency="@Currency" />
+                    </div>
                     @if (split.PaidAt.HasValue)
                     {
-                        <DateDisplay Date="@split.PaidAt" ShowRelative="true" />
+                        <div class="split-amount-date">
+                            <DateDisplay Date="@split.PaidAt" ShowRelative="true" />
+                        </div>
                     }
-                </RadzenStack>
+                </div>
 
-                @* Owed-to info & Status & action *@
-                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
-                    @if (!string.IsNullOrEmpty(split.OwedToUserId))
-                    {
-                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.25rem"
-                                     Style="padding: 0.125rem 0.5rem; background: var(--rz-warning-lighter); border-radius: var(--rz-border-radius); font-size: 0.75rem;">
-                            <RadzenIcon Icon="arrow_forward" Style="font-size: 0.75rem; color: var(--rz-warning-dark);" />
-                            <RadzenText TextStyle="TextStyle.Caption" class="rz-mb-0" Style="color: var(--rz-warning-dark);">
-                                Owes <strong>@(split.OwedToUserFullName ?? "payer")</strong>
-                            </RadzenText>
-                        </RadzenStack>
-                    }
-
+                @* Status & Action *@
+                <div class="split-status-actions">
                     <StatusBadge Text="@GetStatusText(split.Status)"
                                  Severity="@GetStatusSeverity(split.Status)"
                                  Icon="@GetStatusIcon(split.Status)" />
@@ -55,8 +58,8 @@ else
                                       IsBusy="@(IsProcessing && _processingSplitId == split.Id)"
                                       Click="@(() => MarkAsPaidAsync(split))" />
                     }
-                </RadzenStack>
-            </RadzenStack>
-        </Template>
-    </RadzenDataList>
+                </div>
+            </div>
+        }
+    </div>
 }

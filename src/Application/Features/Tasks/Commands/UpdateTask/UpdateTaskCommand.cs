@@ -28,6 +28,7 @@ public sealed record UpdateTaskCommand : IRequest, IRequireEditAccess
     public BillCategory? DefaultBillCategory { get; init; }
     public string? DefaultBillTitle { get; init; }
     public string? DefaultBillPaidByUserId { get; init; }
+    public Guid? DefaultBudgetId { get; init; }
 
     public string ResourceType => EntityTypes.HouseholdTask;
     public Guid ResourceId => Id;

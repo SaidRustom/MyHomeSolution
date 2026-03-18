@@ -12,12 +12,13 @@ public sealed record UpdateBillCommand : IRequest, IRequireEditAccess
     public required string Title { get; init; }
     public string? Description { get; init; }
     public decimal Amount { get; init; }
-    public string Currency { get; init; } = "USD";
+    public string Currency { get; init; } = "CAD";
     public BillCategory Category { get; init; }
     public DateTimeOffset BillDate { get; init; }
     public string? Notes { get; init; }
     public string? PaidByUserId { get; init; }
     public List<BillSplitRequest>? Splits { get; init; }
+    public Guid? BudgetId { get; init; }
 
     public string ResourceType => EntityTypes.Bill;
     public Guid ResourceId => Id;

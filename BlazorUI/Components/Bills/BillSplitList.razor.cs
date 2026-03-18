@@ -11,6 +11,9 @@ public partial class BillSplitList
     public IReadOnlyList<BillSplitDto> Splits { get; set; } = [];
 
     [Parameter]
+    public string Currency { get; set; } = "$";
+
+    [Parameter]
     public bool AllowMarkAsPaid { get; set; }
 
     [Parameter]
@@ -47,6 +50,13 @@ public partial class BillSplitList
 
     bool CanMarkAsPaid(BillSplitDto split) =>
         AllowMarkAsPaid && split.Status == SplitStatus.Unpaid;
+
+    string GetCardClass(BillSplitDto split) => split.Status switch
+    {
+        SplitStatus.Paid => "split-card paid",
+        SplitStatus.Settled => "split-card settled",
+        _ => "split-card"
+    };
 
     async Task MarkAsPaidAsync(BillSplitDto split)
     {

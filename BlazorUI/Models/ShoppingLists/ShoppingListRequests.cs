@@ -8,6 +8,7 @@ public sealed record CreateShoppingListRequest
     public string? Description { get; init; }
     public ShoppingListCategory Category { get; init; }
     public DateOnly? DueDate { get; init; }
+    public Guid? DefaultBudgetId { get; init; }
 }
 
 public sealed record UpdateShoppingListRequest
@@ -17,6 +18,7 @@ public sealed record UpdateShoppingListRequest
     public string? Description { get; init; }
     public ShoppingListCategory Category { get; init; }
     public DateOnly? DueDate { get; init; }
+    public Guid? DefaultBudgetId { get; init; }
 }
 
 public sealed record AddShoppingItemRequest
@@ -45,4 +47,16 @@ public sealed record AddShoppingItemFromBillItemRequest
     public Guid BillItemId { get; init; }
     public int? QuantityOverride { get; init; }
     public string? UnitOverride { get; init; }
+}
+
+public sealed record ResolveCrossListMatchRequest
+{
+    public Guid TargetShoppingListId { get; init; }
+    public Guid BillId { get; init; }
+    public required string ReceiptItemName { get; init; }
+    public required string GenericName { get; init; }
+    public decimal Price { get; init; }
+    public bool IsTaxable { get; init; }
+    public bool ToggleExisting { get; init; } = true;
+    public Guid? ShoppingItemId { get; init; }
 }

@@ -31,8 +31,8 @@
                 <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0"><strong>View:</strong></RadzenText>
                 <RadzenSelectBar TValue="UserScopeFilter" @bind-Value="@_userScope" Change="OnUserScopeChangedAsync" Size="ButtonSize.Small">
                     <Items>
-                        <RadzenSelectBarItem Text="All Users" Value="UserScopeFilter.All" Icon="groups" />
-                        <RadzenSelectBarItem Text="Me Only" Value="UserScopeFilter.MeOnly" Icon="person" />
+                        <RadzenSelectBarItem Text="All Bills" Value="UserScopeFilter.All" Icon="groups" />
+                        <RadzenSelectBarItem Text="My Bills" Value="UserScopeFilter.MeOnly" Icon="person" />
                     </Items>
                 </RadzenSelectBar>
                 @if (_userScope == UserScopeFilter.All && ScopeUserOptions.Count > 0)
@@ -100,6 +100,42 @@
                                            Placeholder="All categories"
                                            Style="width: 100%;" />
                         </RadzenStack>
+                        <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem" Style="min-width: 170px;">
+                            <RadzenLabel Text="Payment Status" />
+                            <RadzenDropDown TValue="bool?"
+                                           Data="@(new[] { new { Value = (bool?)true, Label = "Paid" }, new { Value = (bool?)false, Label = "Unpaid" } })"
+                                           @bind-Value="@AnalysisPaymentStatus"
+                                           TextProperty="Label"
+                                           ValueProperty="Value"
+                                           AllowClear="true"
+                                           Placeholder="All"
+                                           Style="width: 100%;" />
+                        </RadzenStack>
+                        <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem" Style="min-width: 170px;">
+                            <RadzenLabel Text="Linked to Task" />
+                            <RadzenDropDown TValue="bool?"
+                                           Data="@(new[] { new { Value = (bool?)true, Label = "Yes" }, new { Value = (bool?)false, Label = "No" } })"
+                                           @bind-Value="@AnalysisHasLinkedTask"
+                                           TextProperty="Label"
+                                           ValueProperty="Value"
+                                           AllowClear="true"
+                                           Placeholder="Any"
+                                           Style="width: 100%;" />
+                        </RadzenStack>
+                        @if (ShoppingLists.Count > 0)
+                        {
+                            <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem" Style="min-width: 220px; flex: 1;">
+                                <RadzenLabel Text="Shopping List" />
+                                <RadzenDropDown TValue="Guid?"
+                                               Data="@ShoppingLists"
+                                               @bind-Value="@AnalysisShoppingListId"
+                                               TextProperty="Title"
+                                               ValueProperty="Id"
+                                               AllowClear="true"
+                                               Placeholder="Any list"
+                                               Style="width: 100%;" />
+                            </RadzenStack>
+                        }
                     </RadzenStack>
                 </RadzenStack>
             </RadzenCard>

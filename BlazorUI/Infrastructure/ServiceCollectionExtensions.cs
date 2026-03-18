@@ -90,6 +90,10 @@ public static class ServiceCollectionExtensions
             ConfigureClient(client, apiSettings))
             .AddHttpMessageHandler<AuthTokenHandler>();
 
+        services.AddHttpClient<IBudgetService, BudgetService>(client =>
+            ConfigureClient(client, apiSettings))
+            .AddHttpMessageHandler<AuthTokenHandler>();
+
         return services;
     }
 

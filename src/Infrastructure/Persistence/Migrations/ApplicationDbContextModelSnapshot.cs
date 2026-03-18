@@ -17,7 +17,7 @@ namespace MyHomeSolution.Infrastructure.Persistence.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.5")
+                .HasAnnotation("ProductVersion", "10.0.3")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -390,6 +390,33 @@ namespace MyHomeSolution.Infrastructure.Persistence.Migrations
                     b.ToTable("Bills");
                 });
 
+            modelBuilder.Entity("MyHomeSolution.Domain.Entities.BillBudgetLink", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("BillId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("BudgetId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("BudgetOccurrenceId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BillId")
+                        .IsUnique();
+
+                    b.HasIndex("BudgetId");
+
+                    b.HasIndex("BudgetOccurrenceId");
+
+                    b.ToTable("BillBudgetLinks");
+                });
+
             modelBuilder.Entity("MyHomeSolution.Domain.Entities.BillItem", b =>
                 {
                     b.Property<Guid>("Id")
@@ -403,6 +430,9 @@ namespace MyHomeSolution.Infrastructure.Persistence.Migrations
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
+                    b.Property<bool>("IsTaxable")
+                        .HasColumnType("bit");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(500)
@@ -415,6 +445,13 @@ namespace MyHomeSolution.Infrastructure.Persistence.Migrations
                     b.Property<int>("Quantity")
                         .HasColumnType("int");
 
+                    b.Property<Guid?>("ShoppingListId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal>("TaxAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
                     b.Property<decimal>("UnitPrice")
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
@@ -423,7 +460,40 @@ namespace MyHomeSolution.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("BillId");
 
+                    b.HasIndex("ShoppingListId")
+                        .HasFilter("ShoppingListId IS NOT NULL");
+
                     b.ToTable("BillItems");
+                });
+
+            modelBuilder.Entity("MyHomeSolution.Domain.Entities.BillRelatedItem", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("BillId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("RelatedEntityId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("RelatedEntityName")
+                        .HasMaxLength(512)
+                        .HasColumnType("nvarchar(512)");
+
+                    b.Property<string>("RelatedEntityType")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BillId");
+
+                    b.HasIndex("RelatedEntityType", "RelatedEntityId");
+
+                    b.ToTable("BillRelatedItems");
                 });
 
             modelBuilder.Entity("MyHomeSolution.Domain.Entities.BillSplit", b =>
@@ -466,6 +536,195 @@ namespace MyHomeSolution.Infrastructure.Persistence.Migrations
                         .IsUnique();
 
                     b.ToTable("BillSplits");
+                });
+
+            modelBuilder.Entity("MyHomeSolution.Domain.Entities.Budget", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("Category")
+                        .HasColumnType("int");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("nvarchar(3)");
+
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("DeletedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<DateTimeOffset?>("EndDate")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsRecurring")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTimeOffset?>("LastModifiedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<Guid?>("ParentBudgetId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("Period")
+                        .HasColumnType("int");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<DateTimeOffset>("StartDate")
+                        .HasColumnType("datetimeoffset");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Category");
+
+                    b.HasIndex("IsDeleted");
+
+                    b.HasIndex("ParentBudgetId");
+
+                    b.HasIndex("Period");
+
+                    b.HasIndex("StartDate");
+
+                    b.ToTable("Budgets");
+                });
+
+            modelBuilder.Entity("MyHomeSolution.Domain.Entities.BudgetOccurrence", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal>("AllocatedAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("Balance")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)")
+                        .HasComputedColumnSql("[AllocatedAmount] + [CarryoverAmount] - ISNULL((SELECT SUM(b.[Amount]) FROM [Bills] b INNER JOIN [BillBudgetLinks] bbl ON bbl.[BillId] = b.[Id] WHERE bbl.[BudgetOccurrenceId] = [Id] AND b.[IsDeleted] = 0), 0)", false);
+
+                    b.Property<Guid>("BudgetId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal>("CarryoverAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("bit")
+                        .HasComputedColumnSql("CAST(CASE WHEN [PeriodStart] <= SYSUTCDATETIME() AND [PeriodEnd] >= SYSUTCDATETIME() THEN 1 ELSE 0 END AS bit)", false);
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<DateTimeOffset>("PeriodEnd")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<DateTimeOffset>("PeriodStart")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<decimal>("SpentAmount")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)")
+                        .HasComputedColumnSql("ISNULL((SELECT SUM(b.[Amount]) FROM [Bills] b INNER JOIN [BillBudgetLinks] bbl ON bbl.[BillId] = b.[Id] WHERE bbl.[BudgetOccurrenceId] = [Id] AND b.[IsDeleted] = 0), 0)", false);
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BudgetId");
+
+                    b.HasIndex("PeriodStart", "PeriodEnd");
+
+                    b.ToTable("BudgetOccurrences");
+
+                    b.HasAnnotation("SqlServer:UseSqlOutputClause", false);
+                });
+
+            modelBuilder.Entity("MyHomeSolution.Domain.Entities.BudgetTransfer", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("DeletedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid>("DestinationOccurrenceId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTimeOffset?>("LastModifiedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Reason")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<Guid>("SourceOccurrenceId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DestinationOccurrenceId");
+
+                    b.HasIndex("SourceOccurrenceId");
+
+                    b.ToTable("BudgetTransfers");
                 });
 
             modelBuilder.Entity("MyHomeSolution.Domain.Entities.EntityShare", b =>
@@ -657,6 +916,9 @@ namespace MyHomeSolution.Infrastructure.Persistence.Migrations
                     b.Property<string>("DefaultBillTitle")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<Guid?>("DefaultBudgetId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<DateTimeOffset?>("DeletedAt")
                         .HasColumnType("datetimeoffset");
 
@@ -705,6 +967,8 @@ namespace MyHomeSolution.Infrastructure.Persistence.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("Category");
+
+                    b.HasIndex("DefaultBudgetId");
 
                     b.HasIndex("IsActive");
 
@@ -922,6 +1186,9 @@ namespace MyHomeSolution.Infrastructure.Persistence.Migrations
                     b.Property<string>("CreatedBy")
                         .HasColumnType("nvarchar(450)");
 
+                    b.Property<Guid?>("DefaultBudgetId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<DateTimeOffset?>("DeletedAt")
                         .HasColumnType("datetimeoffset");
 
@@ -957,6 +1224,8 @@ namespace MyHomeSolution.Infrastructure.Persistence.Migrations
                     b.HasIndex("Category");
 
                     b.HasIndex("CreatedBy");
+
+                    b.HasIndex("DefaultBudgetId");
 
                     b.HasIndex("DueDate");
 
@@ -1311,10 +1580,48 @@ namespace MyHomeSolution.Infrastructure.Persistence.Migrations
                     b.Navigation("ExceptionLog");
                 });
 
+            modelBuilder.Entity("MyHomeSolution.Domain.Entities.BillBudgetLink", b =>
+                {
+                    b.HasOne("MyHomeSolution.Domain.Entities.Bill", "Bill")
+                        .WithOne("BudgetLink")
+                        .HasForeignKey("MyHomeSolution.Domain.Entities.BillBudgetLink", "BillId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("MyHomeSolution.Domain.Entities.Budget", "Budget")
+                        .WithMany("BillLinks")
+                        .HasForeignKey("BudgetId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("MyHomeSolution.Domain.Entities.BudgetOccurrence", "BudgetOccurrence")
+                        .WithMany("BillLinks")
+                        .HasForeignKey("BudgetOccurrenceId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Bill");
+
+                    b.Navigation("Budget");
+
+                    b.Navigation("BudgetOccurrence");
+                });
+
             modelBuilder.Entity("MyHomeSolution.Domain.Entities.BillItem", b =>
                 {
                     b.HasOne("MyHomeSolution.Domain.Entities.Bill", "Bill")
                         .WithMany("Items")
+                        .HasForeignKey("BillId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Bill");
+                });
+
+            modelBuilder.Entity("MyHomeSolution.Domain.Entities.BillRelatedItem", b =>
+                {
+                    b.HasOne("MyHomeSolution.Domain.Entities.Bill", "Bill")
+                        .WithMany("RelatedItems")
                         .HasForeignKey("BillId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -1331,6 +1638,56 @@ namespace MyHomeSolution.Infrastructure.Persistence.Migrations
                         .IsRequired();
 
                     b.Navigation("Bill");
+                });
+
+            modelBuilder.Entity("MyHomeSolution.Domain.Entities.Budget", b =>
+                {
+                    b.HasOne("MyHomeSolution.Domain.Entities.Budget", "ParentBudget")
+                        .WithMany("ChildBudgets")
+                        .HasForeignKey("ParentBudgetId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("ParentBudget");
+                });
+
+            modelBuilder.Entity("MyHomeSolution.Domain.Entities.BudgetOccurrence", b =>
+                {
+                    b.HasOne("MyHomeSolution.Domain.Entities.Budget", "Budget")
+                        .WithMany("Occurrences")
+                        .HasForeignKey("BudgetId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Budget");
+                });
+
+            modelBuilder.Entity("MyHomeSolution.Domain.Entities.BudgetTransfer", b =>
+                {
+                    b.HasOne("MyHomeSolution.Domain.Entities.BudgetOccurrence", "DestinationOccurrence")
+                        .WithMany("IncomingTransfers")
+                        .HasForeignKey("DestinationOccurrenceId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("MyHomeSolution.Domain.Entities.BudgetOccurrence", "SourceOccurrence")
+                        .WithMany("OutgoingTransfers")
+                        .HasForeignKey("SourceOccurrenceId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("DestinationOccurrence");
+
+                    b.Navigation("SourceOccurrence");
+                });
+
+            modelBuilder.Entity("MyHomeSolution.Domain.Entities.HouseholdTask", b =>
+                {
+                    b.HasOne("MyHomeSolution.Domain.Entities.Budget", "DefaultBudget")
+                        .WithMany()
+                        .HasForeignKey("DefaultBudgetId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("DefaultBudget");
                 });
 
             modelBuilder.Entity("MyHomeSolution.Domain.Entities.RecurrenceAssignee", b =>
@@ -1366,6 +1723,16 @@ namespace MyHomeSolution.Infrastructure.Persistence.Migrations
                     b.Navigation("ShoppingList");
                 });
 
+            modelBuilder.Entity("MyHomeSolution.Domain.Entities.ShoppingList", b =>
+                {
+                    b.HasOne("MyHomeSolution.Domain.Entities.Budget", "DefaultBudget")
+                        .WithMany()
+                        .HasForeignKey("DefaultBudgetId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("DefaultBudget");
+                });
+
             modelBuilder.Entity("MyHomeSolution.Domain.Entities.TaskOccurrence", b =>
                 {
                     b.HasOne("MyHomeSolution.Domain.Entities.Bill", "Bill")
@@ -1395,9 +1762,31 @@ namespace MyHomeSolution.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("MyHomeSolution.Domain.Entities.Bill", b =>
                 {
+                    b.Navigation("BudgetLink");
+
                     b.Navigation("Items");
 
+                    b.Navigation("RelatedItems");
+
                     b.Navigation("Splits");
+                });
+
+            modelBuilder.Entity("MyHomeSolution.Domain.Entities.Budget", b =>
+                {
+                    b.Navigation("BillLinks");
+
+                    b.Navigation("ChildBudgets");
+
+                    b.Navigation("Occurrences");
+                });
+
+            modelBuilder.Entity("MyHomeSolution.Domain.Entities.BudgetOccurrence", b =>
+                {
+                    b.Navigation("BillLinks");
+
+                    b.Navigation("IncomingTransfers");
+
+                    b.Navigation("OutgoingTransfers");
                 });
 
             modelBuilder.Entity("MyHomeSolution.Domain.Entities.HouseholdTask", b =>

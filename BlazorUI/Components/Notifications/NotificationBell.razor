@@ -65,14 +65,14 @@
                                         @(notification.IsRead ? "" : "background: var(--rz-base-300);")">
                                 <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Start" Gap="0.625rem">
                                     <div style="width: 32px; height: 32px; border-radius: 50%;
-                                                background: @(notification.IsRead ? "var(--rz-base-200)" : "var(--rz-base-400)");
+                                                background: @(notification.IsRead ? "var(--rz-primary)" : "var(--rz-info)");
                                                 display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
                                         <RadzenIcon Icon="@GetNotificationIcon(notification)"
                                                     Style="@($"font-size: 1rem; color: {(notification.IsRead ? "var(--rz-text-secondary-color)" : "var(--rz-primary)")};")"/>
                                     </div>
                                     <RadzenStack Orientation="Orientation.Vertical" Gap="0.125rem" Style="flex: 1; min-width: 0;">
                                         <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0"
-                                                    Style="@($"{(notification.IsRead ? "" : "font-weight: 600;")} white-space: nowrap; overflow: hidden; text-overflow: ellipsis;")">
+                                                    Style="@($"{(notification.IsRead ? "" : "font-weight: 600; color: var(--rz-primary);")} white-space: nowrap; overflow: hidden; text-overflow: ellipsis;")">
                                             @notification.Title
                                         </RadzenText>
                                         <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.25rem">

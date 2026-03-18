@@ -1,0 +1,101 @@
+<RadzenDataGrid Data="@Items"
+                Count="@Count"
+                TItem="ShoppingListBriefDto"
+                IsLoading="@IsLoading"
+                AllowPaging="true"
+                PageSize="@PageSize"
+                PagerHorizontalAlign="HorizontalAlign.Center"
+                LoadData="@OnLoadData"
+                RowSelect="@RowSelectAsync"
+                AllowSorting="true"
+                GridLines="DataGridGridLines.None"
+                Density="Density.Compact"
+                class="rz-datatable-striped"
+                Style="cursor: pointer;">
+    <Columns>
+        <RadzenDataGridColumn TItem="ShoppingListBriefDto" Title="" Width="52px" Sortable="false" Filterable="false">
+            <Template Context="list">
+                <RadzenIcon Icon="@GetCategoryIcon(list.Category)"
+                            Style="font-size: 1.5rem; color: var(--rz-primary);" />
+            </Template>
+        </RadzenDataGridColumn>
+
+        <RadzenDataGridColumn TItem="ShoppingListBriefDto" MinWidth="fit-content;" Property="Title" Title="Title">
+            <Template Context="list">
+                <RadzenStack Orientation="Orientation.Vertical" Gap="0">
+                    <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0"><strong>@list.Title</strong></RadzenText>
+                    <RadzenText TextStyle="TextStyle.Caption" class="rz-color-secondary rz-mb-0">@list.Category</RadzenText>
+                </RadzenStack>
+            </Template>
+        </RadzenDataGridColumn>
+
+        <RadzenDataGridColumn TItem="ShoppingListBriefDto" Title="Progress" Width="200px" Sortable="false">
+            <Template Context="list">
+                <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem">
+                    <RadzenText TextStyle="TextStyle.Caption" class="rz-mb-0">@list.CheckedItems / @list.TotalItems items</RadzenText>
+                    <RadzenProgressBar Value="@GetProgress(list)" ShowValue="false"
+                                       ProgressBarStyle="@(list.IsCompleted ? ProgressBarStyle.Success : ProgressBarStyle.Primary)"
+                                       Style="height: 6px;" class="rz-border-radius-2" />
+                </RadzenStack>
+            </Template>
+        </RadzenDataGridColumn>
+
+        <RadzenDataGridColumn TItem="ShoppingListBriefDto" Property="DueDate" Title="Due Date" Width="130px">
+            <Template Context="list">
+                @if (list.DueDate.HasValue)
+                {
+                    <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0"
+                                Style="@(IsPastDue(list) ? "color: var(--rz-danger);" : "")">
+                        @list.DueDate.Value.ToString("MMM dd, yyyy")
+                    </RadzenText>
+                }
+                else
+                {
+                    <RadzenText TextStyle="TextStyle.Caption" class="rz-mb-0 rz-color-secondary">No date</RadzenText>
+                }
+            </Template>
+        </RadzenDataGridColumn>
+
+        <RadzenDataGridColumn TItem="ShoppingListBriefDto" Property="IsCompleted" Title="Status" Width="110px" TextAlign="TextAlign.Center">
+            <Template Context="list">
+                @if (list.IsCompleted)
+                {
+                    <RadzenBadge BadgeStyle="BadgeStyle.Success" IsPill="true" Variant="Variant.Flat" Text="Done" />
+                }
+                else if (list.CheckedItems > 0)
+                {
+                    <RadzenBadge BadgeStyle="BadgeStyle.Info" IsPill="true" Variant="Variant.Flat" Text="In Progress" />
+                }
+                else
+                {
+                    <RadzenBadge BadgeStyle="BadgeStyle.Warning" IsPill="true" Variant="Variant.Flat" Text="New" />
+                }
+            </Template>
+        </RadzenDataGridColumn>
+
+        <RadzenDataGridColumn TItem="ShoppingListBriefDto" Property="CreatedAt" Title="Created" Width="140px" SortOrder="SortOrder.Descending">
+            <Template Context="list">
+                <DateDisplay Date="@list.CreatedAt" ShowRelative="true" />
+            </Template>
+        </RadzenDataGridColumn>
+
+        <RadzenDataGridColumn TItem="ShoppingListBriefDto" Title="" Width="100px" Sortable="false" Filterable="false" TextAlign="TextAlign.End">
+            <Template Context="list">
+                <RadzenStack Orientation="Orientation.Horizontal" Gap="0" AlignItems="AlignItems.Center">
+                    @if (!list.IsCompleted && list.TotalItems - list.CheckedItems > 0)
+                    {
+                        <RadzenButton Icon="store" Variant="Variant.Text" ButtonStyle="ButtonStyle.Success" Size="ButtonSize.Small"
+                                      Click="@(() => OnInStoreView.InvokeAsync(list))" title="In-Store View"
+                                      @onclick:stopPropagation="true" />
+                    }
+                    @if (OnDelete.HasDelegate)
+                    {
+                        <RadzenButton Icon="delete_outline" Variant="Variant.Text" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small"
+                                      Click="@(async () => await OnDelete.InvokeAsync(list))" title="Delete"
+                                      @onclick:stopPropagation="true" />
+                    }
+                </RadzenStack>
+            </Template>
+        </RadzenDataGridColumn>
+    </Columns>
+</RadzenDataGrid>

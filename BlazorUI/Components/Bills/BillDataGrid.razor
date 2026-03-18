@@ -19,7 +19,7 @@
             </Template>
         </RadzenDataGridColumn>
 
-        <RadzenDataGridColumn TItem="BillBriefDto" Property="Title" Title="Title">
+        <RadzenDataGridColumn TItem="BillBriefDto" MinWidth="fit-content;" Property="Title" Title="Title">
             <Template Context="bill">
                 <RadzenStack Orientation="Orientation.Vertical" Gap="0">
                     <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0"><strong>@bill.Title</strong></RadzenText>
@@ -28,13 +28,13 @@
             </Template>
         </RadzenDataGridColumn>
 
-        <RadzenDataGridColumn TItem="BillBriefDto" Property="Amount" Title="Amount" Width="130px" TextAlign="TextAlign.End">
+        <RadzenDataGridColumn TItem="BillBriefDto" Property="Amount" Title="Amount" Width="130px" TextAlign="TextAlign.Center">
             <Template Context="bill">
                 <CurrencyDisplay Amount="@bill.Amount" Currency="@bill.Currency" />
             </Template>
         </RadzenDataGridColumn>
 
-        <RadzenDataGridColumn TItem="BillBriefDto" Property="BillDate" Title="Date" Width="140px">
+        <RadzenDataGridColumn TItem="BillBriefDto" Property="BillDate" Title="Date" Width="140px" SortOrder="SortOrder.Ascending">
             <Template Context="bill">
                 <DateDisplay Date="@bill.BillDate" />
             </Template>

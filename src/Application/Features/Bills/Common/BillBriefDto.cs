@@ -15,5 +15,6 @@ public sealed record BillBriefDto
     public bool HasReceipt { get; init; }
     public int SplitCount { get; init; }
     public bool IsFullyPaid { get; init; }
+    public bool HasLinkedTask { get; init; }
     public DateTimeOffset CreatedAt { get; init; }
 }

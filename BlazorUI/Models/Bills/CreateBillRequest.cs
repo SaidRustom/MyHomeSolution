@@ -13,6 +13,7 @@ public sealed record CreateBillRequest
     public string? Notes { get; init; }
     public Guid? RelatedEntityId { get; init; }
     public string? RelatedEntityType { get; init; }
+    public Guid? BudgetId { get; init; }
     public List<BillSplitRequest> Splits { get; init; } = [];
 }
 

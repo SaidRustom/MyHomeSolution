@@ -20,6 +20,11 @@ public sealed class ShoppingListConfiguration : IEntityTypeConfiguration<Shoppin
         builder.Ignore(sl => sl.AuditLogs);
         builder.Ignore(sl => sl.Bills);
 
+        builder.HasOne(sl => sl.DefaultBudget)
+            .WithMany()
+            .HasForeignKey(sl => sl.DefaultBudgetId)
+            .OnDelete(DeleteBehavior.SetNull);
+
         builder.HasMany(sl => sl.Items)
             .WithOne(si => si.ShoppingList)
             .HasForeignKey(si => si.ShoppingListId)

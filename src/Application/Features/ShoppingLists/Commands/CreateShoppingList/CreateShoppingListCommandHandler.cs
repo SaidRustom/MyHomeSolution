@@ -22,7 +22,8 @@ public sealed class CreateShoppingListCommandHandler(
             Title = request.Title,
             Description = request.Description,
             Category = request.Category,
-            DueDate = request.DueDate
+            DueDate = request.DueDate,
+            DefaultBudgetId = request.DefaultBudgetId
         };
 
         dbContext.ShoppingLists.Add(shoppingList);

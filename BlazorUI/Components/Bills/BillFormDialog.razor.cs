@@ -1,8 +1,8 @@
 using System.Security.Claims;
 using BlazorUI.Models.Bills;
+using BlazorUI.Models.Budgets;
 using BlazorUI.Models.Common;
 using BlazorUI.Models.Enums;
-using BlazorUI.Models.Users;
 using BlazorUI.Services.Contracts;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
@@ -19,10 +19,10 @@ public partial class BillFormDialog
     IBillService BillService { get; set; } = default!;
 
     [Inject]
-    NotificationService Notifications { get; set; } = default!;
+    IBudgetService BudgetService { get; set; } = default!;
 
     [Inject]
-    IUserConnectionService UserConnectionService { get; set; } = default!;
+    NotificationService Notifications { get; set; } = default!;
 
     [CascadingParameter]
     private Task<AuthenticationState> AuthState { get; set; } = default!;
@@ -41,11 +41,11 @@ public partial class BillFormDialog
 
     string? CurrentUserFullName { get; set; }
 
-    string DialogTitle => IsEdit ? "Edit Bill" : "Create Bill";
-
     string SubmitText => IsEdit ? "Save Changes" : "Create Bill";
 
     IEnumerable<BillCategory> Categories => Enum.GetValues<BillCategory>();
+
+    PaginatedList<BudgetBriefDto> AvailableBudgets { get; set; } = new();
 
     protected override async Task OnInitializedAsync()
     {
@@ -58,6 +58,10 @@ public partial class BillFormDialog
         var email = state.User.FindFirst(ClaimTypes.Email)?.Value
             ?? state.User.FindFirst("email")?.Value;
         CurrentUserFullName = name ?? email ?? CurrentUserId;
+
+        var budgetResult = await BudgetService.GetBudgetsAsync(pageNumber: 1, pageSize: 100);
+        if (budgetResult.IsSuccess)
+            AvailableBudgets = budgetResult.Value;
     }
 
     /// <summary>
@@ -179,6 +183,7 @@ public sealed class BillFormModel
     public string? Notes { get; set; }
     public Guid? RelatedEntityId { get; set; }
     public string? RelatedEntityType { get; set; }
+    public Guid? BudgetId { get; set; }
     public string? PaidByUserId { get; set; }
     public List<BillSplitFormModel> Splits { get; set; } = [];
 
@@ -193,6 +198,7 @@ public sealed class BillFormModel
         Notes = Notes,
         RelatedEntityId = RelatedEntityId,
         RelatedEntityType = RelatedEntityType,
+        BudgetId = BudgetId,
         Splits = Splits.Select(s => new BillSplitRequest
         {
             UserId = s.UserId,
@@ -211,6 +217,7 @@ public sealed class BillFormModel
         BillDate = BillDate,
         Notes = Notes,
         PaidByUserId = PaidByUserId,
+        BudgetId = BudgetId,
         Splits = Splits.Count > 0
             ? Splits.Select(s => new BillSplitRequest
             {
@@ -232,6 +239,10 @@ public sealed class BillFormModel
         Notes = detail.Notes,
         RelatedEntityId = detail.RelatedEntityId,
         RelatedEntityType = detail.RelatedEntityType,
+        BudgetId = detail.RelatedItems
+            .Where(ri => string.Equals(ri.RelatedEntityType, "Budget", StringComparison.OrdinalIgnoreCase))
+            .Select(ri => ri.RelatedEntityId)
+            .FirstOrDefault(),
         PaidByUserId = detail.PaidByUserId,
         Splits = detail.Splits.Select(s => new BillSplitFormModel
         {

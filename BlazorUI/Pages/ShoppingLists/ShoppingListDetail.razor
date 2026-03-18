@@ -1,0 +1,416 @@
+@page "/shopping-lists/{Id:guid}"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize]
+
+<PageTitle>@(Detail?.Title ?? "Shopping List")</PageTitle>
+
+<RadzenStack Orientation="Orientation.Vertical" Gap="1rem">
+
+    @* Page header *@
+    <PageHeader Title="@(Detail?.Title ?? "Shopping List")"
+                Subtitle="@(Detail is not null ? $"{Detail.Category} • {Detail.Items.Count} items" : null)"
+                Icon="shopping_cart">
+        <Breadcrumb>
+            <RadzenBreadCrumb>
+                <RadzenBreadCrumbItem Path="/shopping-lists" Text="Shopping Lists" Icon="shopping_cart" />
+                <RadzenBreadCrumbItem Text="@(Detail?.Title ?? "Detail")" />
+            </RadzenBreadCrumb>
+        </Breadcrumb>
+        <Actions>
+            @if (Detail is not null)
+            {
+                <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" Wrap="FlexWrap.Wrap">
+                    <RadzenButton Text="In-Store View" Icon="store" ButtonStyle="ButtonStyle.Success"
+                                  Click="@(() => NavigationManager.NavigateTo($"/shopping-lists/{Id}/in-store"))" />
+                    <RadzenButton Text="Add Receipt" Icon="receipt_long" ButtonStyle="ButtonStyle.Primary"
+                                  Click="OpenReceiptScanAsync" />
+                    @if (!Detail.IsCompleted)
+                    {
+                        <RadzenButton Text="Edit" Icon="edit" Variant="Variant.Outlined"
+                                      ButtonStyle="ButtonStyle.Secondary" Click="EditListAsync" />
+                    }
+                    <RadzenButton Text="Delete" Icon="delete_outline" Variant="Variant.Outlined"
+                                  ButtonStyle="ButtonStyle.Danger" Click="DeleteListAsync" />
+                </RadzenStack>
+            }
+        </Actions>
+    </PageHeader>
+
+    @* Error *@
+    @if (Error is not null)
+    {
+        <ErrorAlert Problem="@Error" OnRetry="LoadDetailAsync" />
+    }
+
+    @* Loading *@
+    @if (IsLoading)
+    {
+        <LoadingIndicator Text="Loading list…" />
+    }
+    else if (Detail is not null)
+    {
+        @* Summary card *@
+        <RadzenRow Gap="1rem" RowGap="1rem">
+            <RadzenColumn Size="12" SizeSM="6" SizeLG="3">
+                <StatCard Title="Total Items" Value="@Detail.Items.Count.ToString()" Icon="list" IconColor="var(--rz-primary)" />
+            </RadzenColumn>
+            <RadzenColumn Size="12" SizeSM="6" SizeLG="3">
+                <StatCard Title="Checked" Value="@CheckedCount.ToString()" Icon="check_circle" IconColor="var(--rz-success)" />
+            </RadzenColumn>
+            <RadzenColumn Size="12" SizeSM="6" SizeLG="3">
+                <StatCard Title="Remaining" Value="@RemainingCount.ToString()" Icon="radio_button_unchecked" IconColor="var(--rz-warning)" />
+            </RadzenColumn>
+            <RadzenColumn Size="12" SizeSM="6" SizeLG="3">
+                <StatCard Title="Predicted Cost" Value="@(PredictedCost > 0 ? $"${PredictedCost:N2}" : "—")" Icon="savings" IconColor="var(--rz-info)"
+                          Subtitle="@(PredictedCost > 0 ? "Based on avg prices" : "No price data")" />
+            </RadzenColumn>
+        </RadzenRow>
+
+        @* Info panel *@
+        @if (!string.IsNullOrEmpty(Detail.Description) || Detail.DueDate.HasValue)
+        {
+            <RadzenCard Variant="Variant.Outlined" class="rz-p-4">
+                <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
+                    @if (Detail.DueDate.HasValue)
+                    {
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.375rem">
+                            <RadzenIcon Icon="event" Style="font-size: 1rem; color: var(--rz-text-secondary-color);" />
+                            <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0">
+                                Due: <strong>@Detail.DueDate.Value.ToString("MMM dd, yyyy")</strong>
+                                @if (IsPastDue)
+                                {
+                                    <RadzenBadge BadgeStyle="BadgeStyle.Danger" IsPill="true" Variant="Variant.Flat"
+                                                 Text="Overdue" Style="margin-left: 0.5rem; font-size: 0.625rem;" />
+                                }
+                            </RadzenText>
+                        </RadzenStack>
+                    }
+                    @if (!string.IsNullOrEmpty(Detail.Description))
+                    {
+                        <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0 rz-color-secondary">@Detail.Description</RadzenText>
+                    }
+                </RadzenStack>
+            </RadzenCard>
+        }
+
+        @* Main tabs *@
+        <RadzenTabs @bind-SelectedIndex="_selectedTabIndex">
+            <Tabs>
+                @* Items tab *@
+                <RadzenTabsItem Text="Items" Icon="checklist">
+                    <RadzenStack Orientation="Orientation.Vertical" Gap="1rem" class="rz-pt-3">
+
+                        @* Add item form *@
+                        <RadzenCard Variant="Variant.Outlined" class="rz-p-3">
+                            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.End" Gap="0.5rem" Wrap="FlexWrap.Wrap">
+                                <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem" Style="flex: 2; min-width: 200px;">
+                                    <RadzenLabel Text="Item Name" />
+                                    <RadzenTextBox @bind-Value="@_newItemName" Placeholder="Add an item…" Style="width: 100%;"
+                                                    @onkeydown="HandleAddItemKeyDown" />
+                                </RadzenStack>
+                                <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem" Style="min-width: 80px;">
+                                    <RadzenLabel Text="Qty" />
+                                    <RadzenNumeric TValue="int" @bind-Value="@_newItemQuantity" Min="1" Style="width: 80px;" />
+                                </RadzenStack>
+                                <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem" Style="min-width: 100px;">
+                                    <RadzenLabel Text="Unit" />
+                                    <RadzenTextBox @bind-Value="@_newItemUnit" Placeholder="e.g. kg" Style="width: 100px;" />
+                                </RadzenStack>
+                                <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem" Style="flex: 1; min-width: 150px;">
+                                    <RadzenLabel Text="Notes" />
+                                    <RadzenTextBox @bind-Value="@_newItemNotes" Placeholder="Optional" Style="width: 100%;" />
+                                </RadzenStack>
+                                <RadzenButton Text="Add" Icon="add" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Medium"
+                                                Click="AddItemAsync" Disabled="@(string.IsNullOrWhiteSpace(_newItemName) || IsAddingItem)" IsBusy="@IsAddingItem" />
+                            </RadzenStack>
+                        </RadzenCard>
+
+                        @* Item search filter *@
+                        <RadzenCard Variant="Variant.Outlined" class="rz-p-3">
+                            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween" Wrap="FlexWrap.Wrap" Gap="0.5rem">
+                                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                                    <RadzenIcon Icon="checklist" Style="color: var(--rz-primary);" />
+                                    <RadzenText TextStyle="TextStyle.Subtitle1" class="rz-mb-0"><strong>Items</strong></RadzenText>
+                                    <RadzenBadge BadgeStyle="BadgeStyle.Info" IsPill="true" Variant="Variant.Flat"
+                                                 Text="@($"{CheckedCount}/{Detail.Items.Count}")" />
+                                </RadzenStack>
+                                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem" Wrap="FlexWrap.Wrap">
+                                    <RadzenTextBox @bind-Value="@_itemSearchTerm" Placeholder="Search items…" Style="width: 180px;"
+                                                   class="rz-border-radius-2" />
+                                    <RadzenSelectBar TValue="ShoppingItemViewFilter" @bind-Value="@_itemViewFilter" Size="ButtonSize.ExtraSmall">
+                                        <Items>
+                                            <RadzenSelectBarItem Text="All" Value="ShoppingItemViewFilter.All" />
+                                            <RadzenSelectBarItem Text="Unchecked" Value="ShoppingItemViewFilter.Unchecked" />
+                                            <RadzenSelectBarItem Text="Checked" Value="ShoppingItemViewFilter.Checked" />
+                                        </Items>
+                                    </RadzenSelectBar>
+                                    @if (RemainingCount > 0)
+                                    {
+                                        <RadzenButton Text="Check All" Icon="done_all" Variant="Variant.Outlined"
+                                                      ButtonStyle="ButtonStyle.Success" Size="ButtonSize.ExtraSmall"
+                                                      Click="ToggleAllAsync" IsBusy="@_isTogglingAll" />
+                                    }
+                                    @if (CheckedCount > 0)
+                                    {
+                                        <RadzenButton Text="Uncheck All" Icon="remove_done" Variant="Variant.Outlined"
+                                                      ButtonStyle="ButtonStyle.Warning" Size="ButtonSize.ExtraSmall"
+                                                      Click="UntoggleAllAsync" IsBusy="@_isTogglingAll" />
+                                    }
+                                </RadzenStack>
+                            </RadzenStack>
+                        </RadzenCard>
+
+                        @* Items list *@
+                        <RadzenCard Variant="Variant.Outlined" class="rz-p-0" Style="overflow: hidden;">
+                            @if (FilteredItems.Count == 0)
+                            {
+                                <div class="rz-p-4">
+                                    <EmptyState Icon="checklist"
+                                                Title="@(_itemViewFilter == ShoppingItemViewFilter.All && string.IsNullOrEmpty(_itemSearchTerm) ? "No items yet" : "No matching items")"
+                                                Description="@(_itemViewFilter == ShoppingItemViewFilter.All && string.IsNullOrEmpty(_itemSearchTerm) ? "Add your first item above." : "Try changing the filter or search term.")" />
+                                </div>
+                            }
+                            else
+                            {
+                                <div style="max-height: 600px; overflow-y: auto;">
+                                    @foreach (var item in FilteredItems)
+                                    {
+                                        <div class="rz-p-3 shopping-item @(item.IsChecked ? "checked" : "")"
+                                             style="border-bottom: 1px solid var(--rz-base-100); transition: background-color 0.15s ease;">
+                                            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween" Gap="0.75rem">
+                                                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.75rem" Style="flex: 1; min-width: 0;">
+                                                    <RadzenCheckBox TValue="bool" Value="@item.IsChecked"
+                                                                    ValueChanged="@(_ => ToggleItemAsync(item))" />
+                                                    <RadzenStack Orientation="Orientation.Vertical" Gap="0" Style="min-width: 0;">
+                                                        <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0"
+                                                                    Style="@(item.IsChecked ? "text-decoration: line-through; opacity: 0.6;" : "")">
+                                                            <strong>@item.Name</strong>
+                                                            @if (item.Quantity > 1 || !string.IsNullOrEmpty(item.Unit))
+                                                            {
+                                                                <span class="rz-color-secondary"> — @item.Quantity @item.Unit</span>
+                                                            }
+                                                        </RadzenText>
+                                                        @if (!string.IsNullOrEmpty(item.Notes))
+                                                        {
+                                                            <RadzenText TextStyle="TextStyle.Caption" class="rz-mb-0 rz-color-secondary"
+                                                                        Style="@(item.IsChecked ? "opacity: 0.5;" : "")">
+                                                                @item.Notes
+                                                            </RadzenText>
+                                                        }
+                                                        @if (item.AveragePrice.HasValue)
+                                                        {
+                                                            <RadzenText TextStyle="TextStyle.Caption" class="rz-mb-0" Style="@(item.IsChecked ? "opacity: 0.5;" : "color: var(--rz-success);")">
+                                                                <RadzenIcon Icon="trending_up" Style="font-size: 0.75rem; vertical-align: middle;" />
+                                                                Avg: <CurrencyDisplay Amount="@item.AveragePrice.Value" />
+                                                            </RadzenText>
+                                                        }
+                                                        @if(item.CheckedAt.HasValue)
+                                                        {
+                                                            <text> • <DateDisplay Date="@item.CheckedAt.Value" ShowRelative="true" /></text>
+                                                        }
+                                                    </RadzenStack>
+                                                </RadzenStack>
+
+                                                <RadzenStack Orientation="Orientation.Horizontal" Gap="0" AlignItems="AlignItems.Center">
+                                                    <RadzenButton Icon="history" Variant="Variant.Text" ButtonStyle="ButtonStyle.Info"
+                                                                    Size="ButtonSize.Small" Click="@(() => ShowItemHistoryAsync(item))" title="Purchase History" />
+                                                    <RadzenButton Icon="edit" Variant="Variant.Text" ButtonStyle="ButtonStyle.Secondary"
+                                                                    Size="ButtonSize.Small" Click="@(() => EditItemAsync(item))" title="Edit" />
+                                                    <RadzenButton Icon="delete_outline" Variant="Variant.Text" ButtonStyle="ButtonStyle.Danger"
+                                                                    Size="ButtonSize.Small" Click="@(() => RemoveItemAsync(item))" title="Remove" />
+                                                </RadzenStack>
+                                            </RadzenStack>
+                                        </div>
+                                    }
+                                </div>
+                            }
+                        </RadzenCard>
+                    </RadzenStack>
+                </RadzenTabsItem>
+
+                @* Purchase History tab *@
+                <RadzenTabsItem Text="Purchase History" Icon="history">
+                    <RadzenStack Orientation="Orientation.Vertical" Gap="1rem" class="rz-pt-3">
+
+                        @* History filters *@
+                        <RadzenCard Variant="Variant.Outlined" class="rz-p-3">
+                            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.End" Gap="0.5rem" Wrap="FlexWrap.Wrap">
+                                <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem" Style="min-width: 150px;">
+                                    <RadzenLabel Text="From" />
+                                    <RadzenDatePicker TValue="DateTimeOffset?" @bind-Value="@_historyFromDate"
+                                                      DateFormat="yyyy-MM-dd" Style="width: 150px;" />
+                                </RadzenStack>
+                                <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem" Style="min-width: 150px;">
+                                    <RadzenLabel Text="To" />
+                                    <RadzenDatePicker TValue="DateTimeOffset?" @bind-Value="@_historyToDate"
+                                                      DateFormat="yyyy-MM-dd" Style="width: 150px;" />
+                                </RadzenStack>
+                                <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem" Style="min-width: 180px;">
+                                    <RadzenLabel Text="Search" />
+                                    <RadzenTextBox @bind-Value="@_historySearchTerm" Placeholder="Search bills…"
+                                                   Style="width: 180px;" />
+                                </RadzenStack>
+                                <RadzenButton Text="Search" Icon="search" ButtonStyle="ButtonStyle.Primary"
+                                              Size="ButtonSize.Medium" Click="LoadPurchaseHistoryAsync" />
+                                @if (_historyFromDate.HasValue || _historyToDate.HasValue || !string.IsNullOrEmpty(_historySearchTerm))
+                                {
+                                    <RadzenButton Text="Clear" Icon="clear" ButtonStyle="ButtonStyle.Light"
+                                                  Variant="Variant.Flat" Size="ButtonSize.Medium" Click="ClearHistoryFilters" />
+                                }
+                            </RadzenStack>
+                        </RadzenCard>
+
+                        @if (_isLoadingHistory)
+                        {
+                            <LoadingIndicator Text="Loading purchase history…" />
+                        }
+                        else if (_purchaseHistory.Count == 0)
+                        {
+                            <EmptyState Icon="receipt_long" Title="No purchase history"
+                                        Description="Receipts processed for this shopping list will appear here." />
+                        }
+                        else
+                        {
+                            <RadzenDataGrid Data="@_purchaseHistory" TItem="BillBriefDto" Density="Density.Compact"
+                                            AllowPaging="true" PageSize="10" AllowSorting="true"
+                                            GridLines="DataGridGridLines.None" class="rz-datatable-striped"
+                                            Style="cursor: pointer;" RowSelect="@(b => NavigationManager.NavigateTo($"/bills/{b.Id}"))">
+                                <Columns>
+                                    <RadzenDataGridColumn TItem="BillBriefDto" Property="Title" Title="Store" />
+                                    <RadzenDataGridColumn TItem="BillBriefDto" Title="Amount" Width="120px" TextAlign="TextAlign.Center">
+                                        <Template Context="bill">
+                                            <strong><CurrencyDisplay Amount="@bill.Amount" /></strong>
+                                        </Template>
+                                    </RadzenDataGridColumn>
+                                    <RadzenDataGridColumn TItem="BillBriefDto" Title="Paid By" Width="140px">
+                                        <Template Context="bill">
+                                            <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0">
+                                                @(bill.PaidByUserFullName ?? "Unknown")
+                                            </RadzenText>
+                                        </Template>
+                                    </RadzenDataGridColumn>
+                                    <RadzenDataGridColumn TItem="BillBriefDto" Property="BillDate" Title="Date" Width="140px"
+                                                          SortOrder="SortOrder.Descending">
+                                        <Template Context="bill">
+                                            <DateDisplay Date="@bill.BillDate" ShowRelative="true" />
+                                        </Template>
+                                    </RadzenDataGridColumn>
+                                    <RadzenDataGridColumn TItem="BillBriefDto" Title="" Width="40px" Sortable="false">
+                                        <Template Context="bill">
+                                            <RadzenButton Icon="open_in_new" Variant="Variant.Text" Size="ButtonSize.Small"
+                                                          ButtonStyle="ButtonStyle.Info" title="View Bill"
+                                                          Click="@(() => NavigationManager.NavigateTo($"/bills/{bill.Id}"))"
+                                                          @onclick:stopPropagation="true" />
+                                        </Template>
+                                    </RadzenDataGridColumn>
+                                </Columns>
+                            </RadzenDataGrid>
+                        }
+                    </RadzenStack>
+                </RadzenTabsItem>
+
+                @* Financial Summary tab *@
+                <RadzenTabsItem Text="Financial Summary" Icon="analytics">
+                    <RadzenStack Orientation="Orientation.Vertical" Gap="1rem" class="rz-pt-3">
+                        @if (_isLoadingFinancials)
+                        {
+                            <LoadingIndicator Text="Loading financial data…" />
+                        }
+                        else if (_purchaseHistory.Count == 0)
+                        {
+                            <EmptyState Icon="analytics" Title="No financial data"
+                                        Description="Process receipts for this shopping list to see analytics." />
+                        }
+                        else
+                        {
+                            <RadzenRow Gap="1rem" RowGap="1rem">
+                                <RadzenColumn Size="12" SizeSM="6" SizeLG="3">
+                                    <StatCard Title="Total Spent" Value="@($"${_totalSpent:N2}")" Icon="payments"
+                                              IconColor="var(--rz-primary)" />
+                                </RadzenColumn>
+                                <RadzenColumn Size="12" SizeSM="6" SizeLG="3">
+                                    <StatCard Title="Total Receipts" Value="@_purchaseHistory.Count.ToString()" Icon="receipt_long"
+                                              IconColor="var(--rz-info)" />
+                                </RadzenColumn>
+                                <RadzenColumn Size="12" SizeSM="6" SizeLG="3">
+                                    <StatCard Title="Avg per Trip" Value="@($"${_averagePerTrip:N2}")" Icon="trending_up"
+                                              IconColor="var(--rz-success)" />
+                                </RadzenColumn>
+                                <RadzenColumn Size="12" SizeSM="6" SizeLG="3">
+                                    <StatCard Title="Total Tax" Value="@($"${_totalTax:N2}")" Icon="account_balance"
+                                              IconColor="var(--rz-warning)"
+                                              Subtitle="HST 13%" />
+                                </RadzenColumn>
+                            </RadzenRow>
+
+                            @* Spending by user *@
+                            @if (_spendingByUser.Count > 0)
+                            {
+                                <RadzenCard Variant="Variant.Outlined" class="rz-p-4">
+                                    <RadzenText TextStyle="TextStyle.Subtitle1" class="rz-mb-3"><strong>Spending by Person</strong></RadzenText>
+                                    <RadzenDataGrid Data="@_spendingByUser" TItem="UserSpendingSummary" Density="Density.Compact"
+                                                    AllowPaging="false" AllowSorting="true" GridLines="DataGridGridLines.None">
+                                        <Columns>
+                                            <RadzenDataGridColumn TItem="UserSpendingSummary" Property="UserFullName" Title="Person" />
+                                            <RadzenDataGridColumn TItem="UserSpendingSummary" Title="Amount" Width="120px" TextAlign="TextAlign.Center">
+                                                <Template Context="row">
+                                                    <strong><CurrencyDisplay Amount="@row.TotalAmount" /></strong>
+                                                </Template>
+                                            </RadzenDataGridColumn>
+                                            <RadzenDataGridColumn TItem="UserSpendingSummary" Property="TripCount" Title="Trips" Width="80px" TextAlign="TextAlign.Center" />
+                                            <RadzenDataGridColumn TItem="UserSpendingSummary" Title="Share" Width="100px" TextAlign="TextAlign.Center">
+                                                <Template Context="row">
+                                                    @($"{(_totalSpent > 0 ? row.TotalAmount / _totalSpent * 100 : 0):N0}%")
+                                                </Template>
+                                            </RadzenDataGridColumn>
+                                        </Columns>
+                                    </RadzenDataGrid>
+                                </RadzenCard>
+                            }
+                        }
+                    </RadzenStack>
+                </RadzenTabsItem>
+            </Tabs>
+        </RadzenTabs>
+
+        @* Sharing *@
+        <EntitySharePanel EntityId="@Detail.Id"
+                         EntityType="ShoppingList"
+                         OwnerId="@Detail.CreatedBy"
+                         OwnerName="@(Detail.CreatedByFullName ?? Detail.CreatedBy)"
+                         CanManage="true" />
+
+        @* Metadata footer *@
+        <RadzenCard Variant="Variant.Outlined" class="rz-p-3">
+            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem" Wrap="FlexWrap.Wrap" class="rz-color-secondary">
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.25rem">
+                    <RadzenIcon Icon="person" Style="font-size: 0.875rem;" />
+                    <RadzenText TextStyle="TextStyle.Caption" class="rz-mb-0">Created by @(Detail.CreatedByFullName ?? Detail.CreatedBy ?? "Unknown")</RadzenText>
+                </RadzenStack>
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.25rem">
+                    <RadzenIcon Icon="schedule" Style="font-size: 0.875rem;" />
+                    <RadzenText TextStyle="TextStyle.Caption" class="rz-mb-0">
+                        <DateDisplay Date="@Detail.CreatedAt" ShowRelative="true" />
+                    </RadzenText>
+                </RadzenStack>
+                @if (Detail.LastModifiedAt.HasValue)
+                {
+                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.25rem">
+                        <RadzenIcon Icon="update" Style="font-size: 0.875rem;" />
+                        <RadzenText TextStyle="TextStyle.Caption" class="rz-mb-0">
+                            Modified <DateDisplay Date="@Detail.LastModifiedAt.Value" ShowRelative="true" />
+                        </RadzenText>
+                    </RadzenStack>
+                }
+            </RadzenStack>
+        </RadzenCard>
+    }
+</RadzenStack>
+
+<style>
+    .shopping-item:hover {
+        background-color: var(--rz-secondary);
+    }
+    .shopping-item.checked {
+        background-color: var(--rz-secondary);
+    }
+</style>

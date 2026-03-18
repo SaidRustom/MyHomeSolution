@@ -25,4 +25,5 @@ public sealed record UpdateTaskRequest
     public BillCategory? DefaultBillCategory { get; init; }
     public string? DefaultBillTitle { get; init; }
     public string? DefaultBillPaidByUserId { get; init; }
+    public Guid? DefaultBudgetId { get; init; }
 }

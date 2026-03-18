@@ -182,6 +182,24 @@
                                 </RadzenStack>
                             </RadzenFieldset>
                         }
+
+                        @* Linked Budget *@
+                        @if (Task.DefaultBudgetId.HasValue)
+                        {
+                            <RadzenCard Variant="Variant.Flat" class="rz-p-3" Style="cursor: pointer; background: var(--rz-base-100); border-radius: var(--rz-border-radius);"
+                                        @onclick="@(() => NavigationManager.NavigateTo($"/budgets/{Task.DefaultBudgetId}"))">
+                                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                                    <div style="width: 36px; height: 36px; border-radius: 50%; background: var(--rz-info-lighter); display: flex; align-items: center; justify-content: center;">
+                                        <RadzenIcon Icon="account_balance_wallet" Style="font-size: 1.125rem; color: var(--rz-info);" />
+                                    </div>
+                                    <RadzenStack Orientation="Orientation.Vertical" Gap="0.125rem" Style="flex: 1;">
+                                        <RadzenText TextStyle="TextStyle.Caption" class="rz-mb-0 rz-color-secondary">Linked Budget</RadzenText>
+                                        <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0"><strong>@(Task.DefaultBudgetName ?? "Budget")</strong></RadzenText>
+                                    </RadzenStack>
+                                    <RadzenIcon Icon="chevron_right" Style="color: var(--rz-secondary);" />
+                                </RadzenStack>
+                            </RadzenCard>
+                        }
                     </RadzenStack>
                 </RadzenCard>
             </RadzenColumn>
@@ -196,6 +214,13 @@
                     {
                         <StatCard Title="Bills Created" Value="@Task.Occurrences.Count(o => o.BillId.HasValue).ToString()" Icon="receipt_long" IconColor="var(--rz-warning)" />
                     }
+
+                    @* Sharing *@
+                    <EntitySharePanel EntityId="@Task.Id"
+                                     EntityType="HouseholdTask"
+                                     OwnerId="@Task.CreatedByUserId"
+                                     OwnerName="@(Task.CreatedByUserFullName ?? Task.CreatedByUserId)"
+                                     CanManage="true" />
                 </RadzenStack>
             </RadzenColumn>
         </RadzenRow>

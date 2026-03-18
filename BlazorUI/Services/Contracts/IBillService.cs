@@ -17,6 +17,9 @@ public interface IBillService
         string? sortBy = null,
         string? sortDirection = null,
         bool? isFullyPaid = null,
+        string? splitWithUserId = null,
+        bool? hasLinkedTask = null,
+        Guid? shoppingListId = null,
         CancellationToken cancellationToken = default);
 
     Task<ApiResult<BillDetailDto>> GetBillByIdAsync(
@@ -52,6 +55,6 @@ public interface IBillService
     Task<ApiResult<BillDetailDto>> CreateBillFromReceiptAsync(
         Stream fileStream, string fileName, string contentType,
         BillCategory category = BillCategory.General,
-        List<string>? splitUserIds = null,
+        List<SplitRequest>? splits = null,
         CancellationToken cancellationToken = default);
 }

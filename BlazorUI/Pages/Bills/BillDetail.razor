@@ -3,34 +3,69 @@
 
 <PageTitle>@(Bill?.Title ?? "Bill Detail")</PageTitle>
 
-<RadzenStack Orientation="Orientation.Vertical" Gap="1rem">
+@if (IsLoading)
+{
+    <LoadingIndicator Text="Loading bill details…" />
+}
+else if (Error is not null)
+{
+    <ErrorAlert Problem="@Error" OnRetry="LoadBillAsync" />
+}
+else if (Bill is not null)
+{
+    <RadzenStack Orientation="Orientation.Vertical" Gap="1.25rem">
 
-    @if (IsLoading)
-    {
-        <LoadingIndicator Text="Loading bill details…" />
-    }
-    else if (Error is not null)
-    {
-        <ErrorAlert Problem="@Error" OnRetry="LoadBillAsync" />
-    }
-    else if (Bill is not null)
-    {
-        <BillDetailPanel Bill="@Bill"
-                         OnEdit="@(_canEdit ? EditBillAsync : null)"
-                         OnDelete="@(_isOwner ? DeleteBillAsync : null)"
-                         OnMarkSplitAsPaid="MarkSplitAsPaidAsync"
-                         IsProcessing="@IsProcessing"
-                         OnBack="GoBack" />
+        @* ═══ Page Header with Breadcrumb & Actions ═══ *@
+                <RadzenBreadCrumb>
+                    <RadzenBreadCrumbItem Text="Bills" Path="/bills" Icon="receipt_long" />
+                    <RadzenBreadCrumbItem Text="@Bill.Title" />
+                </RadzenBreadCrumb>
 
-        @* History & Permissions row *@
-        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" Wrap="FlexWrap.Wrap">
-            <RadzenButton Text="View History" Icon="history" Variant="Variant.Outlined" ButtonStyle="ButtonStyle.Info" Size="ButtonSize.Small" Click="ShowHistoryAsync" />
-        </RadzenStack>
+        @* ═══ Two-column responsive layout ═══ *@
+        <RadzenRow Gap="1.25rem" RowGap="1.25rem">
+            @* Main content column *@
+            <RadzenColumn Size="12" SizeLG="8">
+                <BillDetailPanel Bill="@Bill"
+                                 OnMarkSplitAsPaid="MarkSplitAsPaidAsync"
+                                 IsProcessing="@IsProcessing" />
+            </RadzenColumn>
 
-        <BillPermissionPanel EntityId="@Bill.Id"
-                             EntityType="Bill"
-                             OwnerId="@Bill.CreatedByUserId"
-                             OwnerName="@Bill.CreatedBy"
-                             CanEdit="@_isOwner" />
-    }
-</RadzenStack>
+            @* Sidebar column *@
+            <RadzenColumn Size="12" SizeLG="4">
+                <RadzenStack Orientation="Orientation.Vertical" Gap="1rem" class="bill-sidebar">
+
+                    @* Quick Actions Card *@
+                    <div class="sidebar-card">
+                        <div class="sidebar-card-header">
+                            <RadzenIcon Icon="bolt" Style="font-size: 1.125rem; color: var(--rz-primary);" />
+                            <span class="sidebar-card-title">Quick Actions</span>
+                        </div>
+                        <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
+                            @if (_canEdit)
+                            {
+                                <RadzenButton Text="Edit Bill" Icon="edit" ButtonStyle="ButtonStyle.Primary"
+                                              Style="width: 100%; justify-content: flex-start;" Click="EditBillAsync" />
+                            }
+                            <RadzenButton Text="View History" Icon="history" Variant="Variant.Outlined" ButtonStyle="ButtonStyle.Info"
+                                          Style="width: 100%; justify-content: flex-start;" Click="ShowHistoryAsync" />
+                            @if (_isOwner)
+                            {
+                                <RadzenButton Text="Delete Bill" Icon="delete" Variant="Variant.Outlined" ButtonStyle="ButtonStyle.Danger"
+                                              Style="width: 100%; justify-content: flex-start;" Click="DeleteBillAsync" />
+                            }
+                        </RadzenStack>
+                    </div>
+
+                    @* Sharing *@
+                    <EntitySharePanel EntityId="@Bill.Id"
+                                     EntityType="Bill"
+                                     OwnerId="@Bill.CreatedByUserId"
+                                     OwnerName="@(Bill.CreatedBy ?? Bill.CreatedByUserId)"
+                                     OwnerAvatarUrl="@Bill.CreatedByAvatarUrl"
+                                     CanManage="@_isOwner"
+                                     OnSharesChanged="LoadBillAsync" />
+                </RadzenStack>
+            </RadzenColumn>
+        </RadzenRow>
+    </RadzenStack>
+}

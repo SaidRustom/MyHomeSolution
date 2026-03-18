@@ -19,6 +19,7 @@ public static class EntityNavigator
             "bill" => $"/bills/{entityId}",
             "householdtask" or "task" or "taskitem" => $"/tasks/{entityId}",
             "shoppinglist" => $"/shopping-lists/{entityId}",
+            "budget" => $"/budgets/{entityId}",
             "occurrence" or "taskoccurrence" => $"/occurrences/{entityId}",
             "user" => $"/admin/users/{entityId}",
             "userconnection" or "connection" => "/connections",

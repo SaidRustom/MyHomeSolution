@@ -9,4 +9,5 @@ public sealed record CreateShoppingListCommand : IRequest<Guid>
     public string? Description { get; init; }
     public ShoppingListCategory Category { get; init; }
     public DateOnly? DueDate { get; init; }
+    public Guid? DefaultBudgetId { get; init; }
 }

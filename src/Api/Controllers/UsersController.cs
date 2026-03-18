@@ -25,7 +25,6 @@ public sealed class UsersController(ISender sender) : ControllerBase
     // ── Admin: list users ───────────────────────────────────────────────────
 
     [HttpGet]
-    [Authorize(Roles = Roles.Administrator)]
     [ProducesResponseType(typeof(PaginatedList<UserDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetUsers(
         [FromQuery] string? searchTerm = null,

@@ -1,0 +1,40 @@
+@* Edit shopping item dialog *@
+
+<RadzenStack Orientation="Orientation.Vertical" Gap="1rem" Style="padding: 0.5rem 0;">
+    <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem">
+        <RadzenLabel Text="Name" />
+        <RadzenTextBox @bind-Value="@_name" Placeholder="Item name" Style="width: 100%;" />
+    </RadzenStack>
+
+    <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" Wrap="FlexWrap.Wrap">
+        <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem" Style="min-width: 80px;">
+            <RadzenLabel Text="Quantity" />
+            <RadzenNumeric TValue="int" @bind-Value="@_quantity" Min="1" Style="width: 80px;" />
+        </RadzenStack>
+        <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem" Style="flex: 1; min-width: 100px;">
+            <RadzenLabel Text="Unit" />
+            <RadzenTextBox @bind-Value="@_unit" Placeholder="e.g. kg, pcs" Style="width: 100%;" />
+        </RadzenStack>
+    </RadzenStack>
+
+    <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem">
+        <RadzenLabel Text="Notes" />
+        <RadzenTextBox @bind-Value="@_notes" Placeholder="Optional notes" Style="width: 100%;" />
+    </RadzenStack>
+
+    @if (!string.IsNullOrEmpty(_errorMessage))
+    {
+        <RadzenAlert AlertStyle="AlertStyle.Danger" Variant="Variant.Flat" Size="AlertSize.Small"
+                     ShowIcon="true" AllowClose="false">
+            @_errorMessage
+        </RadzenAlert>
+    }
+
+    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
+        <RadzenButton Text="Cancel" Variant="Variant.Flat" ButtonStyle="ButtonStyle.Light"
+                      Click="Cancel" Disabled="@_isBusy" />
+        <RadzenButton Text="Save" Icon="check" ButtonStyle="ButtonStyle.Primary"
+                      Click="SaveAsync" IsBusy="@_isBusy"
+                      Disabled="@(string.IsNullOrWhiteSpace(_name))" />
+    </RadzenStack>
+</RadzenStack>

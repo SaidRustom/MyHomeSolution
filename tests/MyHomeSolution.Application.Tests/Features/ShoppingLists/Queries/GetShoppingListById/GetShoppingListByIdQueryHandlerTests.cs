@@ -13,10 +13,13 @@ public sealed class GetShoppingListByIdQueryHandlerTests : IDisposable
 {
     private readonly TestDbContextFactory _factory = new();
     private readonly ICurrentUserService _currentUserService = Substitute.For<ICurrentUserService>();
+    private readonly IIdentityService _identityService = Substitute.For<IIdentityService>();
 
     public GetShoppingListByIdQueryHandlerTests()
     {
         _currentUserService.UserId.Returns("user-1");
+        _identityService.GetUserFullNamesByIdsAsync(Arg.Any<IEnumerable<string>>(), Arg.Any<CancellationToken>())
+            .Returns(new Dictionary<string, string>());
     }
 
     [Fact]
@@ -25,7 +28,7 @@ public sealed class GetShoppingListByIdQueryHandlerTests : IDisposable
         var list = await SeedListWithItems();
 
         using var context = _factory.CreateContext();
-        var handler = new GetShoppingListByIdQueryHandler(context, _currentUserService);
+        var handler = new GetShoppingListByIdQueryHandler(context, _currentUserService, _identityService);
 
         var result = await handler.Handle(new GetShoppingListByIdQuery(list.Id), CancellationToken.None);
 
@@ -41,7 +44,7 @@ public sealed class GetShoppingListByIdQueryHandlerTests : IDisposable
         var list = await SeedListWithItems();
 
         using var context = _factory.CreateContext();
-        var handler = new GetShoppingListByIdQueryHandler(context, _currentUserService);
+        var handler = new GetShoppingListByIdQueryHandler(context, _currentUserService, _identityService);
 
         var result = await handler.Handle(new GetShoppingListByIdQuery(list.Id), CancellationToken.None);
 
@@ -55,7 +58,7 @@ public sealed class GetShoppingListByIdQueryHandlerTests : IDisposable
     public async Task Handle_ShouldThrow_WhenNotFound()
     {
         using var context = _factory.CreateContext();
-        var handler = new GetShoppingListByIdQueryHandler(context, _currentUserService);
+        var handler = new GetShoppingListByIdQueryHandler(context, _currentUserService, _identityService);
 
         var act = () => handler.Handle(
             new GetShoppingListByIdQuery(Guid.CreateVersion7()), CancellationToken.None);
@@ -70,7 +73,7 @@ public sealed class GetShoppingListByIdQueryHandlerTests : IDisposable
         var list = await SeedListWithItems();
 
         using var context = _factory.CreateContext();
-        var handler = new GetShoppingListByIdQueryHandler(context, _currentUserService);
+        var handler = new GetShoppingListByIdQueryHandler(context, _currentUserService, _identityService);
 
         var act = () => handler.Handle(new GetShoppingListByIdQuery(list.Id), CancellationToken.None);
         await act.Should().ThrowAsync<ForbiddenAccessException>();
@@ -84,7 +87,7 @@ public sealed class GetShoppingListByIdQueryHandlerTests : IDisposable
         var list = await SeedSharedList();
 
         using var context = _factory.CreateContext();
-        var handler = new GetShoppingListByIdQueryHandler(context, _currentUserService);
+        var handler = new GetShoppingListByIdQueryHandler(context, _currentUserService, _identityService);
 
         var result = await handler.Handle(new GetShoppingListByIdQuery(list.Id), CancellationToken.None);
         result.Id.Should().Be(list.Id);

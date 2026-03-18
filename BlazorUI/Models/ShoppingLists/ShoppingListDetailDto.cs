@@ -14,5 +14,7 @@ public sealed record ShoppingListDetailDto
     public IReadOnlyList<ShoppingItemDto> Items { get; init; } = [];
     public DateTimeOffset CreatedAt { get; init; }
     public string? CreatedBy { get; init; }
+    public string? CreatedByFullName { get; init; }
     public DateTimeOffset? LastModifiedAt { get; init; }
+    public Guid? DefaultBudgetId { get; init; }
 }

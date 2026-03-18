@@ -1,0 +1,84 @@
+@page "/shopping-lists"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize]
+
+<PageTitle>Shopping Lists</PageTitle>
+
+<RadzenStack Orientation="Orientation.Vertical" Gap="1rem">
+
+    @* Page header *@
+    <PageHeader Title="Shopping Lists" Subtitle="Organize and track what you need to buy" Icon="shopping_cart">
+        <Actions>
+            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
+                <RadzenButton Text="New List" Icon="add" ButtonStyle="ButtonStyle.Primary" Click="CreateListAsync" />
+            </RadzenStack>
+        </Actions>
+    </PageHeader>
+
+    @* Error state *@
+    @if (Error is not null)
+    {
+        <ErrorAlert Problem="@Error" OnRetry="LoadListsAsync" />
+    }
+
+    @* Status tabs *@
+    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.Center">
+        <RadzenSelectBar TValue="ShoppingListStatusFilter" @bind-Value="@StatusFilter" Change="@OnStatusFilterChanged" Size="ButtonSize.Small">
+            <Items>
+                <RadzenSelectBarItem Text="All" Value="ShoppingListStatusFilter.All" Icon="list" />
+                <RadzenSelectBarItem Text="Active" Value="ShoppingListStatusFilter.Active" Icon="shopping_cart" />
+                <RadzenSelectBarItem Text="Completed" Value="ShoppingListStatusFilter.Completed" Icon="check_circle" />
+            </Items>
+        </RadzenSelectBar>
+    </RadzenStack>
+
+    @* Filter bar *@
+    <RadzenCard Variant="Variant.Outlined" class="rz-p-3">
+        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Wrap="FlexWrap.Wrap" Gap="0.5rem">
+            <div style="flex: 1; min-width: 200px;">
+                <RadzenTextBox Placeholder="Search lists…"
+                               @bind-Value="@SearchTerm"
+                               Style="width: 100%;"
+                               class="rz-border-radius-2" />
+            </div>
+            <div style="min-width: 180px;">
+                <RadzenDropDown TValue="ShoppingListCategory?"
+                                Data="@AllCategories"
+                                @bind-Value="@SelectedCategory"
+                                AllowClear="true"
+                                Placeholder="All Categories"
+                                Style="width: 100%;" />
+            </div>
+            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.375rem">
+                <RadzenButton Text="Search" Icon="search" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Medium" Click="OnSearchAsync" />
+                @if (HasActiveFilters)
+                {
+                    <RadzenButton Text="Clear" Icon="clear" ButtonStyle="ButtonStyle.Light" Variant="Variant.Flat" Size="ButtonSize.Medium" Click="OnClearFiltersAsync" />
+                }
+            </RadzenStack>
+        </RadzenStack>
+    </RadzenCard>
+
+    @* Content *@
+    @if (IsLoading && ListData.Items.Count == 0)
+    {
+        <LoadingIndicator Text="Loading shopping lists…" />
+    }
+    else if (!IsLoading && ListData.Items.Count == 0)
+    {
+        <EmptyState Icon="shopping_cart"
+                    Title="No shopping lists found"
+                    Description="@(HasActiveFilters ? "Try adjusting your filters." : "Create your first shopping list to start organizing.")"
+                    ActionText="@(!HasActiveFilters ? "Create List" : null)"
+                    OnAction="CreateListAsync" />
+    }
+    else
+    {
+        <ShoppingListDataGrid Data="@ListData"
+                              IsLoading="@IsLoading"
+                              PageSize="@PageSize"
+                              OnLoadData="OnLoadDataAsync"
+                              OnRowSelect="ViewList"
+                              OnDelete="DeleteListAsync"
+                              OnInStoreView="GoToInStoreView" />
+    }
+</RadzenStack>

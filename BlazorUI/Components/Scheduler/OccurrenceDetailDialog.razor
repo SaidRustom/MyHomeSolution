@@ -68,7 +68,7 @@
             @if (!string.IsNullOrEmpty(Occurrence.AssignedToUserId))
             {
                 <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem"
-                             Style="padding: 0.5rem 0.75rem; background: var(--rz-base-100); border-radius: var(--rz-border-radius);">
+                             Style="padding: 0.5rem 0.75rem; border-radius: var(--rz-border-radius);">
                     <UserAvatar UserId="@Occurrence.AssignedToUserId" AvatarUrl="@Occurrence.AssignedToUserAvatarUrl" FallbackName="@Occurrence.AssignedToUserFullName" Size="28px" />
                     <RadzenStack Orientation="Orientation.Vertical" Gap="0">
                         <RadzenText TextStyle="TextStyle.Caption" class="rz-mb-0 rz-color-secondary">Assigned to</RadzenText>
@@ -95,7 +95,7 @@
             @if (!string.IsNullOrEmpty(Occurrence.CompletedByUserId))
             {
                 <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem"
-                             Style="padding: 0.5rem 0.75rem; background: var(--rz-success-lighter); border-radius: var(--rz-border-radius);">
+                             Style="padding: 0.5rem 0.75rem; border-radius: var(--rz-border-radius);">
                     <UserAvatar UserId="@Occurrence.CompletedByUserId" AvatarUrl="@Occurrence.CompletedByUserAvatarUrl" FallbackName="@Occurrence.CompletedByUserFullName"
                                 Size="28px" FallbackIcon="check_circle" Background="var(--rz-success-lighter)" IconColor="var(--rz-success)" />
                     <RadzenStack Orientation="Orientation.Vertical" Gap="0">
@@ -117,7 +117,7 @@
         @if (Occurrence.BillId.HasValue)
         {
             <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem"
-                         Style="padding: 0.5rem 0.75rem; background: var(--rz-base-100); border-radius: var(--rz-border-radius); cursor: pointer;"
+                         Style="padding: 0.5rem 0.75rem; border-radius: var(--rz-border-radius); cursor: pointer;"
                          @onclick="NavigateToBill">
                 <RadzenIcon Icon="receipt_long" Style="color: var(--rz-warning);" />
                 <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0">

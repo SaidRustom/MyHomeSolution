@@ -38,6 +38,19 @@ public interface IShoppingListService
     Task<ApiResult> ToggleItemAsync(
         Guid listId, Guid itemId, CancellationToken cancellationToken = default);
 
+    Task<ApiResult> ToggleAllItemsAsync(
+        Guid listId, bool check, CancellationToken cancellationToken = default);
+
     Task<ApiResult<ShoppingItemDto>> AddItemFromBillItemAsync(
         Guid listId, AddShoppingItemFromBillItemRequest request, CancellationToken cancellationToken = default);
+
+    Task<ApiResult<ProcessReceiptResultDto>> ProcessReceiptAsync(
+        Guid listId, Stream fileStream, string fileName, string contentType,
+        List<SplitRequest>? splits = null, CancellationToken cancellationToken = default);
+
+    Task<ApiResult> ResolveCrossListMatchAsync(
+        Guid targetListId, ResolveCrossListMatchRequest request, CancellationToken cancellationToken = default);
+
+    Task<ApiResult<ShoppingItemGroupResultDto>> GroupItemsAsync(
+        Guid listId, CancellationToken cancellationToken = default);
 }

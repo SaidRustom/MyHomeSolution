@@ -43,6 +43,7 @@ public sealed class UpdateTaskCommandHandler(
         task.DefaultBillCategory = request.DefaultBillCategory;
         task.DefaultBillTitle = request.DefaultBillTitle;
         task.DefaultBillPaidByUserId = request.DefaultBillPaidByUserId;
+        task.DefaultBudgetId = request.DefaultBudgetId;
 
         if (request.IsRecurring && request.RecurrenceType.HasValue && request.RecurrenceStartDate.HasValue)
         {

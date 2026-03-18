@@ -1,0 +1,71 @@
+@* Shopping item purchase history dialog *@
+<RadzenStack Orientation="Orientation.Vertical" Gap="1rem" class="rz-p-2" Style="min-width: 450px;">
+
+    <RadzenText TextStyle="TextStyle.Body2" class="rz-color-secondary rz-mb-0">
+        Purchase history for <strong>@ItemName</strong> from bills linked to this shopping list.
+    </RadzenText>
+
+    @if (_isLoading)
+    {
+        <LoadingIndicator Text="Loading history…" />
+    }
+    else if (_history.Count == 0)
+    {
+        <EmptyState Icon="history" Title="No purchase history"
+                    Description="This item hasn't been purchased from a receipt yet." />
+    }
+    else
+    {
+        <RadzenDataGrid Data="@_history" TItem="ItemPurchaseRecord" Density="Density.Compact"
+                        AllowPaging="true" PageSize="10" AllowSorting="true"
+                        GridLines="DataGridGridLines.None" class="rz-datatable-striped">
+            <Columns>
+                <RadzenDataGridColumn TItem="ItemPurchaseRecord" Title="Date" Width="140px"
+                                      Property="PurchaseDate" SortOrder="SortOrder.Descending">
+                    <Template Context="row">
+                        <DateDisplay Date="@row.PurchaseDate" ShowRelative="true" />
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="ItemPurchaseRecord" Title="Store" Property="StoreName" />
+                <RadzenDataGridColumn TItem="ItemPurchaseRecord" Title="Price" Width="100px" TextAlign="TextAlign.Center">
+                    <Template Context="row">
+                        <CurrencyDisplay Amount="@row.Price" />
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="ItemPurchaseRecord" Title="Qty" Property="Quantity" Width="60px" TextAlign="TextAlign.Center" />
+                <RadzenDataGridColumn TItem="ItemPurchaseRecord" Title="Purchased By" Width="140px" Property="PurchasedByFullName" />
+                <RadzenDataGridColumn TItem="ItemPurchaseRecord" Title="" Width="40px" Sortable="false">
+                    <Template Context="row">
+                        <RadzenButton Icon="open_in_new" Variant="Variant.Text" Size="ButtonSize.Small"
+                                      ButtonStyle="ButtonStyle.Info" title="View Bill"
+                                      Click="@(() => ViewBill(row.BillId))" />
+                    </Template>
+                </RadzenDataGridColumn>
+            </Columns>
+        </RadzenDataGrid>
+
+        @if (_history.Count > 0)
+        {
+            <RadzenCard Variant="Variant.Outlined" class="rz-p-3">
+                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center">
+                    <RadzenText TextStyle="TextStyle.Caption" class="rz-color-secondary rz-mb-0">
+                        @_history.Count purchase(s) found
+                    </RadzenText>
+                    <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" AlignItems="AlignItems.Center">
+                        <RadzenText TextStyle="TextStyle.Caption" class="rz-mb-0">
+                            Avg Price: <strong><CurrencyDisplay Amount="@(_history.Average(h => h.Price))" /></strong>
+                        </RadzenText>
+                        <RadzenText TextStyle="TextStyle.Caption" class="rz-mb-0">
+                            Total: <strong><CurrencyDisplay Amount="@(_history.Sum(h => h.Price))" /></strong>
+                        </RadzenText>
+                    </RadzenStack>
+                </RadzenStack>
+            </RadzenCard>
+        }
+    }
+
+    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" class="rz-pt-2">
+        <RadzenButton Text="Close" Variant="Variant.Flat" ButtonStyle="ButtonStyle.Light"
+                      Click="@(() => DialogService.Close(null))" />
+    </RadzenStack>
+</RadzenStack>

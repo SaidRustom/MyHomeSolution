@@ -33,7 +33,8 @@ public sealed class CreateTaskCommandHandler(
             DefaultBillCurrency = request.DefaultBillCurrency,
             DefaultBillCategory = request.DefaultBillCategory,
             DefaultBillTitle = request.DefaultBillTitle,
-            DefaultBillPaidByUserId = request.DefaultBillPaidByUserId
+            DefaultBillPaidByUserId = request.DefaultBillPaidByUserId,
+            DefaultBudgetId = request.DefaultBudgetId
         };
 
         if (request.IsRecurring && request.RecurrenceType.HasValue && request.RecurrenceStartDate.HasValue)

@@ -31,6 +31,43 @@
         <RadzenColumn Size="12" SizeMD="6" SizeLG="4">
             <RadzenCard>
                 <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem">
+                    <RadzenIcon Icon="store" Style="font-size: 2rem; color: var(--rz-success);" />
+                    <RadzenStack Gap="0">
+                        <RadzenText TextStyle="TextStyle.H6" Style="margin: 0;">In-Store View</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-text-secondary-color);">
+                            Quick shopping mode with item grouping
+                        </RadzenText>
+                    </RadzenStack>
+                </RadzenStack>
+                <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem" class="rz-mt-2">
+                    @if (_isLoadingLists)
+                    {
+                        <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate"
+                                                   Size="ProgressBarCircularSize.ExtraSmall" />
+                    }
+                    else if (_activeLists.Count > 0)
+                    {
+                        <RadzenDropDown TValue="Guid?" Data="@_activeLists" TextProperty="Title" ValueProperty="Id"
+                                        @bind-Value="@_selectedListId" Placeholder="Select a list…" Style="width: 100%;"
+                                        AllowClear="true" />
+                        <RadzenButton Text="Open In-Store View" Icon="arrow_forward" Variant="Variant.Text"
+                                      ButtonStyle="ButtonStyle.Success"
+                                      Disabled="@(!_selectedListId.HasValue)"
+                                      Click="@(() => Navigation.NavigateTo($"/shopping-lists/{_selectedListId}/in-store"))" />
+                    }
+                    else
+                    {
+                        <RadzenText TextStyle="TextStyle.Caption" class="rz-color-secondary rz-mb-0">No active shopping lists</RadzenText>
+                        <RadzenButton Text="View Lists" Icon="arrow_forward" Variant="Variant.Text"
+                                      ButtonStyle="ButtonStyle.Primary"
+                                      Click="@(() => Navigation.NavigateTo("/shopping-lists"))" />
+                    }
+                </RadzenStack>
+            </RadzenCard>
+        </RadzenColumn>
+        <RadzenColumn Size="12" SizeMD="6" SizeLG="4">
+            <RadzenCard>
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem">
                     <RadzenIcon Icon="dashboard" Style="font-size: 2rem; color: var(--rz-primary);" />
                     <RadzenStack Gap="0">
                         <RadzenText TextStyle="TextStyle.H6" Style="margin: 0;">Dashboard</RadzenText>
@@ -44,6 +81,9 @@
                               Click="@(() => Navigation.NavigateTo("/bills/dashboard"))" />
             </RadzenCard>
         </RadzenColumn>
+    </RadzenRow>
+
+    <RadzenRow Gap="1rem" RowGap="1rem">
         <RadzenColumn Size="12" SizeMD="6" SizeLG="4">
             <RadzenCard>
                 <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem">

@@ -27,6 +27,12 @@ public sealed class HouseholdTask : BaseAuditableEntity, IBillable
     public string? DefaultBillTitle { get; set; }
     public string? DefaultBillPaidByUserId { get; set; }
 
+    /// <summary>
+    /// Default budget to attach when a bill is auto-created from this task.
+    /// </summary>
+    public Guid? DefaultBudgetId { get; set; }
+    public Budget? DefaultBudget { get; set; }
+
     public RecurrencePattern? RecurrencePattern { get; set; }
     public ICollection<TaskOccurrence> Occurrences { get; set; } = [];
     public ICollection<Bill> Bills { get; set; } = [];

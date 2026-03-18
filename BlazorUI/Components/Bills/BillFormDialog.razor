@@ -52,6 +52,32 @@
             <RadzenTextArea Name="Notes" @bind-Value="@Model.Notes" Placeholder="Optional notes…" Rows="2" Style="width: 100%;" />
         </RadzenStack>
 
+        @* Budget(s) *@
+        <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem">
+            <RadzenLabel Text="Budget (Optional)" />
+            <RadzenDropDown TValue="Guid?"
+                            Data="@AvailableBudgets.Items"
+                            @bind-Value="@Model.BudgetId"
+                            TextProperty="Name"
+                            ValueProperty="Id"
+                            AllowClear="true"
+                            AllowFiltering="true"
+                            FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                            Placeholder="Select budgets…"
+                            Style="width: 100%;">
+                <Template Context="budget">
+                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                        <RadzenBadge Text="@((budget as BlazorUI.Models.Budgets.BudgetBriefDto)?.Category.ToString())"
+                                     BadgeStyle="BadgeStyle.Info" IsPill="true" Variant="Variant.Flat" Style="font-size: 0.6rem;" />
+                        <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0">@((budget as BlazorUI.Models.Budgets.BudgetBriefDto)?.Name)</RadzenText>
+                    </RadzenStack>
+                </Template>
+            </RadzenDropDown>
+            <RadzenText TextStyle="TextStyle.Caption" class="rz-mb-0 rz-color-secondary">
+                Bills will be linked to selected budgets and spending tracked.
+            </RadzenText>
+        </RadzenStack>
+
         @* Paid By — filtered to split participants + current user *@
         @if (IsEdit || Model.Splits.Count > 0)
         {

@@ -12,7 +12,7 @@
     @* Bill summary *@
     @if (!string.IsNullOrEmpty(BillTitle))
     {
-        <RadzenCard Variant="Variant.Flat" class="rz-p-3" Style="background: var(--rz-base-100); border-radius: var(--rz-border-radius);">
+        <RadzenCard Variant="Variant.Flat" class="rz-p-3" Style="border-radius: var(--rz-border-radius);">
             <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
                 <RadzenStack Orientation="Orientation.Vertical" Gap="0.125rem">
                     <RadzenText TextStyle="TextStyle.Subtitle2" class="rz-mb-0"><strong>@BillTitle</strong></RadzenText>

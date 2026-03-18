@@ -135,9 +135,16 @@ public static class DependencyInjection
             .ValidateDataAnnotations()
             .ValidateOnStart();
 
+        services
+            .AddOptions<BudgetOccurrenceGeneratorOptions>()
+            .Bind(configuration.GetSection(BudgetOccurrenceGeneratorOptions.SectionName))
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
+
         services.AddScoped<IOccurrenceScheduler, OccurrenceScheduler>();
         services.AddHostedService<OccurrenceGeneratorService>();
         services.AddHostedService<OverdueOccurrenceService>();
+        services.AddHostedService<BudgetOccurrenceGeneratorService>();
     }
 
     private static void AddReceiptAnalysis(
@@ -152,6 +159,11 @@ public static class DependencyInjection
         services.AddHttpClient<IReceiptAnalysisService, OpenAiReceiptAnalysisService>(client =>
         {
             client.Timeout = TimeSpan.FromSeconds(60);
+        });
+
+        services.AddHttpClient<IShoppingItemGroupingService, OpenAiShoppingItemGroupingService>(client =>
+        {
+            client.Timeout = TimeSpan.FromSeconds(30);
         });
     }
 

@@ -20,5 +20,19 @@ public enum NotificationType
     ShoppingListCreated = 15,
     ShoppingListUpdated = 16,
     ShoppingListDeleted = 17,
-    ShoppingItemChecked = 18
+    ShoppingItemChecked = 18,
+    ConnectionRequestReceived = 19,
+    ConnectionRequestAccepted = 20,
+    OccurrenceOverdue = 21,
+    OccurrenceStarted = 22,
+    OccurrenceRescheduled = 23,
+    OccurrenceCompletedByOther = 24,
+    BillRequiresPayment = 25,
+    BudgetCreated = 26,
+    BudgetUpdated = 27,
+    BudgetDeleted = 28,
+    BudgetThresholdReached = 29,
+    BudgetExceeded = 30,
+    BudgetTransfer = 31,
+    BudgetPeriodExpired = 32
 }

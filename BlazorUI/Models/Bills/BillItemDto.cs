@@ -8,4 +8,7 @@ public sealed record BillItemDto
     public decimal UnitPrice { get; init; }
     public decimal Price { get; init; }
     public decimal Discount { get; init; }
+    public bool IsTaxable { get; init; }
+    public decimal TaxAmount { get; init; }
+    public Guid? ShoppingListId { get; init; }
 }

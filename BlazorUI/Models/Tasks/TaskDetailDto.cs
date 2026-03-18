@@ -26,6 +26,8 @@ public sealed record TaskDetailDto
     public string? DefaultBillTitle { get; init; }
     public string? DefaultBillPaidByUserId { get; init; }
     public string? DefaultBillPaidByUserFullName { get; init; }
+    public Guid? DefaultBudgetId { get; init; }
+    public string? DefaultBudgetName { get; init; }
     public RecurrencePatternDto? RecurrencePattern { get; init; }
     public IReadOnlyCollection<OccurrenceDto> Occurrences { get; init; } = [];
 }

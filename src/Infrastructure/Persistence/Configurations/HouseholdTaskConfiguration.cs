@@ -32,6 +32,11 @@ public sealed class HouseholdTaskConfiguration : IEntityTypeConfiguration<Househ
         builder.Ignore(t => t.AuditLogs);
         builder.Ignore(t => t.Bills);
 
+        builder.HasOne(t => t.DefaultBudget)
+            .WithMany()
+            .HasForeignKey(t => t.DefaultBudgetId)
+            .OnDelete(DeleteBehavior.SetNull);
+
         builder.HasOne(t => t.RecurrencePattern)
             .WithOne(rp => rp.HouseholdTask)
             .HasForeignKey<RecurrencePattern>(rp => rp.HouseholdTaskId)

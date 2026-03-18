@@ -1,0 +1,254 @@
+@page "/shopping-lists/{Id:guid}/in-store"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize]
+
+<PageTitle>In-Store View — @(_detail?.Title ?? "Shopping")</PageTitle>
+
+<RadzenStack Orientation="Orientation.Vertical" Gap="1rem">
+
+    @* Page header *@
+    <PageHeader Title="@(_detail?.Title ?? "In-Store View")"
+                Subtitle="@(_detail is not null ? $"{RemainingCount} items remaining" : null)"
+                Icon="store">
+        <Breadcrumb>
+            <RadzenBreadCrumb>
+                <RadzenBreadCrumbItem Path="/shopping-lists" Text="Shopping Lists" Icon="shopping_cart" />
+                <RadzenBreadCrumbItem Path="@($"/shopping-lists/{Id}")" Text="@(_detail?.Title ?? "Detail")" />
+                <RadzenBreadCrumbItem Text="In-Store View" />
+            </RadzenBreadCrumb>
+        </Breadcrumb>
+        <Actions>
+            @if (_detail is not null)
+            {
+                <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" Wrap="FlexWrap.Wrap">
+                    <RadzenButton Text="Add Receipt" Icon="receipt_long" ButtonStyle="ButtonStyle.Primary"
+                                  Click="OpenReceiptScanAsync" />
+                    <RadzenButton Text="Back to Detail" Icon="arrow_back" Variant="Variant.Outlined"
+                                  ButtonStyle="ButtonStyle.Secondary"
+                                  Click="@(() => NavigationManager.NavigateTo($"/shopping-lists/{Id}"))" />
+                </RadzenStack>
+            }
+        </Actions>
+    </PageHeader>
+
+    @* Error *@
+    @if (_error is not null)
+    {
+        <ErrorAlert Problem="@_error" OnRetry="LoadDetailAsync" />
+    }
+
+    @* Loading *@
+    @if (_isLoading)
+    {
+        <LoadingIndicator Text="Loading list…" />
+    }
+    else if (_detail is not null)
+    {
+        @* Summary strip *@
+        <RadzenRow Gap="1rem" RowGap="1rem">
+            <RadzenColumn Size="12" SizeSM="6" SizeLG="3">
+                <StatCard Title="Items Remaining" Value="@RemainingCount.ToString()" Icon="checklist"
+                          IconColor="var(--rz-primary)" />
+            </RadzenColumn>
+            <RadzenColumn Size="12" SizeSM="6" SizeLG="3">
+                <StatCard Title="Predicted Cost" Value="@(PredictedCost > 0 ? $"${PredictedCost:N2}" : "—")" Icon="savings"
+                          IconColor="var(--rz-info)"
+                          Subtitle="@(PredictedCost > 0 ? "Based on avg prices" : "No price data")" />
+            </RadzenColumn>
+        </RadzenRow>
+
+        @* Group Items action bar *@
+        @if (RemainingCount > 4)
+        {
+            <RadzenCard Variant="Variant.Outlined" class="rz-p-3">
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center"
+                             JustifyContent="JustifyContent.SpaceBetween" Wrap="FlexWrap.Wrap" Gap="0.5rem">
+                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                        <RadzenIcon Icon="category" Style="color: var(--rz-primary);" />
+                        <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0">
+                            <strong>@RemainingCount items</strong> — group by store aisle for faster shopping
+                        </RadzenText>
+                    </RadzenStack>
+                    <RadzenButton Text="@(_isGrouped ? "Ungroup" : "Group Items")"
+                                  Icon="@(_isGrouped ? "view_list" : "category")"
+                                  ButtonStyle="@(_isGrouped ? ButtonStyle.Light : ButtonStyle.Info)"
+                                  Variant="@(_isGrouped ? Variant.Outlined : Variant.Filled)"
+                                  Size="ButtonSize.Small"
+                                  Click="ToggleGroupingAsync"
+                                  IsBusy="@_isGrouping"
+                                  Disabled="@_isGrouping" />
+                </RadzenStack>
+            </RadzenCard>
+        }
+
+        @* Grouping loading state *@
+        @if (_isGrouping)
+        {
+            <RadzenCard Variant="Variant.Outlined" class="rz-p-4">
+                <RadzenStack Orientation="Orientation.Vertical" AlignItems="AlignItems.Center" Gap="0.75rem">
+                    <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate"
+                                               Size="ProgressBarCircularSize.Medium" />
+                    <RadzenText TextStyle="TextStyle.Body2" class="rz-color-secondary">Grouping items by store aisle…</RadzenText>
+                </RadzenStack>
+            </RadzenCard>
+        }
+
+        @* Grouped view *@
+        @if (_isGrouped && _groups is not null && !_isGrouping)
+        {
+            @foreach (var group in _groups)
+            {
+                <RadzenCard Variant="Variant.Outlined" class="rz-p-0" Style="overflow: hidden;">
+                    <div class="rz-p-3" style="border-bottom: 1px solid var(--rz-base-100);">
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                            <div style="width: 32px; height: 32px; border-radius: 50%; background: color-mix(in srgb, var(--rz-primary) 12%, transparent); display: flex; align-items: center; justify-content: center;">
+                                <RadzenIcon Icon="@group.Icon" Style="font-size: 1rem; color: var(--rz-primary);" />
+                            </div>
+                            <RadzenText TextStyle="TextStyle.Subtitle2" class="rz-mb-0"><strong>@group.Category</strong></RadzenText>
+                            <RadzenBadge BadgeStyle="BadgeStyle.Info" IsPill="true" Variant="Variant.Flat"
+                                         Text="@group.Items.Count.ToString()" />
+                        </RadzenStack>
+                    </div>
+                    @foreach (var item in group.Items)
+                    {
+                        <div class="rz-p-3 in-store-item" style="border-bottom: 1px solid var(--rz-base-100);">
+                            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center"
+                                         JustifyContent="JustifyContent.SpaceBetween" Gap="0.75rem">
+                                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.75rem" Style="flex: 1; min-width: 0;">
+                                    <RadzenCheckBox TValue="bool" Value="@item.IsChecked"
+                                                    ValueChanged="@(_ => ToggleItemAsync(item))" />
+                                    <RadzenStack Orientation="Orientation.Vertical" Gap="0" Style="min-width: 0;">
+                                        <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0"
+                                                    Style="@(item.IsChecked ? "text-decoration: line-through; opacity: 0.6;" : "")">
+                                            <strong>@item.Name</strong>
+                                            @if (item.Quantity > 1 || !string.IsNullOrEmpty(item.Unit))
+                                            {
+                                                <span class="rz-color-secondary"> — @item.Quantity @item.Unit</span>
+                                            }
+                                        </RadzenText>
+                                        @if (!string.IsNullOrEmpty(item.Notes))
+                                        {
+                                            <RadzenText TextStyle="TextStyle.Caption" class="rz-mb-0 rz-color-secondary">
+                                                @item.Notes
+                                            </RadzenText>
+                                        }
+                                    </RadzenStack>
+                                </RadzenStack>
+                                @if (item.AveragePrice.HasValue)
+                                {
+                                    <RadzenBadge BadgeStyle="BadgeStyle.Secondary" IsPill="true" Variant="Variant.Outlined"
+                                                 Text="@($"~${item.AveragePrice.Value:N2}")" Style="font-variant-numeric: tabular-nums;" />
+                                }
+                            </RadzenStack>
+                        </div>
+                    }
+                </RadzenCard>
+            }
+        }
+
+        @* Flat (ungrouped) view *@
+        @if (!_isGrouped && !_isGrouping)
+        {
+            <RadzenCard Variant="Variant.Outlined" class="rz-p-0" Style="overflow: hidden;">
+                @if (UncheckedItems.Count == 0)
+                {
+                    <div class="rz-p-4">
+                        <EmptyState Icon="check_circle" Title="All done!"
+                                    Description="Every item has been checked off. Great shopping!" />
+                    </div>
+                }
+                else
+                {
+                    <div class="rz-p-3" style="border-bottom: 1px solid var(--rz-base-100);">
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                            <RadzenIcon Icon="checklist" Style="color: var(--rz-primary);" />
+                            <RadzenText TextStyle="TextStyle.Subtitle2" class="rz-mb-0"><strong>Items to Get</strong></RadzenText>
+                            <RadzenBadge BadgeStyle="BadgeStyle.Info" IsPill="true" Variant="Variant.Flat"
+                                         Text="@RemainingCount.ToString()" />
+                        </RadzenStack>
+                    </div>
+                    @foreach (var item in UncheckedItems)
+                    {
+                        <div class="rz-p-3 in-store-item" style="border-bottom: 1px solid var(--rz-base-100);">
+                            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center"
+                                         JustifyContent="JustifyContent.SpaceBetween" Gap="0.75rem">
+                                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.75rem" Style="flex: 1; min-width: 0;">
+                                    <RadzenCheckBox TValue="bool" Value="@item.IsChecked"
+                                                    ValueChanged="@(_ => ToggleItemAsync(item))" />
+                                    <RadzenStack Orientation="Orientation.Vertical" Gap="0" Style="min-width: 0;">
+                                        <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0">
+                                            <strong>@item.Name</strong>
+                                            @if (item.Quantity > 1 || !string.IsNullOrEmpty(item.Unit))
+                                            {
+                                                <span class="rz-color-secondary"> — @item.Quantity @item.Unit</span>
+                                            }
+                                        </RadzenText>
+                                        @if (!string.IsNullOrEmpty(item.Notes))
+                                        {
+                                            <RadzenText TextStyle="TextStyle.Caption" class="rz-mb-0 rz-color-secondary">
+                                                @item.Notes
+                                            </RadzenText>
+                                        }
+                                    </RadzenStack>
+                                </RadzenStack>
+                                @if (item.AveragePrice.HasValue)
+                                {
+                                    <RadzenBadge BadgeStyle="BadgeStyle.Secondary" IsPill="true" Variant="Variant.Outlined"
+                                                 Text="@($"~${item.AveragePrice.Value:N2}")" Style="font-variant-numeric: tabular-nums;" />
+                                }
+                            </RadzenStack>
+                        </div>
+                    }
+                }
+            </RadzenCard>
+        }
+
+        @* Recently checked (collapsed) *@
+        @if (RecentlyCheckedItems.Count > 0)
+        {
+            <RadzenCard Variant="Variant.Outlined" class="rz-p-0" Style="overflow: hidden;">
+                <div class="rz-p-3" style="border-bottom: 1px solid var(--rz-base-100); cursor: pointer;"
+                     @onclick="() => _showChecked = !_showChecked">
+                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center"
+                                 JustifyContent="JustifyContent.SpaceBetween">
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                            <RadzenIcon Icon="check_circle" Style="color: var(--rz-success);" />
+                            <RadzenText TextStyle="TextStyle.Subtitle2" class="rz-mb-0"><strong>Checked Off</strong></RadzenText>
+                            <RadzenBadge BadgeStyle="BadgeStyle.Success" IsPill="true" Variant="Variant.Flat"
+                                         Text="@CheckedCount.ToString()" />
+                        </RadzenStack>
+                        <RadzenIcon Icon="@(_showChecked ? "expand_less" : "expand_more")"
+                                    Style="color: var(--rz-text-secondary-color);" />
+                    </RadzenStack>
+                </div>
+                @if (_showChecked)
+                {
+                    @foreach (var item in RecentlyCheckedItems)
+                    {
+                        <div class="rz-p-3" style="border-bottom: 1px solid var(--rz-base-100); opacity: 0.6;">
+                            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.75rem">
+                                <RadzenCheckBox TValue="bool" Value="@item.IsChecked"
+                                                ValueChanged="@(_ => ToggleItemAsync(item))" />
+                                <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0" Style="text-decoration: line-through;">
+                                    @item.Name
+                                    @if (item.Quantity > 1 || !string.IsNullOrEmpty(item.Unit))
+                                    {
+                                        <span class="rz-color-secondary"> — @item.Quantity @item.Unit</span>
+                                    }
+                                </RadzenText>
+                            </RadzenStack>
+                        </div>
+                    }
+                }
+            </RadzenCard>
+        }
+    }
+</RadzenStack>
+
+<style>
+    .in-store-item {
+        transition: background-color 0.15s ease;
+    }
+    .in-store-item:hover {
+        background-color: var(--rz-info);
+    }
+</style>

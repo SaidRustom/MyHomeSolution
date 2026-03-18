@@ -10,10 +10,10 @@ public partial class ResetPassword
     [Inject] private NavigationManager Navigation { get; set; } = default!;
 
     [SupplyParameterFromQuery(Name = "userId")]
-    private string? UserId { get; set; }
+    public string? UserId { get; set; }
 
     [SupplyParameterFromQuery(Name = "token")]
-    private string? Token { get; set; }
+    public string? Token { get; set; }
 
     private ResetPasswordRequest Model { get; set; } = new();
     private bool IsLoading { get; set; }

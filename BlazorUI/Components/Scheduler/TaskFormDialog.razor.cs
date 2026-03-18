@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using BlazorUI.Components.Bills;
+using BlazorUI.Models.Budgets;
 using BlazorUI.Models.Common;
 using BlazorUI.Models.Enums;
 using BlazorUI.Models.Tasks;
@@ -18,6 +19,9 @@ public partial class TaskFormDialog
 
     [Inject]
     ITaskService TaskService { get; set; } = default!;
+
+    [Inject]
+    IBudgetService BudgetService { get; set; } = default!;
 
     [Inject]
     NotificationService Notifications { get; set; } = default!;
@@ -46,6 +50,8 @@ public partial class TaskFormDialog
     IEnumerable<RecurrenceType> RecurrenceTypes => Enum.GetValues<RecurrenceType>();
     IEnumerable<BillCategory> BillCategories => Enum.GetValues<BillCategory>();
 
+    PaginatedList<BudgetBriefDto> AvailableBudgets { get; set; } = new();
+
     protected override async Task OnInitializedAsync()
     {
         var state = await AuthState;
@@ -69,6 +75,10 @@ public partial class TaskFormDialog
                 FullName = $"{name} (You)"
             };
         }
+
+        var budgetResult = await BudgetService.GetBudgetsAsync(pageNumber: 1, pageSize: 100);
+        if (budgetResult.IsSuccess)
+            AvailableBudgets = budgetResult.Value;
     }
 
     void OnRecurrenceToggled(bool value)
@@ -213,6 +223,7 @@ public sealed class TaskFormModel
     public BillCategory? DefaultBillCategory { get; set; }
     public string? DefaultBillTitle { get; set; }
     public string? DefaultBillPaidByUserId { get; set; }
+    public Guid? DefaultBudgetId { get; set; }
     public List<BillSplitFormModel> BillSplits { get; set; } = [];
 
     public CreateTaskRequest ToCreateRequest() => new()
@@ -235,7 +246,8 @@ public sealed class TaskFormModel
         DefaultBillCurrency = AutoCreateBill ? DefaultBillCurrency : null,
         DefaultBillCategory = AutoCreateBill ? DefaultBillCategory : null,
         DefaultBillTitle = AutoCreateBill ? DefaultBillTitle : null,
-        DefaultBillPaidByUserId = AutoCreateBill ? DefaultBillPaidByUserId : null
+        DefaultBillPaidByUserId = AutoCreateBill ? DefaultBillPaidByUserId : null,
+        DefaultBudgetId = AutoCreateBill ? DefaultBudgetId : null
     };
 
     public UpdateTaskRequest ToUpdateRequest() => new()
@@ -260,7 +272,8 @@ public sealed class TaskFormModel
         DefaultBillCurrency = AutoCreateBill ? DefaultBillCurrency : null,
         DefaultBillCategory = AutoCreateBill ? DefaultBillCategory : null,
         DefaultBillTitle = AutoCreateBill ? DefaultBillTitle : null,
-        DefaultBillPaidByUserId = AutoCreateBill ? DefaultBillPaidByUserId : null
+        DefaultBillPaidByUserId = AutoCreateBill ? DefaultBillPaidByUserId : null,
+        DefaultBudgetId = AutoCreateBill ? DefaultBudgetId : null
     };
 
     public static TaskFormModel FromDetail(TaskDetailDto detail) => new()
@@ -285,6 +298,7 @@ public sealed class TaskFormModel
         DefaultBillCurrency = detail.DefaultBillCurrency,
         DefaultBillCategory = detail.DefaultBillCategory,
         DefaultBillTitle = detail.DefaultBillTitle,
-        DefaultBillPaidByUserId = detail.DefaultBillPaidByUserId
+        DefaultBillPaidByUserId = detail.DefaultBillPaidByUserId,
+        DefaultBudgetId = detail.DefaultBudgetId
     };
 }

@@ -1,10 +1,12 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using MyHomeSolution.Application.Common.Constants;
 using MyHomeSolution.Application.Common.Events;
 using MyHomeSolution.Application.Common.Exceptions;
 using MyHomeSolution.Application.Common.Interfaces;
 using MyHomeSolution.Domain.Entities;
 using MyHomeSolution.Domain.Enums;
+using System.Data;
 
 namespace MyHomeSolution.Application.Features.Bills.Commands.UpdateBill;
 
@@ -21,10 +23,10 @@ public sealed class UpdateBillCommandHandler(
 
         var bill = await dbContext.Bills
             .Include(b => b.Splits)
+            .Include(b => b.BudgetLink)
             .FirstOrDefaultAsync(b => b.Id == request.Id && !b.IsDeleted, cancellationToken)
             ?? throw new NotFoundException(nameof(Bill), request.Id);
 
-        var oldAmount = bill.Amount;
         bill.Title = request.Title;
         bill.Description = request.Description;
         bill.Amount = request.Amount;
@@ -32,6 +34,50 @@ public sealed class UpdateBillCommandHandler(
         bill.Category = request.Category;
         bill.BillDate = request.BillDate;
         bill.Notes = request.Notes;
+
+        // Handle budget link: single-budget model
+        if (request.BudgetId.HasValue)
+        {
+            if (bill.BudgetLink is not null && bill.BudgetLink.BudgetId != request.BudgetId.Value)
+            {
+                // Changing budget: remove old link and create new one
+                dbContext.BillBudgetLinks.Remove(bill.BudgetLink);
+                bill.BudgetLink = null;
+            }
+
+            if (bill.BudgetLink is null)
+            {
+                var budgetExists = await dbContext.Budgets
+                    .AnyAsync(b => b.Id == request.BudgetId.Value && !b.IsDeleted, cancellationToken);
+
+                if (budgetExists)
+                {
+                    // Find the active occurrence, or fall back to the most recent
+                    var activeOccurrence = await dbContext.BudgetOccurrences
+                        .Where(o => o.BudgetId == request.BudgetId.Value
+                            && o.PeriodStart <= bill.BillDate && o.PeriodEnd >= bill.BillDate)
+                        .FirstOrDefaultAsync(cancellationToken);
+
+                    if (activeOccurrence is null)
+                    {
+                        activeOccurrence = await dbContext.BudgetOccurrences
+                            .Where(o => o.BudgetId == request.BudgetId.Value)
+                            .OrderByDescending(o => o.PeriodStart)
+                            .FirstOrDefaultAsync(cancellationToken);
+                    }
+
+                    if (activeOccurrence is not null)
+                    {
+                        bill.BudgetLink = new BillBudgetLink
+                        {
+                            BillId = bill.Id,
+                            BudgetId = request.BudgetId.Value,
+                            BudgetOccurrenceId = activeOccurrence.Id
+                        };
+                    }
+                }
+            }
+        }
 
         // Update PaidByUserId if provided
         if (!string.IsNullOrEmpty(request.PaidByUserId))
@@ -64,13 +110,14 @@ public sealed class UpdateBillCommandHandler(
                     UserId = splitReq.UserId,
                     Percentage = percentage,
                     Amount = splitAmount,
-                    Status = splitReq.UserId == bill.PaidByUserId ? SplitStatus.Paid : SplitStatus.Unpaid
+                    Status = string.IsNullOrEmpty(bill.PaidByUserId) ? SplitStatus.Unpaid : SplitStatus.Paid,
+                    OwedToUserId = splitReq.UserId == bill.PaidByUserId ? null : bill.PaidByUserId
                 });
             }
 
             dbContext.BillSplits.AddRange(splits);
         }
-        else if (oldAmount != request.Amount)
+        else if (bill.Amount != request.Amount)
         {
             // Recalculate amounts based on existing percentages
             splits = bill.Splits.ToList();

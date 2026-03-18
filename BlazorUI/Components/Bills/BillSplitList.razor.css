@@ -1,0 +1,137 @@
+/* ═══════════════════════════════════════════════════════════
+   BillSplitList — Modern Card-Based Split Items
+   ═══════════════════════════════════════════════════════════ */
+
+.split-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.split-card {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    border-radius: var(--rz-border-radius);
+    background: var(--rz-base-background-color);
+    border: 1px solid var(--rz-base-200);
+    transition: transform 0.12s ease, box-shadow 0.12s ease, border-color 0.12s ease;
+}
+
+.split-card:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
+    border-color: var(--rz-base-300);
+}
+
+.split-card.paid {
+    background: color-mix(in srgb, var(--rz-success) 3%, var(--rz-base-background-color));
+    border-color: color-mix(in srgb, var(--rz-success) 20%, transparent);
+}
+
+.split-card.settled {
+    background: color-mix(in srgb, var(--rz-info) 3%, var(--rz-base-background-color));
+    border-color: color-mix(in srgb, var(--rz-info) 20%, transparent);
+}
+
+/* ── User Info ──────────────────────────────────────────── */
+.split-user {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    flex: 1;
+    min-width: 0;
+}
+
+.split-user-info {
+    min-width: 0;
+}
+
+.split-user-name {
+    font-weight: 600;
+    font-size: 0.875rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.split-user-pct {
+    font-size: 0.75rem;
+    color: var(--rz-text-secondary-color);
+}
+
+/* ── Amount Column ──────────────────────────────────────── */
+.split-amount {
+    text-align: right;
+    flex-shrink: 0;
+    min-width: 80px;
+}
+
+.split-amount-value {
+    font-weight: 700;
+    font-size: 0.9375rem;
+    font-variant-numeric: tabular-nums;
+}
+
+.split-amount-date {
+    font-size: 0.6875rem;
+    color: var(--rz-text-secondary-color);
+}
+
+/* ── Owed-To Pill ───────────────────────────────────────── */
+.split-owed-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.1875rem 0.5rem;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--rz-warning) 10%, transparent);
+    font-size: 0.6875rem;
+    color: var(--rz-warning-dark);
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+/* ── Status + Action ────────────────────────────────────── */
+.split-status-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-shrink: 0;
+}
+
+/* ── Empty state ────────────────────────────────────────── */
+.split-empty {
+    text-align: center;
+    padding: 2rem 1rem;
+    color: var(--rz-text-secondary-color);
+    font-size: 0.875rem;
+}
+
+/* ── Responsive ─────────────────────────────────────────── */
+@media (max-width: 640px) {
+    .split-card {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        padding: 0.625rem 0.75rem;
+    }
+
+    .split-user {
+        flex: 1 1 100%;
+    }
+
+    .split-amount {
+        text-align: left;
+        min-width: auto;
+    }
+
+    .split-status-actions {
+        margin-left: auto;
+    }
+
+    .split-owed-pill {
+        order: -1;
+        flex-basis: 100%;
+    }
+}

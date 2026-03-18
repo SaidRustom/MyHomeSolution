@@ -23,4 +23,10 @@ public sealed class Bill : BaseAuditableEntity
 
     public ICollection<BillSplit> Splits { get; set; } = [];
     public ICollection<BillItem> Items { get; set; } = [];
+    public ICollection<BillRelatedItem> RelatedItems { get; set; } = [];
+
+    /// <summary>
+    /// Single budget link. A bill can only belong to one budget.
+    /// </summary>
+    public BillBudgetLink? BudgetLink { get; set; }
 }

@@ -1,0 +1,87 @@
+@* Shopping list create/edit form dialog *@
+
+<RadzenStack Orientation="Orientation.Vertical" Gap="1.25rem" Style="padding: 0.5rem 0;">
+    <RadzenTemplateForm TItem="ShoppingListFormModel" Data="@Model" Submit="OnSubmitAsync">
+
+        <RadzenStack Orientation="Orientation.Vertical" Gap="1rem">
+
+            @* Title *@
+            <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem">
+                <RadzenLabel Text="Title" Component="Title" />
+                <RadzenTextBox Name="Title" @bind-Value="@Model.Title" Placeholder="e.g. Weekly Groceries" Style="width: 100%;" />
+                <RadzenRequiredValidator Component="Title" Text="Title is required" />
+            </RadzenStack>
+
+            @* Description *@
+            <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem">
+                <RadzenLabel Text="Description" Component="Description" />
+                <RadzenTextArea Name="Description" @bind-Value="@Model.Description" Placeholder="Optional notes…"
+                                Rows="3" Style="width: 100%;" />
+            </RadzenStack>
+
+            @* Category & Due Date *@
+            <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" Wrap="FlexWrap.Wrap">
+                <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem" Style="flex: 1; min-width: 200px;">
+                    <RadzenLabel Text="Category" Component="Category" />
+                    <RadzenDropDown TValue="ShoppingListCategory" Name="Category"
+                                    Data="@Categories"
+                                    @bind-Value="@Model.Category"
+                                    Style="width: 100%;" />
+                </RadzenStack>
+                <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem" Style="flex: 1; min-width: 200px;">
+                    <RadzenLabel Text="Due Date" Component="DueDate" />
+                    <RadzenDatePicker TValue="DateOnly?" Name="DueDate"
+                                      @bind-Value="@Model.DueDate"
+                                      Placeholder="Optional"
+                                      DateFormat="MMM dd, yyyy"
+                                      Style="width: 100%;" />
+                </RadzenStack>
+            </RadzenStack>
+
+            @* Default Budget *@
+            <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem">
+                <RadzenLabel Text="Default Budget (Optional)" />
+                <RadzenDropDown TValue="Guid?"
+                                Data="@AvailableBudgets.Items"
+                                @bind-Value="@Model.DefaultBudgetId"
+                                TextProperty="Name"
+                                ValueProperty="Id"
+                                AllowClear="true"
+                                AllowFiltering="true"
+                                FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                                Placeholder="Select budget…"
+                                Style="width: 100%;">
+                    <Template Context="budget">
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                            <RadzenBadge Text="@((budget as BlazorUI.Models.Budgets.BudgetBriefDto)?.Category.ToString())"
+                                         BadgeStyle="BadgeStyle.Info" IsPill="true" Variant="Variant.Flat" Style="font-size: 0.6rem;" />
+                            <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0">@((budget as BlazorUI.Models.Budgets.BudgetBriefDto)?.Name)</RadzenText>
+                        </RadzenStack>
+                    </Template>
+                </RadzenDropDown>
+                <RadzenText TextStyle="TextStyle.Caption" class="rz-mb-0 rz-color-secondary">
+                    Bills created from this list will be linked to this budget.
+                </RadzenText>
+            </RadzenStack>
+
+        </RadzenStack>
+
+        @* Error message *@
+        @if (!string.IsNullOrEmpty(ErrorMessage))
+        {
+            <RadzenAlert AlertStyle="AlertStyle.Danger" Variant="Variant.Flat" Size="AlertSize.Small"
+                         ShowIcon="true" AllowClose="false">
+                @ErrorMessage
+            </RadzenAlert>
+        }
+
+        @* Actions *@
+        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem" class="rz-mt-2">
+            <RadzenButton Text="Cancel" Variant="Variant.Flat" ButtonStyle="ButtonStyle.Light"
+                          Click="CancelAsync" ButtonType="ButtonType.Button" Disabled="@IsBusy" />
+            <RadzenButton Text="@SubmitText" Icon="@(IsBusy ? "" : "check")" ButtonStyle="ButtonStyle.Primary"
+                          ButtonType="ButtonType.Submit" IsBusy="@IsBusy" />
+        </RadzenStack>
+
+    </RadzenTemplateForm>
+</RadzenStack>

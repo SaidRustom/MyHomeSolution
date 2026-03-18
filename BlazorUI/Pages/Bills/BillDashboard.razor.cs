@@ -1,6 +1,7 @@
 using BlazorUI.Models.Bills;
 using BlazorUI.Models.Common;
 using BlazorUI.Models.Enums;
+using BlazorUI.Models.ShoppingLists;
 using BlazorUI.Services.Contracts;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
@@ -17,6 +18,9 @@ public partial class BillDashboard : IDisposable
 {
     [Inject]
     IBillService BillService { get; set; } = default!;
+
+    [Inject]
+    IShoppingListService ShoppingListService { get; set; } = default!;
 
     [Inject]
     NavigationManager NavigationManager { get; set; } = default!;
@@ -47,6 +51,7 @@ public partial class BillDashboard : IDisposable
             var bills = RecentBills.Items
                 .Where(b => b.IsFullyPaid)
                 .Where(b => PassesUserScopeFilter(b))
+                .Where(b => PassesAnalysisFilters(b))
                 .OrderByDescending(b => b.BillDate);
 
             return _recentFilter switch
@@ -73,6 +78,7 @@ public partial class BillDashboard : IDisposable
             var bills = RecentBills.Items
                 .Where(b => !b.IsFullyPaid && b.BillDate <= cutoffDate)
                 .Where(b => PassesUserScopeFilter(b))
+                .Where(b => PassesAnalysisFilters(b))
                 .OrderBy(b => b.BillDate);
 
             return _upcomingPaidByFilter switch
@@ -114,6 +120,11 @@ public partial class BillDashboard : IDisposable
     // Analysis filters
     IEnumerable<string>? SelectedUserIds { get; set; }
     IEnumerable<BillCategory>? SelectedBillCategories { get; set; }
+    bool? AnalysisPaymentStatus { get; set; }
+    bool? AnalysisHasLinkedTask { get; set; }
+    Guid? AnalysisShoppingListId { get; set; }
+
+    IReadOnlyList<ShoppingListBriefDto> ShoppingLists { get; set; } = [];
 
     IEnumerable<BillCategory> AllBillCategories => Enum.GetValues<BillCategory>();
 
@@ -144,7 +155,10 @@ public partial class BillDashboard : IDisposable
 
     bool HasAnalysisFilters =>
         (SelectedUserIds?.Any() == true)
-        || (SelectedBillCategories?.Any() == true);
+        || (SelectedBillCategories?.Any() == true)
+        || AnalysisPaymentStatus.HasValue
+        || AnalysisHasLinkedTask.HasValue
+        || AnalysisShoppingListId.HasValue;
 
     /// <summary>Category spending data filtered by selected bill categories.</summary>
     IReadOnlyList<CategorySpendingDto> FilteredByCategory
@@ -194,6 +208,9 @@ public partial class BillDashboard : IDisposable
     {
         SelectedUserIds = null;
         SelectedBillCategories = null;
+        AnalysisPaymentStatus = null;
+        AnalysisHasLinkedTask = null;
+        AnalysisShoppingListId = null;
     }
 
     CancellationTokenSource _cts = new();
@@ -209,7 +226,17 @@ public partial class BillDashboard : IDisposable
         FromDate = new DateTimeOffset(now.Year, now.Month, 1, 0, 0, 0, now.Offset);
         ToDate = now;
 
+        await LoadShoppingListsAsync();
         await LoadDashboardDataAsync();
+    }
+
+    async Task LoadShoppingListsAsync()
+    {
+        var result = await ShoppingListService.GetShoppingListsAsync(
+            pageNumber: 1, pageSize: 100, cancellationToken: _cts.Token);
+
+        if (result.IsSuccess)
+            ShoppingLists = result.Value.Items.ToList();
     }
 
     async Task LoadDashboardDataAsync()
@@ -221,7 +248,11 @@ public partial class BillDashboard : IDisposable
         var balancesTask = BillService.GetBalancesAsync(
             counterpartyUserId: _selectedScopeUserId,
             cancellationToken: _cts.Token);
-        var recentTask = BillService.GetBillsAsync(pageNumber: 1, pageSize: 50, cancellationToken: _cts.Token);
+        var recentTask = BillService.GetBillsAsync(
+            pageNumber: 1,
+            pageSize: 50,
+            splitWithUserId: _selectedScopeUserId,
+            cancellationToken: _cts.Token);
 
         await Task.WhenAll(summaryTask, balancesTask, recentTask);
 
@@ -268,15 +299,44 @@ public partial class BillDashboard : IDisposable
     {
         if (_userScope == UserScopeFilter.MeOnly)
         {
-            return string.Equals(bill.PaidByUserId, _currentUserId, StringComparison.OrdinalIgnoreCase);
+            // My Bills: only show bills that are personal (not split with others)
+            return bill.SplitCount <= 1
+                && string.Equals(bill.PaidByUserId, _currentUserId, StringComparison.OrdinalIgnoreCase);
         }
 
-        // When a specific user is selected, show only bills shared between current user and selected user
-        // This means the bill was paid by either the current user or the selected user
+        // When a specific user is selected, show only bills that are split with that user
+        // Non-split bills are excluded since they cannot be "split with" anyone
         if (!string.IsNullOrEmpty(_selectedScopeUserId))
         {
-            return string.Equals(bill.PaidByUserId, _currentUserId, StringComparison.OrdinalIgnoreCase)
-                || string.Equals(bill.PaidByUserId, _selectedScopeUserId, StringComparison.OrdinalIgnoreCase);
+            // We rely on the split participants; since BillBriefDto doesn't carry split user IDs,
+            // we use a server-side filter when loading. For client-side tabs, we approximate:
+            // bill must have splits and be between current user and selected user.
+            return bill.SplitCount > 1;
+        }
+
+        return true;
+    }
+
+    /// <summary>Returns true if a bill passes the analysis filters.</summary>
+    bool PassesAnalysisFilters(BillBriefDto bill)
+    {
+        if (SelectedBillCategories?.Any() == true)
+        {
+            var selected = SelectedBillCategories.ToHashSet();
+            if (!selected.Contains(bill.Category))
+                return false;
+        }
+
+        if (AnalysisPaymentStatus.HasValue)
+        {
+            if (bill.IsFullyPaid != AnalysisPaymentStatus.Value)
+                return false;
+        }
+
+        if (AnalysisHasLinkedTask.HasValue)
+        {
+            if (bill.HasLinkedTask != AnalysisHasLinkedTask.Value)
+                return false;
         }
 
         return true;

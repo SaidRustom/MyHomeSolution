@@ -22,6 +22,7 @@ public sealed class GetTaskByIdQueryHandler(
             .Include(t => t.Occurrences.Where(o => !o.IsDeleted).OrderBy(o => o.DueDate))
                 .ThenInclude(o => o.Bill!)
                     .ThenInclude(b => b.Splits)
+            .Include(t => t.DefaultBudget)
             .Where(t => !t.IsDeleted)
             .FirstOrDefaultAsync(t => t.Id == request.Id, cancellationToken)
             ?? throw new NotFoundException(nameof(HouseholdTask), request.Id);
@@ -83,6 +84,8 @@ public sealed class GetTaskByIdQueryHandler(
             DefaultBillTitle = task.DefaultBillTitle,
             DefaultBillPaidByUserId = task.DefaultBillPaidByUserId,
             DefaultBillPaidByUserFullName = ResolveName(task.DefaultBillPaidByUserId),
+            DefaultBudgetId = task.DefaultBudgetId,
+            DefaultBudgetName = task.DefaultBudget?.Name,
             RecurrencePattern = task.RecurrencePattern is not null
                 ? new RecurrencePatternDto
                 {

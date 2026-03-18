@@ -5,7 +5,7 @@ using MyHomeSolution.Application.Features.ShoppingLists.Common;
 
 namespace MyHomeSolution.Application.Features.ShoppingLists.Commands.ProcessShoppingListReceipt;
 
-public sealed record ProcessShoppingListReceiptCommand : IRequest<ProcessReceiptResultDto>, IRequireEditAccess
+public sealed record ProcessShoppingListReceiptCommand : IRequest<ProcessReceiptResultDto>, IRequireViewAccess
 {
     public Guid ShoppingListId { get; init; }
     public required string FileName { get; init; }

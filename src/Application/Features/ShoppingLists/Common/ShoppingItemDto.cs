@@ -10,5 +10,7 @@ public sealed record ShoppingItemDto
     public bool IsChecked { get; init; }
     public DateTimeOffset? CheckedAt { get; init; }
     public string? CheckedByUserId { get; init; }
+    public string? CheckedByUserFullName { get; init; }
     public int SortOrder { get; init; }
+    public decimal? AveragePrice { get; init; }
 }
