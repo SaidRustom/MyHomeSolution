@@ -113,6 +113,7 @@ try
     app.UseRateLimiter();
     app.UseAuthentication();
     app.UseAuthorization();
+    app.UseMiddleware<DemoActionTrackingMiddleware>();
 
     // ── Endpoints ───────────────────────────────────────────────────────────
     app.MapControllers().RequireRateLimiting("fixed");

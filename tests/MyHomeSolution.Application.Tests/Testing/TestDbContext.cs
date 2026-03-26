@@ -35,6 +35,7 @@ public sealed class TestDbContext(DbContextOptions<TestDbContext> options)
     public DbSet<PortfolioProject> PortfolioProjects => Set<PortfolioProject>();
     public DbSet<PortfolioExperience> PortfolioExperiences => Set<PortfolioExperience>();
     public DbSet<PortfolioSkill> PortfolioSkills => Set<PortfolioSkill>();
+    public DbSet<DemoUser> DemoUsers => Set<DemoUser>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

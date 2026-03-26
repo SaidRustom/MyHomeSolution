@@ -70,6 +70,25 @@
                                             Text="Passwords do not match." Operator="CompareOperator.Equal" />
                 </RadzenStack>
 
+                <RadzenCard Variant="Variant.Flat"
+                            Style="border-radius: 8px; padding: 1rem;">
+                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Start" Gap="0.75rem">
+                        <RadzenCheckBox @bind-Value="Model.IsDemoUser" Name="IsDemoUser"
+                                        Style="margin-top: 2px;" />
+                        <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem" Style="flex: 1;">
+                            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.375rem">
+                                <RadzenLabel Text="Demo Account" Component="IsDemoUser"
+                                             Style="font-weight: 600; margin: 0; cursor: pointer;" />
+                                <RadzenIcon Icon="info" Style="font-size: 1rem; color: var(--rz-primary); cursor: help;"
+                                            title="A demo account is pre-loaded with sample data (tasks, bills, budgets, shopping lists, and friend connections) so you can explore the full experience. The account and all its data are automatically deleted after 24 hours. You can create another demo anytime." />
+                            </RadzenStack>
+                            <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color); line-height: 1.4;">
+                                Get a fully loaded account with sample data for 24 hours. Perfect for exploring all features before creating a permanent account.
+                            </RadzenText>
+                        </RadzenStack>
+                    </RadzenStack>
+                </RadzenCard>
+
                 <RadzenButton ButtonType="ButtonType.Submit" Text="Create Account" Icon="person_add"
                               Style="width: 100%;" IsBusy="@IsLoading" BusyText="Creating account…"
                               ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Large" />

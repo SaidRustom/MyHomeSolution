@@ -57,7 +57,14 @@ public sealed class AuthService(
     public async Task<ApiResult> RegisterAsync(
         RegisterRequest request, CancellationToken cancellationToken = default)
     {
-        var body = new { request.Email, request.Password, request.FirstName, request.LastName };
+        var body = new
+        {
+            request.Email,
+            request.Password,
+            request.FirstName,
+            request.LastName,
+            request.IsDemoUser
+        };
 
         using var response = await httpClient.PostAsJsonAsync(
             $"{BasePath}/register", body, JsonOptions, cancellationToken);

@@ -12,9 +12,13 @@ public partial class Login
     [SupplyParameterFromQuery(Name = "returnUrl")]
     private string? ReturnUrl { get; set; }
 
+    [SupplyParameterFromQuery(Name = "demo")]
+    private string? DemoParam { get; set; }
+
     private LoginRequest Model { get; set; } = new();
     private bool IsLoading { get; set; }
     private string? ErrorMessage { get; set; }
+    private bool ShowDemoBanner => string.Equals(DemoParam, "true", StringComparison.OrdinalIgnoreCase);
 
     private async Task HandleLoginAsync()
     {

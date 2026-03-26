@@ -1,9 +1,12 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using MyHomeSolution.Application.Common.Constants;
 using MyHomeSolution.Application.Common.Interfaces;
+using MyHomeSolution.Domain.Entities;
 using MyHomeSolution.Infrastructure.Identity;
+using MyHomeSolution.Infrastructure.Persistence;
 using MyHomeSolution.Infrastructure.Services;
 
 namespace MyHomeSolution.Api.Controllers;
@@ -17,7 +20,9 @@ public sealed class AuthController(
     IIdentityService identityService,
     IDateTimeProvider dateTimeProvider,
     IEmailBackgroundQueue emailQueue,
-    IConfiguration configuration) : ControllerBase
+    IConfiguration configuration,
+    ApplicationDbContext dbContext,
+    DemoDataSeederService demoSeeder) : ControllerBase
 {
     // ── Login ───────────────────────────────────────────────────────────────
 
@@ -71,6 +76,22 @@ public sealed class AuthController(
     public async Task<IActionResult> Register(
         RegisterRequest request, CancellationToken cancellationToken)
     {
+        // Demo eligibility check
+        if (request.IsDemoUser)
+        {
+            var canDemo = await CanRegisterAsDemoAsync(request.Email, cancellationToken);
+            if (!canDemo)
+            {
+                return BadRequest(new
+                {
+                    Type = "https://httpstatuses.com/400",
+                    Title = "Demo registration unavailable",
+                    Status = 400,
+                    Detail = "This email is currently in use as an active account or has an active demo session. Please wait for the current session to expire or use a different email."
+                });
+            }
+        }
+
         var (result, userId) = await identityService.CreateUserAsync(
             request.Email, request.Password, request.FirstName, request.LastName,
             cancellationToken);
@@ -90,9 +111,71 @@ public sealed class AuthController(
             });
         }
 
+        if (request.IsDemoUser)
+        {
+            var now = dateTimeProvider.UtcNow;
+
+            // Record in DemoUsers table
+            dbContext.DemoUsers.Add(new DemoUser
+            {
+                UserId = userId,
+                Email = request.Email,
+                FullName = $"{request.FirstName} {request.LastName}",
+                CreatedAt = now,
+                ExpiresAt = now.AddHours(24),
+                IsActive = true,
+                ActionCount = 0
+            });
+            await dbContext.SaveChangesAsync(cancellationToken);
+
+            // Auto-confirm email for demo users so they can log in immediately
+            var confirmToken = await identityService.GenerateEmailConfirmationTokenAsync(userId, cancellationToken);
+            await identityService.ConfirmEmailAsync(userId, confirmToken, cancellationToken);
+
+            // Seed demo data in the background
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    await demoSeeder.SeedAsync(userId, CancellationToken.None);
+                }
+                catch (Exception ex)
+                {
+                    // Logged inside the seeder; swallow here so registration still succeeds
+                    _ = ex;
+                }
+            }, CancellationToken.None);
+
+            // Send demo-specific welcome email
+            await SendDemoEmailConfirmationAsync(request.Email, request.FirstName, cancellationToken);
+
+            return Ok(new { IsDemo = true, Message = "Demo account created! You can log in immediately." });
+        }
+
         await SendEmailConfirmationAsync(userId, request.Email, request.FirstName, cancellationToken);
 
         return Ok();
+    }
+
+    private async Task<bool> CanRegisterAsDemoAsync(string email, CancellationToken cancellationToken)
+    {
+        // Check if email is used by a non-demo active account
+        var existingUser = await userManager.FindByEmailAsync(email);
+        if (existingUser is not null)
+        {
+            // Check if this user is from an active demo session
+            var isActiveDemo = await dbContext.DemoUsers
+                .AnyAsync(d => d.UserId == existingUser.Id && d.IsActive, cancellationToken);
+            if (!isActiveDemo)
+                return false; // It's a real account
+            return false; // Active demo session exists
+        }
+
+        // Check if there's an active demo session for this email
+        var hasActiveDemo = await dbContext.DemoUsers
+            .AnyAsync(d => d.Email == email && d.IsActive, cancellationToken);
+
+        return !hasActiveDemo;
     }
 
     // ── Refresh ─────────────────────────────────────────────────────────────
@@ -151,6 +234,19 @@ public sealed class AuthController(
 
         await emailQueue.EnqueueAsync(
             new EmailMessage(email, firstName, "Verify Your Email — MyHome", html),
+            cancellationToken);
+    }
+
+    private async Task SendDemoEmailConfirmationAsync(
+        string email, string firstName, CancellationToken cancellationToken)
+    {
+        var blazorBaseUrl = "https://saidrustom.ca";
+        var loginUrl = $"{blazorBaseUrl}/login";
+
+        var html = EmailTemplates.DemoEmailConfirmation(firstName, loginUrl);
+
+        await emailQueue.EnqueueAsync(
+            new EmailMessage(email, firstName, "Welcome to Your MyHome Demo!", html),
             cancellationToken);
     }
 }
@@ -289,7 +385,7 @@ public sealed class AuthEmailController(
 }
 
 public sealed record LoginRequest(string Email, string Password);
-public sealed record RegisterRequest(string Email, string Password, string FirstName, string LastName);
+public sealed record RegisterRequest(string Email, string Password, string FirstName, string LastName, bool IsDemoUser = false);
 public sealed record RefreshRequest(string RefreshToken);
 public sealed record ConfirmEmailRequest(string UserId, string Token);
 public sealed record ResendConfirmationRequest(string Email);

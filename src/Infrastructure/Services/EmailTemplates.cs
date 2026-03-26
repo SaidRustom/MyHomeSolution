@@ -160,4 +160,86 @@ public static class EmailTemplates
 
         return WrapInLayout("Account Deleted - MyHome", body);
     }
+
+    public static string DemoEmailConfirmation(string userName, string confirmationUrl)
+    {
+        var body = $$"""
+        <h2 style="margin:0 0 16px;color:#1a1a2e;font-size:22px;font-weight:600;">Welcome to Your MyHome Demo!</h2>
+        <p style="margin:0 0 12px;color:#495057;font-size:15px;line-height:1.6;">
+          Hi {{userName}},
+        </p>
+        <p style="margin:0 0 16px;color:#495057;font-size:15px;line-height:1.6;">
+          You've signed up for a <strong>24-hour demo account</strong> on MyHome! This is a great way to explore all the features before committing.
+        </p>
+        <div style="background-color:#e8f5e9;border:1px solid #4caf50;border-radius:6px;padding:16px;margin-bottom:24px;">
+          <p style="margin:0;color:#2e7d32;font-size:14px;line-height:1.5;">
+            <strong>🎉 What's included in your demo:</strong><br />
+            • Pre-loaded tasks, bills, budgets, and shopping lists<br />
+            • Fake friend connections so you can see sharing in action<br />
+            • Realistic data covering the past month so charts look real<br />
+            • Full access to every feature for 24 hours
+          </p>
+        </div>
+        <div style="background-color:#fff3cd;border:1px solid #ffc107;border-radius:6px;padding:16px;margin-bottom:24px;">
+          <p style="margin:0;color:#856404;font-size:14px;line-height:1.5;">
+            <strong>⏰ Important:</strong> Your demo account and all its data will be <strong>automatically deleted after 24 hours</strong>. A countdown timer will be visible at the top of every page. After expiration, you're welcome to sign up again for another demo or create a permanent account.
+          </p>
+        </div>
+        <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto 24px;">
+          <tr>
+            <td style="border-radius:6px;background-color:#1a73e8;">
+              <a href="{{confirmationUrl}}" target="_blank" style="display:inline-block;padding:14px 32px;color:#ffffff;font-size:15px;font-weight:600;text-decoration:none;border-radius:6px;">
+                Verify Email &amp; Start Demo
+              </a>
+            </td>
+          </tr>
+        </table>
+        <p style="margin:0 0 8px;color:#6c757d;font-size:13px;line-height:1.5;">
+          If the button above doesn't work, copy and paste this link into your browser:
+        </p>
+        <p style="margin:0 0 24px;word-break:break-all;">
+          <a href="{{confirmationUrl}}" style="color:#1a73e8;font-size:13px;">{{confirmationUrl}}</a>
+        </p>
+        """;
+
+        return WrapInLayout("Welcome to Your MyHome Demo!", body);
+    }
+
+    public static string DemoExpired(string userName)
+    {
+        var body = $$"""
+        <h2 style="margin:0 0 16px;color:#1a1a2e;font-size:22px;font-weight:600;">Your Demo Session Has Ended</h2>
+        <p style="margin:0 0 12px;color:#495057;font-size:15px;line-height:1.6;">
+          Hi {{userName}},
+        </p>
+        <p style="margin:0 0 16px;color:#495057;font-size:15px;line-height:1.6;">
+          Your 24-hour MyHome demo has come to an end. Your demo account and all associated data have been automatically removed from our systems.
+        </p>
+        <p style="margin:0 0 24px;color:#495057;font-size:15px;line-height:1.6;">
+          <strong>Thank you</strong> for taking the time to explore MyHome! We hope you enjoyed the experience.
+        </p>
+        <div style="background-color:#e8f4fd;border:1px solid #1a73e8;border-radius:6px;padding:16px;margin-bottom:24px;">
+          <p style="margin:0;color:#0d47a1;font-size:14px;line-height:1.5;">
+            <strong>What's next?</strong><br />
+            • <strong>Create a permanent account</strong> to keep your data forever<br />
+            • <strong>Try another demo</strong> — the same email can be used again<br />
+            • <strong>Tell a friend</strong> — sharing is caring! 🏠
+          </p>
+        </div>
+        <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto 24px;">
+          <tr>
+            <td style="border-radius:6px;background-color:#1a73e8;">
+              <a href="https://saidrustom.ca/register" target="_blank" style="display:inline-block;padding:14px 32px;color:#ffffff;font-size:15px;font-weight:600;text-decoration:none;border-radius:6px;">
+                Create a Permanent Account
+              </a>
+            </td>
+          </tr>
+        </table>
+        <p style="margin:0;color:#6c757d;font-size:13px;line-height:1.5;">
+          We truly appreciate your interest in MyHome. If you have any feedback, we'd love to hear it!
+        </p>
+        """;
+
+        return WrapInLayout("Demo Session Ended — MyHome", body);
+    }
 }

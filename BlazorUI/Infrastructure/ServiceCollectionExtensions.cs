@@ -98,6 +98,10 @@ public static class ServiceCollectionExtensions
             ConfigureClient(client, apiSettings))
             .AddHttpMessageHandler<AuthTokenHandler>();
 
+        services.AddHttpClient<IDemoService, DemoService>(client =>
+            ConfigureClient(client, apiSettings))
+            .AddHttpMessageHandler<AuthTokenHandler>();
+
         return services;
     }
 

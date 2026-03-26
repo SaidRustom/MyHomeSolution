@@ -24,8 +24,16 @@ public partial class Register
 
             if (result.IsSuccess)
             {
-                var encodedEmail = Uri.EscapeDataString(Model.Email);
-                Navigation.NavigateTo($"/email-sent?email={encodedEmail}");
+                if (Model.IsDemoUser)
+                {
+                    // Demo users can log in immediately — redirect to login with a message
+                    Navigation.NavigateTo("/login?demo=true");
+                }
+                else
+                {
+                    var encodedEmail = Uri.EscapeDataString(Model.Email);
+                    Navigation.NavigateTo($"/email-sent?email={encodedEmail}");
+                }
             }
             else
             {

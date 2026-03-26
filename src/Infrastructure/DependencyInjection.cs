@@ -29,6 +29,7 @@ public static class DependencyInjection
         services.AddSingleton<ITaskProcessingLock, TaskProcessingLock>();
         services.AddScoped<IShareService, ShareService>();
         services.AddScoped<IExceptionLogService, ExceptionLogService>();
+        services.AddScoped<DemoDataSeederService>();
         services.AddSingleton<IFileStorageService>(sp =>
         {
             var env = sp.GetRequiredService<Microsoft.AspNetCore.Hosting.IWebHostEnvironment>();
@@ -145,6 +146,7 @@ public static class DependencyInjection
         services.AddHostedService<OccurrenceGeneratorService>();
         services.AddHostedService<OverdueOccurrenceService>();
         services.AddHostedService<BudgetOccurrenceGeneratorService>();
+        services.AddHostedService<DemoUserCleanupService>();
     }
 
     private static void AddReceiptAnalysis(

@@ -1,0 +1,48 @@
+@if (IsDemoUser)
+{
+    <div class="demo-countdown-banner">
+        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center"
+                     JustifyContent="JustifyContent.Center" Gap="0.625rem" Wrap="FlexWrap.Wrap"
+                     Style="padding: 0.5rem 1rem;">
+            <RadzenIcon Icon="hourglass_top" Style="font-size: 1.25rem; animation: pulse 2s infinite;" />
+            <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0" Style="font-weight: 500;">
+                <strong>Demo Account</strong> —
+                @if (TimeRemaining > TimeSpan.Zero)
+                {
+                    <span>Time remaining: <strong>@FormatTimeRemaining()</strong></span>
+                }
+                else
+                {
+                    <span>Your demo has expired. Data will be removed shortly.</span>
+                }
+            </RadzenText>
+            <RadzenButton Text="Create Permanent Account" Icon="person_add"
+                          Variant="Variant.Flat" ButtonStyle="ButtonStyle.Light"
+                          Size="ButtonSize.ExtraSmall"
+                          Click="@(() => NavigationManager.NavigateTo("/register"))"
+                          Style="font-size: 0.75rem; padding: 0.25rem 0.5rem;" />
+        </RadzenStack>
+    </div>
+}
+
+<style>
+    .demo-countdown-banner {
+        background: linear-gradient(135deg, #ff9800, #f57c00);
+        color: white;
+        text-align: center;
+        z-index: 1000;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+        position: fixed;
+        bottom: 0;
+    }
+
+    .demo-countdown-banner .rz-text,
+    .demo-countdown-banner .rz-icon {
+        color: white !important;
+    }
+
+    @@keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+    }
+</style>

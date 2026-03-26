@@ -30,6 +30,9 @@ public static class BackgroundServiceSeeder
 
         public static readonly Guid BudgetOccurrenceGenerator =
             Guid.Parse("a1b2c3d4-0004-0004-0004-000000000004");
+
+        public static readonly Guid DemoUserCleanup =
+            Guid.Parse("a1b2c3d4-0005-0005-0005-000000000005");
     }
 
     public static async Task SeedAsync(IServiceProvider serviceProvider)
@@ -59,7 +62,12 @@ public static class BackgroundServiceSeeder
             (ServiceIds.BudgetOccurrenceGenerator,
              "Budget Occurrence Generator",
              "Creates new budget occurrences when recurring budget periods expire and handles fund carryover.",
-             typeof(BudgetOccurrenceGeneratorService).FullName!)
+             typeof(BudgetOccurrenceGeneratorService).FullName!),
+
+            (ServiceIds.DemoUserCleanup,
+             "Demo User Cleanup",
+             "Periodically checks for expired demo user sessions and purges all their data after 24 hours.",
+             typeof(DemoUserCleanupService).FullName!)
         };
 
         foreach (var (id, name, description, typeName) in definitions)

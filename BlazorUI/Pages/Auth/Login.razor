@@ -23,6 +23,13 @@
             </RadzenAlert>
         }
 
+        @if (ShowDemoBanner)
+        {
+            <RadzenAlert AlertStyle="AlertStyle.Success" Shade="Shade.Lighter" ShowIcon="true" AllowClose="true">
+                <strong>Demo account created!</strong> Your email has been auto-verified. Sign in with your credentials to start exploring. You have <strong>24 hours</strong> before the demo data is removed.
+            </RadzenAlert>
+        }
+
         <RadzenTemplateForm TItem="BlazorUI.Models.Auth.LoginRequest" Data="@Model" Submit="@HandleLoginAsync">
             <RadzenStack Gap="1rem">
                 <RadzenStack Gap="0.25rem">

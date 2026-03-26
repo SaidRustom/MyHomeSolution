@@ -41,6 +41,7 @@ public sealed class ApplicationDbContext(
     public DbSet<PortfolioProject> PortfolioProjects => Set<PortfolioProject>();
     public DbSet<PortfolioExperience> PortfolioExperiences => Set<PortfolioExperience>();
     public DbSet<PortfolioSkill> PortfolioSkills => Set<PortfolioSkill>();
+    public DbSet<DemoUser> DemoUsers => Set<DemoUser>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
 
     protected override void OnModelCreating(ModelBuilder builder)
@@ -67,6 +68,21 @@ public sealed class ApplicationDbContext(
     public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
         var userId = currentUserService.UserId;
+        var now = dateTimeProvider.UtcNow;
+
+        ProcessAuditableEntities(userId, now);
+
+        return await base.SaveChangesAsync(cancellationToken);
+    }
+
+    /// <summary>
+    /// ***IMPORTANT*** ONLY USE WHEN SEEDING DATA TO MANIPULATE USERID 
+    /// </summary>
+    /// <param name="userId"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    public async Task<int> SaveSeederChangesAsync(string userId, CancellationToken cancellationToken = default)
+    {
         var now = dateTimeProvider.UtcNow;
 
         ProcessAuditableEntities(userId, now);
