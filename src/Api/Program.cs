@@ -89,6 +89,7 @@ try
 
         await IdentityDataSeeder.SeedRolesAsync(scope.ServiceProvider);
         await BackgroundServiceSeeder.SeedAsync(scope.ServiceProvider);
+        await PortfolioSeeder.SeedAsync(scope.ServiceProvider);
 
         var seedConfig = app.Configuration.GetSection("SeedAdmin");
         var seedEmail = seedConfig["Email"];

@@ -27,7 +27,7 @@ public partial class Login
 
             if (result.IsSuccess)
             {
-                var target = string.IsNullOrWhiteSpace(ReturnUrl) ? "/" : ReturnUrl;
+                var target = string.IsNullOrWhiteSpace(ReturnUrl) ? "/home" : ReturnUrl;
                 Navigation.NavigateTo(target, forceLoad: false);
             }
             else

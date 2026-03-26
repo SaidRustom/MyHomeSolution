@@ -234,7 +234,7 @@
                         @foreach (var budget in SortedStatuses)
                         {
                             <RadzenCard Variant="Variant.Flat" class="rz-p-3"
-                                        Style="cursor: pointer; background: var(--rz-base-100);"
+                                        Style="cursor: pointer;"
                                         @onclick="@(() => NavigateToBudget(budget.BudgetId))">
                                 <RadzenStack Orientation="Orientation.Vertical" Gap="0.375rem">
                                     <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center"

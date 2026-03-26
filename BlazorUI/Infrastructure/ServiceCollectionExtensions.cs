@@ -26,6 +26,10 @@ public static class ServiceCollectionExtensions
         services.AddHttpClient<IAuthService, AuthService>(client =>
             ConfigureClient(client, apiSettings));
 
+        // Portfolio service is public (no auth required)
+        services.AddHttpClient<IPortfolioService, PortfolioService>(client =>
+            ConfigureClient(client, apiSettings));
+
         return services;
     }
 

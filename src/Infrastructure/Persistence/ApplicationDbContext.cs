@@ -37,6 +37,10 @@ public sealed class ApplicationDbContext(
     public DbSet<BudgetTransfer> BudgetTransfers => Set<BudgetTransfer>();
     public DbSet<BillBudgetLink> BillBudgetLinks => Set<BillBudgetLink>();
     public DbSet<BillRelatedItem> BillRelatedItems => Set<BillRelatedItem>();
+    public DbSet<PortfolioProfile> PortfolioProfiles => Set<PortfolioProfile>();
+    public DbSet<PortfolioProject> PortfolioProjects => Set<PortfolioProject>();
+    public DbSet<PortfolioExperience> PortfolioExperiences => Set<PortfolioExperience>();
+    public DbSet<PortfolioSkill> PortfolioSkills => Set<PortfolioSkill>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
 
     protected override void OnModelCreating(ModelBuilder builder)

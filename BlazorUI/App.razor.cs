@@ -21,7 +21,7 @@ namespace BlazorUI
             if (theme != null)
                 ThemeService.SetTheme(theme, false);
             else
-                await Storage.SetAsync("theme", "material", TimeSpan.FromDays(30));
+                await Storage.SetAsync("theme", "software", TimeSpan.FromDays(30));
         }
     }
 }

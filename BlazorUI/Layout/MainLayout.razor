@@ -42,7 +42,7 @@
                     <RadzenButton Icon="west" Variant="Variant.Text" ButtonStyle="ButtonStyle.Secondary" Click="@(() => sidebarExpanded = false)" />
                 </RadzenStack>
                 <RadzenPanelMenu>
-                    <RadzenPanelMenuItem Click="@(()=>NavigateTo("/"))" Text="Home" Icon="home" />
+                    <RadzenPanelMenuItem Click="@(()=>NavigateTo("/home"))" Text="Home" Icon="home" />
                     <RadzenPanelMenuItem Text="Tasks" Icon="task_alt">
                         <RadzenPanelMenuItem Click="@(()=>NavigateTo("/scheduler"))" Text="Scheduler" Icon="calendar_month" />
                         <RadzenPanelMenuItem Click="@(()=>NavigateTo("/tasks"))" Text="All Tasks" Icon="list" />

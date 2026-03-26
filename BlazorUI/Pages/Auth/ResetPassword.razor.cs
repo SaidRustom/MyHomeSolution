@@ -21,7 +21,7 @@ public partial class ResetPassword
     private bool IsInvalidLink { get; set; }
     private string? ErrorMessage { get; set; }
 
-    protected override void OnInitialized()
+    protected override void OnParametersSet()
     {
         if (string.IsNullOrWhiteSpace(UserId) || string.IsNullOrWhiteSpace(Token))
         {

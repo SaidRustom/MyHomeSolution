@@ -4,7 +4,7 @@
     protected override void OnInitialized()
     {
         var currentUri = Navigation.ToBaseRelativePath(Navigation.Uri);
-        var returnUrl = string.IsNullOrWhiteSpace(currentUri) ? "/" : $"/{currentUri}";
+        var returnUrl = string.IsNullOrWhiteSpace(currentUri) ? "/home" : $"/{currentUri}";
         Navigation.NavigateTo($"/login?returnUrl={Uri.EscapeDataString(returnUrl)}", forceLoad: false);
     }
 }

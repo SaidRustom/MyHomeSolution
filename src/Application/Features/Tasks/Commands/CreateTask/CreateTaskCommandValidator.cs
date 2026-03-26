@@ -17,6 +17,9 @@ public sealed class CreateTaskCommandValidator : AbstractValidator<CreateTaskCom
             .GreaterThan(0).When(x => x.EstimatedDurationMinutes.HasValue)
             .WithMessage("Estimated duration must be positive.");
 
+        RuleFor(x => x.DefaultBillCurrency)
+            .MaximumLength(2).WithMessage("Default bill currency must not exceed 2 characters.");
+
         When(x => x.IsRecurring, () =>
         {
             RuleFor(x => x.RecurrenceType)

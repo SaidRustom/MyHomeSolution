@@ -36,9 +36,10 @@
         <span class="dismiss">🗙</span>
     </div>
     <script src="_framework/blazor.webassembly#[.{fingerprint}].js"></script>
-    <script>navigator.serviceWorker.register('service-worker.js', { updateViaCache: 'none' });</script>
+    <script>navigator.serviceWorker.register('service-worker.js'/*, { updateViaCache: 'none' }*/);</script>
     <script src="_content/Radzen.Blazor/Radzen.Blazor.min.js"></script>
     <script src="js/camera-interop.js"></script>
+    <script src="js/portfolio-interop.js"></script>
 
     <script>
         if ('serviceWorker' in navigator) {

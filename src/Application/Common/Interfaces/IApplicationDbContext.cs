@@ -27,6 +27,10 @@ public interface IApplicationDbContext
     DbSet<BudgetTransfer> BudgetTransfers { get; }
     DbSet<BillBudgetLink> BillBudgetLinks { get; }
     DbSet<BillRelatedItem> BillRelatedItems { get; }
+    DbSet<PortfolioProfile> PortfolioProfiles { get; }
+    DbSet<PortfolioProject> PortfolioProjects { get; }
+    DbSet<PortfolioExperience> PortfolioExperiences { get; }
+    DbSet<PortfolioSkill> PortfolioSkills { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

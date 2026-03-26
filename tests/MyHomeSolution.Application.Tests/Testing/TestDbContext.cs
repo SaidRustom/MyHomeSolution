@@ -31,6 +31,10 @@ public sealed class TestDbContext(DbContextOptions<TestDbContext> options)
     public DbSet<BudgetTransfer> BudgetTransfers => Set<BudgetTransfer>();
     public DbSet<BillBudgetLink> BillBudgetLinks => Set<BillBudgetLink>();
     public DbSet<BillRelatedItem> BillRelatedItems => Set<BillRelatedItem>();
+    public DbSet<PortfolioProfile> PortfolioProfiles => Set<PortfolioProfile>();
+    public DbSet<PortfolioProject> PortfolioProjects => Set<PortfolioProject>();
+    public DbSet<PortfolioExperience> PortfolioExperiences => Set<PortfolioExperience>();
+    public DbSet<PortfolioSkill> PortfolioSkills => Set<PortfolioSkill>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

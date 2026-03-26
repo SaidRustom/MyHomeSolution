@@ -9,16 +9,16 @@ public partial class ConfirmEmail
     [Inject] private NavigationManager Navigation { get; set; } = default!;
 
     [SupplyParameterFromQuery(Name = "userId")]
-    private string? UserId { get; set; }
+    public string? UserId { get; set; }
 
     [SupplyParameterFromQuery(Name = "token")]
-    private string? Token { get; set; }
+    public string? Token { get; set; }
 
     private bool IsLoading { get; set; } = true;
     private bool IsSuccess { get; set; }
     private string? ErrorMessage { get; set; }
 
-    protected override async Task OnInitializedAsync()
+    protected override async Task OnParametersSetAsync()
     {
         if (string.IsNullOrWhiteSpace(UserId) || string.IsNullOrWhiteSpace(Token))
         {
