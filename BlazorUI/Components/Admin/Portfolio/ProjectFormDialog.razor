@@ -1,0 +1,87 @@
+<RadzenTemplateForm TItem="UpsertProjectRequest" Data="@Model" Submit="OnSubmitAsync">
+    <RadzenStack Orientation="Orientation.Vertical" Gap="1rem" class="rz-p-4">
+
+        @if (ErrorMessage is not null)
+        {
+            <RadzenAlert AlertStyle="AlertStyle.Danger" Variant="Variant.Flat" Shade="Shade.Lighter"
+                         AllowClose="true" Close="@(() => ErrorMessage = null)">
+                @ErrorMessage
+            </RadzenAlert>
+        }
+
+        @* Title *@
+        <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem">
+            <RadzenLabel Text="Title" Component="Title" />
+            <RadzenTextBox Name="Title" @bind-Value="@Model.Title" Placeholder="Project name" Style="width: 100%;" />
+            <RadzenRequiredValidator Component="Title" Text="Title is required" />
+        </RadzenStack>
+
+        @* Short Description *@
+        <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem">
+            <RadzenLabel Text="Short Description" Component="ShortDescription" />
+            <RadzenTextArea Name="ShortDescription" @bind-Value="@Model.ShortDescription" Rows="2" Style="width: 100%;" />
+            <RadzenRequiredValidator Component="ShortDescription" Text="Short description is required" />
+        </RadzenStack>
+
+        @* Long Description *@
+        <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem">
+            <RadzenLabel Text="Long Description" Component="LongDescription" />
+            <RadzenTextArea Name="LongDescription" @bind-Value="@Model.LongDescription" Rows="4" Placeholder="Optional detailed description…" Style="width: 100%;" />
+        </RadzenStack>
+
+        @* Technologies & Category *@
+        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.75rem" Wrap="FlexWrap.Wrap">
+            <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem" Style="flex: 2; min-width: 200px;">
+                <RadzenLabel Text="Technologies (comma-separated)" Component="Technologies" />
+                <RadzenTextBox Name="Technologies" @bind-Value="@Model.Technologies" Placeholder="C#, Blazor, Azure, …" Style="width: 100%;" />
+                <RadzenRequiredValidator Component="Technologies" Text="Technologies are required" />
+            </RadzenStack>
+            <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem" Style="flex: 1; min-width: 150px;">
+                <RadzenLabel Text="Category" Component="Category" />
+                <RadzenTextBox Name="Category" @bind-Value="@Model.Category" Placeholder="e.g. Full-Stack" Style="width: 100%;" />
+            </RadzenStack>
+        </RadzenStack>
+
+        @* URLs *@
+        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.75rem" Wrap="FlexWrap.Wrap">
+            <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem" Style="flex: 1; min-width: 200px;">
+                <RadzenLabel Text="Live URL" Component="LiveUrl" />
+                <RadzenTextBox Name="LiveUrl" @bind-Value="@Model.LiveUrl" Placeholder="https://…" Style="width: 100%;" />
+            </RadzenStack>
+            <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem" Style="flex: 1; min-width: 200px;">
+                <RadzenLabel Text="GitHub URL" Component="GitHubUrl" />
+                <RadzenTextBox Name="GitHubUrl" @bind-Value="@Model.GitHubUrl" Placeholder="https://github.com/…" Style="width: 100%;" />
+            </RadzenStack>
+        </RadzenStack>
+
+        <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem">
+            <RadzenLabel Text="Image URL" Component="ImageUrl" />
+            <RadzenTextBox Name="ImageUrl" @bind-Value="@Model.ImageUrl" Placeholder="Optional screenshot URL" Style="width: 100%;" />
+        </RadzenStack>
+
+        @* Toggles & Sort *@
+        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="2rem" Wrap="FlexWrap.Wrap">
+            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                <RadzenSwitch @bind-Value="@Model.IsFeatured" />
+                <RadzenLabel Text="Featured project" Style="margin: 0;" />
+            </RadzenStack>
+            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                <RadzenSwitch @bind-Value="@Model.IsVisible" />
+                <RadzenLabel Text="Visible on portfolio" Style="margin: 0;" />
+            </RadzenStack>
+            <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem" Style="width: 100px;">
+                <RadzenLabel Text="Sort Order" Component="SortOrder" />
+                <RadzenNumeric TValue="int" Name="SortOrder" @bind-Value="@Model.SortOrder" Style="width: 100%;" />
+            </RadzenStack>
+        </RadzenStack>
+
+        @* Footer *@
+        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End"
+                     Gap="0.5rem" class="rz-pt-4" Style="border-top: 1px solid var(--rz-base-200);">
+            <RadzenButton Text="Cancel" Variant="Variant.Flat" ButtonStyle="ButtonStyle.Light"
+                          Click="Cancel" ButtonType="ButtonType.Button" Disabled="@IsBusy" />
+            <RadzenButton Text="@SubmitText" Icon="save" ButtonStyle="ButtonStyle.Primary"
+                          ButtonType="ButtonType.Submit" IsBusy="@IsBusy" />
+        </RadzenStack>
+    </RadzenStack>
+</RadzenTemplateForm>

@@ -102,6 +102,10 @@ public static class ServiceCollectionExtensions
             ConfigureClient(client, apiSettings))
             .AddHttpMessageHandler<AuthTokenHandler>();
 
+        services.AddHttpClient<IPortfolioAdminService, PortfolioAdminService>(client =>
+            ConfigureClient(client, apiSettings))
+            .AddHttpMessageHandler<AuthTokenHandler>();
+
         return services;
     }
 

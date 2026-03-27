@@ -1,0 +1,60 @@
+<RadzenTemplateForm TItem="UpsertSkillRequest" Data="@Model" Submit="OnSubmitAsync">
+    <RadzenStack Orientation="Orientation.Vertical" Gap="1rem" class="rz-p-4">
+
+        @if (ErrorMessage is not null)
+        {
+            <RadzenAlert AlertStyle="AlertStyle.Danger" Variant="Variant.Flat" Shade="Shade.Lighter"
+                         AllowClose="true" Close="@(() => ErrorMessage = null)">
+                @ErrorMessage
+            </RadzenAlert>
+        }
+
+        @* Name *@
+        <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem">
+            <RadzenLabel Text="Skill Name" Component="Name" />
+            <RadzenTextBox Name="Name" @bind-Value="@Model.Name" Placeholder="e.g. C# / .NET" Style="width: 100%;" />
+            <RadzenRequiredValidator Component="Name" Text="Skill name is required" />
+        </RadzenStack>
+
+        @* Category *@
+        <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem">
+            <RadzenLabel Text="Category" Component="Category" />
+            <RadzenTextBox Name="Category" @bind-Value="@Model.Category" Placeholder="e.g. Backend, Frontend, Cloud & DevOps" Style="width: 100%;" />
+            <RadzenRequiredValidator Component="Category" Text="Category is required" />
+        </RadzenStack>
+
+        @* Proficiency & Sort *@
+        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.75rem" Wrap="FlexWrap.Wrap">
+            <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem" Style="flex: 1; min-width: 200px;">
+                <RadzenLabel Text="Proficiency Level (0–100)" Component="ProficiencyLevel" />
+                <RadzenSlider TValue="int" @bind-Value="@Model.ProficiencyLevel" Min="0" Max="100" Step="5" Style="width: 100%;" />
+                <RadzenText TextStyle="TextStyle.Caption" class="rz-color-secondary">@Model.ProficiencyLevel%</RadzenText>
+            </RadzenStack>
+            <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem" Style="width: 100px;">
+                <RadzenLabel Text="Sort Order" Component="SortOrder" />
+                <RadzenNumeric TValue="int" Name="SortOrder" @bind-Value="@Model.SortOrder" Style="width: 100%;" />
+            </RadzenStack>
+        </RadzenStack>
+
+        @* Icon *@
+        <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem">
+            <RadzenLabel Text="Icon (emoji or CSS class)" Component="IconClass" />
+            <RadzenTextBox Name="IconClass" @bind-Value="@Model.IconClass" Placeholder="e.g. ⚙️ or fas fa-code" Style="width: 100%;" />
+        </RadzenStack>
+
+        @* Visible toggle *@
+        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+            <RadzenSwitch @bind-Value="@Model.IsVisible" />
+            <RadzenLabel Text="Visible on portfolio" Style="margin: 0;" />
+        </RadzenStack>
+
+        @* Footer *@
+        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End"
+                     Gap="0.5rem" class="rz-pt-4" Style="border-top: 1px solid var(--rz-base-200);">
+            <RadzenButton Text="Cancel" Variant="Variant.Flat" ButtonStyle="ButtonStyle.Light"
+                          Click="Cancel" ButtonType="ButtonType.Button" Disabled="@IsBusy" />
+            <RadzenButton Text="@SubmitText" Icon="save" ButtonStyle="ButtonStyle.Primary"
+                          ButtonType="ButtonType.Submit" IsBusy="@IsBusy" />
+        </RadzenStack>
+    </RadzenStack>
+</RadzenTemplateForm>

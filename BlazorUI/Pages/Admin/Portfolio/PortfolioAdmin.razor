@@ -1,0 +1,313 @@
+@page "/admin/portfolio"
+@attribute [Authorize(Roles = "Administrator")]
+
+<PageTitle>Portfolio Manager — MyHome</PageTitle>
+
+<RadzenStack Orientation="Orientation.Vertical" Gap="1.25rem">
+
+    <PageHeader Title="Portfolio Manager" Subtitle="Manage your public portfolio — profile, experiences, projects, and skills" Icon="web">
+        <Actions>
+            <RadzenButton Text="Refresh" Icon="refresh" Variant="Variant.Outlined" ButtonStyle="ButtonStyle.Secondary"
+                          Click="LoadDataAsync" IsBusy="@IsLoading" />
+        </Actions>
+    </PageHeader>
+
+    @if (Error is not null)
+    {
+        <ErrorAlert Problem="@Error" OnRetry="LoadDataAsync" />
+    }
+
+    @if (IsLoading && Data is null)
+    {
+        <RadzenStack AlignItems="AlignItems.Center" JustifyContent="JustifyContent.Center" Style="min-height: 300px;">
+            <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Large" />
+            <RadzenText TextStyle="TextStyle.Body2" class="rz-color-secondary">Loading portfolio data…</RadzenText>
+        </RadzenStack>
+    }
+    else if (Data is not null)
+    {
+        <RadzenTabs @bind-SelectedIndex="@SelectedTabIndex" RenderMode="TabRenderMode.Client" Style="margin-top: -0.5rem;">
+            <Tabs>
+
+                @* ═══════════════════════════ PROFILE TAB ═══════════════════════════ *@
+                <RadzenTabsItem Text="Profile" Icon="person">
+                    @if (Data.Profile is not null)
+                    {
+                        <RadzenStack Orientation="Orientation.Vertical" Gap="1rem" class="rz-p-4">
+                            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
+                                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.75rem">
+                                    <RadzenIcon Icon="account_circle" Style="font-size: 1.5rem; color: var(--rz-primary);" />
+                                    <RadzenText TextStyle="TextStyle.Subtitle1" class="rz-mb-0"><strong>@Data.Profile.FullName</strong></RadzenText>
+                                    @if (Data.Profile.IsActive)
+                                    {
+                                        <RadzenBadge Text="Active" BadgeStyle="BadgeStyle.Success" IsPill="true" />
+                                    }
+                                    else
+                                    {
+                                        <RadzenBadge Text="Inactive" BadgeStyle="BadgeStyle.Danger" IsPill="true" />
+                                    }
+                                </RadzenStack>
+                                <RadzenButton Text="Edit Profile" Icon="edit" ButtonStyle="ButtonStyle.Primary" Variant="Variant.Outlined"
+                                              Click="OpenEditProfileDialog" />
+                            </RadzenStack>
+
+                            <RadzenRow Gap="1rem" RowGap="0.75rem">
+                                <RadzenColumn Size="12" SizeMD="6">
+                                    <RadzenCard Variant="Variant.Outlined" class="rz-p-4" Style="height: 100%;">
+                                        <RadzenText TextStyle="TextStyle.Overline" class="rz-color-secondary rz-mb-2">HEADLINE</RadzenText>
+                                        <RadzenText TextStyle="TextStyle.Body1" class="rz-mb-1">@Data.Profile.Headline</RadzenText>
+                                        <RadzenText TextStyle="TextStyle.Body2" class="rz-color-secondary">@Data.Profile.SubHeadline</RadzenText>
+                                    </RadzenCard>
+                                </RadzenColumn>
+                                <RadzenColumn Size="12" SizeMD="6">
+                                    <RadzenCard Variant="Variant.Outlined" class="rz-p-4" Style="height: 100%;">
+                                        <RadzenText TextStyle="TextStyle.Overline" class="rz-color-secondary rz-mb-2">CONTACT</RadzenText>
+                                        <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-1">📧 @Data.Profile.Email</RadzenText>
+                                        @if (!string.IsNullOrWhiteSpace(Data.Profile.Phone))
+                                        {
+                                            <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-1">📞 @Data.Profile.Phone</RadzenText>
+                                        }
+                                        @if (!string.IsNullOrWhiteSpace(Data.Profile.Location))
+                                        {
+                                            <RadzenText TextStyle="TextStyle.Body2">📍 @Data.Profile.Location</RadzenText>
+                                        }
+                                    </RadzenCard>
+                                </RadzenColumn>
+                            </RadzenRow>
+
+                            <RadzenCard Variant="Variant.Outlined" class="rz-p-4">
+                                <RadzenText TextStyle="TextStyle.Overline" class="rz-color-secondary rz-mb-2">BIO</RadzenText>
+                                <RadzenText TextStyle="TextStyle.Body2" Style="white-space: pre-line;">@Data.Profile.Bio</RadzenText>
+                            </RadzenCard>
+
+                            <RadzenCard Variant="Variant.Outlined" class="rz-p-4">
+                                <RadzenText TextStyle="TextStyle.Overline" class="rz-color-secondary rz-mb-2">LINKS</RadzenText>
+                                <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" Wrap="FlexWrap.Wrap">
+                                    @if (!string.IsNullOrWhiteSpace(Data.Profile.GitHubUrl))
+                                    {
+                                        <RadzenLink Path="@Data.Profile.GitHubUrl" Target="_blank" Text="GitHub" />
+                                    }
+                                    @if (!string.IsNullOrWhiteSpace(Data.Profile.LinkedInUrl))
+                                    {
+                                        <RadzenLink Path="@Data.Profile.LinkedInUrl" Target="_blank" Text="LinkedIn" />
+                                    }
+                                    @if (!string.IsNullOrWhiteSpace(Data.Profile.TwitterUrl))
+                                    {
+                                        <RadzenLink Path="@Data.Profile.TwitterUrl" Target="_blank" Text="Twitter" />
+                                    }
+                                    @if (!string.IsNullOrWhiteSpace(Data.Profile.WebsiteUrl))
+                                    {
+                                        <RadzenLink Path="@Data.Profile.WebsiteUrl" Target="_blank" Text="Website" />
+                                    }
+                                    @if (!string.IsNullOrWhiteSpace(Data.Profile.ResumeUrl))
+                                    {
+                                        <RadzenLink Path="@Data.Profile.ResumeUrl" Target="_blank" Text="Resume" />
+                                    }
+                                </RadzenStack>
+                            </RadzenCard>
+                        </RadzenStack>
+                    }
+                    else
+                    {
+                        <RadzenStack AlignItems="AlignItems.Center" class="rz-p-8" Gap="1rem">
+                            <RadzenIcon Icon="person_off" Style="font-size: 3rem; color: var(--rz-text-disabled-color);" />
+                            <RadzenText class="rz-color-secondary">No profile configured yet.</RadzenText>
+                        </RadzenStack>
+                    }
+                </RadzenTabsItem>
+
+                @* ═══════════════════════════ EXPERIENCES TAB ═══════════════════════════ *@
+                <RadzenTabsItem Text="Experiences" Icon="work">
+                    <RadzenStack Orientation="Orientation.Vertical" Gap="1rem" class="rz-p-4">
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
+                            <RadzenText TextStyle="TextStyle.Subtitle1" class="rz-mb-0">
+                                <strong>Experiences</strong>
+                                <RadzenBadge Text="@Data.Experiences.Count.ToString()" BadgeStyle="BadgeStyle.Info" IsPill="true" class="rz-ml-2" />
+                            </RadzenText>
+                            <RadzenButton Text="Add Experience" Icon="add" ButtonStyle="ButtonStyle.Primary" Click="OpenAddExperienceDialog" />
+                        </RadzenStack>
+
+                        @if (Data.Experiences.Count == 0)
+                        {
+                            <RadzenStack AlignItems="AlignItems.Center" class="rz-p-8" Gap="1rem">
+                                <RadzenIcon Icon="work_off" Style="font-size: 3rem; color: var(--rz-text-disabled-color);" />
+                                <RadzenText class="rz-color-secondary">No experiences yet. Add your first one!</RadzenText>
+                            </RadzenStack>
+                        }
+                        else
+                        {
+                            @foreach (var exp in Data.Experiences)
+                            {
+                                <RadzenCard Variant="Variant.Outlined" class="rz-p-4" Style="@(!exp.IsVisible ? "opacity: 0.55;" : "")">
+                                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Start" JustifyContent="JustifyContent.SpaceBetween" Wrap="FlexWrap.Wrap" Gap="1rem">
+                                        <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem" Style="flex: 1; min-width: 200px;">
+                                            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                                                <RadzenText TextStyle="TextStyle.Subtitle1" class="rz-mb-0"><strong>@exp.Role</strong></RadzenText>
+                                                @if (!exp.IsVisible)
+                                                {
+                                                    <RadzenBadge Text="Hidden" BadgeStyle="BadgeStyle.Warning" IsPill="true" Variant="Variant.Flat" />
+                                                }
+                                                @if (exp.IsCurrent)
+                                                {
+                                                    <RadzenBadge Text="Current" BadgeStyle="BadgeStyle.Success" IsPill="true" Variant="Variant.Flat" />
+                                                }
+                                            </RadzenStack>
+                                            <RadzenText TextStyle="TextStyle.Body1" class="rz-mb-0 rz-color-secondary">@exp.Company</RadzenText>
+                                            <RadzenText TextStyle="TextStyle.Caption" class="rz-color-secondary">
+                                                @exp.StartDate.ToString("MMM yyyy") — @(exp.IsCurrent ? "Present" : exp.EndDate?.ToString("MMM yyyy"))
+                                                · Sort: @exp.SortOrder
+                                            </RadzenText>
+                                        </RadzenStack>
+                                        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem">
+                                            <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Variant="Variant.Text" Size="ButtonSize.Small"
+                                                          Click="@(() => OpenEditExperienceDialog(exp))" title="Edit" />
+                                            <RadzenButton Icon="@(exp.IsVisible ? "visibility" : "visibility_off")"
+                                                          ButtonStyle="ButtonStyle.Light" Variant="Variant.Text" Size="ButtonSize.Small"
+                                                          Click="@(() => ToggleExperienceVisibility(exp))"
+                                                          title="@(exp.IsVisible ? "Hide" : "Show")" />
+                                            <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Variant="Variant.Text" Size="ButtonSize.Small"
+                                                          Click="@(() => ConfirmDeleteExperience(exp))" title="Delete" />
+                                        </RadzenStack>
+                                    </RadzenStack>
+                                </RadzenCard>
+                            }
+                        }
+                    </RadzenStack>
+                </RadzenTabsItem>
+
+                @* ═══════════════════════════ PROJECTS TAB ═══════════════════════════ *@
+                <RadzenTabsItem Text="Projects" Icon="code">
+                    <RadzenStack Orientation="Orientation.Vertical" Gap="1rem" class="rz-p-4">
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
+                            <RadzenText TextStyle="TextStyle.Subtitle1" class="rz-mb-0">
+                                <strong>Projects</strong>
+                                <RadzenBadge Text="@Data.Projects.Count.ToString()" BadgeStyle="BadgeStyle.Info" IsPill="true" class="rz-ml-2" />
+                            </RadzenText>
+                            <RadzenButton Text="Add Project" Icon="add" ButtonStyle="ButtonStyle.Primary" Click="OpenAddProjectDialog" />
+                        </RadzenStack>
+
+                        @if (Data.Projects.Count == 0)
+                        {
+                            <RadzenStack AlignItems="AlignItems.Center" class="rz-p-8" Gap="1rem">
+                                <RadzenIcon Icon="code_off" Style="font-size: 3rem; color: var(--rz-text-disabled-color);" />
+                                <RadzenText class="rz-color-secondary">No projects yet. Add your first one!</RadzenText>
+                            </RadzenStack>
+                        }
+                        else
+                        {
+                            <RadzenDataGrid TItem="AdminPortfolioProjectDto" Data="@Data.Projects" AllowSorting="false" Density="Density.Compact">
+                                <Columns>
+                                    <RadzenDataGridColumn TItem="AdminPortfolioProjectDto" Property="SortOrder" Title="#" Width="50px" TextAlign="TextAlign.Center" />
+                                    <RadzenDataGridColumn TItem="AdminPortfolioProjectDto" Property="Title" Title="Title">
+                                        <Template Context="proj">
+                                            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                                                <RadzenText class="rz-mb-0" Style="@(!proj.IsVisible ? "opacity: 0.55;" : "")">@proj.Title</RadzenText>
+                                                @if (proj.IsFeatured)
+                                                {
+                                                    <RadzenBadge Text="★ Featured" BadgeStyle="BadgeStyle.Warning" IsPill="true" Variant="Variant.Flat" />
+                                                }
+                                                @if (!proj.IsVisible)
+                                                {
+                                                    <RadzenBadge Text="Hidden" BadgeStyle="BadgeStyle.Light" IsPill="true" Variant="Variant.Flat" />
+                                                }
+                                            </RadzenStack>
+                                        </Template>
+                                    </RadzenDataGridColumn>
+                                    <RadzenDataGridColumn TItem="AdminPortfolioProjectDto" Property="Category" Title="Category" Width="130px" />
+                                    <RadzenDataGridColumn TItem="AdminPortfolioProjectDto" Property="Technologies" Title="Technologies">
+                                        <Template Context="proj">
+                                            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem" Wrap="FlexWrap.Wrap">
+                                                @foreach (var tech in proj.Technologies.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).Take(4))
+                                                {
+                                                    <RadzenBadge Text="@tech" BadgeStyle="BadgeStyle.Info" IsPill="true" Variant="Variant.Flat" />
+                                                }
+                                            </RadzenStack>
+                                        </Template>
+                                    </RadzenDataGridColumn>
+                                    <RadzenDataGridColumn TItem="AdminPortfolioProjectDto" Title="Actions" Width="140px" TextAlign="TextAlign.Center" Sortable="false">
+                                        <Template Context="proj">
+                                            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem" JustifyContent="JustifyContent.Center">
+                                                <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Variant="Variant.Text" Size="ButtonSize.Small"
+                                                              Click="@(() => OpenEditProjectDialog(proj))" title="Edit" />
+                                                <RadzenButton Icon="@(proj.IsVisible ? "visibility" : "visibility_off")"
+                                                              ButtonStyle="ButtonStyle.Light" Variant="Variant.Text" Size="ButtonSize.Small"
+                                                              Click="@(() => ToggleProjectVisibility(proj))"
+                                                              title="@(proj.IsVisible ? "Hide" : "Show")" />
+                                                <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Variant="Variant.Text" Size="ButtonSize.Small"
+                                                              Click="@(() => ConfirmDeleteProject(proj))" title="Delete" />
+                                            </RadzenStack>
+                                        </Template>
+                                    </RadzenDataGridColumn>
+                                </Columns>
+                            </RadzenDataGrid>
+                        }
+                    </RadzenStack>
+                </RadzenTabsItem>
+
+                @* ═══════════════════════════ SKILLS TAB ═══════════════════════════ *@
+                <RadzenTabsItem Text="Skills" Icon="psychology">
+                    <RadzenStack Orientation="Orientation.Vertical" Gap="1rem" class="rz-p-4">
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
+                            <RadzenText TextStyle="TextStyle.Subtitle1" class="rz-mb-0">
+                                <strong>Skills</strong>
+                                <RadzenBadge Text="@Data.Skills.Count.ToString()" BadgeStyle="BadgeStyle.Info" IsPill="true" class="rz-ml-2" />
+                            </RadzenText>
+                            <RadzenButton Text="Add Skill" Icon="add" ButtonStyle="ButtonStyle.Primary" Click="OpenAddSkillDialog" />
+                        </RadzenStack>
+
+                        @if (Data.Skills.Count == 0)
+                        {
+                            <RadzenStack AlignItems="AlignItems.Center" class="rz-p-8" Gap="1rem">
+                                <RadzenIcon Icon="psychology" Style="font-size: 3rem; color: var(--rz-text-disabled-color);" />
+                                <RadzenText class="rz-color-secondary">No skills yet. Add your first one!</RadzenText>
+                            </RadzenStack>
+                        }
+                        else
+                        {
+                            @foreach (var group in Data.Skills.GroupBy(s => s.Category))
+                            {
+                                <RadzenCard Variant="Variant.Outlined" class="rz-p-4">
+                                    <RadzenText TextStyle="TextStyle.Subtitle2" class="rz-mb-3"><strong>@group.Key</strong></RadzenText>
+                                    <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
+                                        @foreach (var skill in group)
+                                        {
+                                            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween"
+                                                         Style="@($"padding: 0.5rem 0.75rem; border-radius: 0.375rem; {(!skill.IsVisible ? "opacity: 0.55;" : "")}")">
+                                                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.75rem" Style="flex: 1;">
+                                                    @if (!string.IsNullOrWhiteSpace(skill.IconClass))
+                                                    {
+                                                        <span style="font-size: 1.2rem;">@skill.IconClass</span>
+                                                    }
+                                                    <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0" Style="min-width: 160px;">@skill.Name</RadzenText>
+                                                    <RadzenProgressBar Value="@skill.ProficiencyLevel" Max="100" ShowValue="false"
+                                                                       Style="flex: 1; max-width: 200px; height: 8px;"
+                                                                       ProgressBarStyle="ProgressBarStyle.Primary" />
+                                                    <RadzenText TextStyle="TextStyle.Caption" class="rz-mb-0 rz-color-secondary">@skill.ProficiencyLevel%</RadzenText>
+                                                    @if (!skill.IsVisible)
+                                                    {
+                                                        <RadzenBadge Text="Hidden" BadgeStyle="BadgeStyle.Warning" IsPill="true" Variant="Variant.Flat" />
+                                                    }
+                                                </RadzenStack>
+                                                <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem">
+                                                    <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Light" Variant="Variant.Text" Size="ButtonSize.Small"
+                                                                  Click="@(() => OpenEditSkillDialog(skill))" title="Edit" />
+                                                    <RadzenButton Icon="@(skill.IsVisible ? "visibility" : "visibility_off")"
+                                                                  ButtonStyle="ButtonStyle.Light" Variant="Variant.Text" Size="ButtonSize.Small"
+                                                                  Click="@(() => ToggleSkillVisibility(skill))"
+                                                                  title="@(skill.IsVisible ? "Hide" : "Show")" />
+                                                    <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Variant="Variant.Text" Size="ButtonSize.Small"
+                                                                  Click="@(() => ConfirmDeleteSkill(skill))" title="Delete" />
+                                                </RadzenStack>
+                                            </RadzenStack>
+                                        }
+                                    </RadzenStack>
+                                </RadzenCard>
+                            }
+                        }
+                    </RadzenStack>
+                </RadzenTabsItem>
+
+            </Tabs>
+        </RadzenTabs>
+    }
+</RadzenStack>

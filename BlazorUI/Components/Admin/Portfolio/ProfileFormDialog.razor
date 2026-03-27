@@ -1,0 +1,108 @@
+<RadzenTemplateForm TItem="UpdateProfileRequest" Data="@Model" Submit="OnSubmitAsync">
+    <RadzenStack Orientation="Orientation.Vertical" Gap="1rem" class="rz-p-4">
+
+        @if (ErrorMessage is not null)
+        {
+            <RadzenAlert AlertStyle="AlertStyle.Danger" Variant="Variant.Flat" Shade="Shade.Lighter"
+                         AllowClose="true" Close="@(() => ErrorMessage = null)">
+                @ErrorMessage
+            </RadzenAlert>
+        }
+
+        @* Full Name *@
+        <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem">
+            <RadzenLabel Text="Full Name" Component="FullName" />
+            <RadzenTextBox Name="FullName" @bind-Value="@Model.FullName" Style="width: 100%;" />
+            <RadzenRequiredValidator Component="FullName" Text="Full name is required" />
+        </RadzenStack>
+
+        @* Headline & Sub-Headline *@
+        <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem">
+            <RadzenLabel Text="Headline" Component="Headline" />
+            <RadzenTextBox Name="Headline" @bind-Value="@Model.Headline" Style="width: 100%;" />
+            <RadzenRequiredValidator Component="Headline" Text="Headline is required" />
+        </RadzenStack>
+
+        <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem">
+            <RadzenLabel Text="Sub-Headline" Component="SubHeadline" />
+            <RadzenTextBox Name="SubHeadline" @bind-Value="@Model.SubHeadline" Style="width: 100%;" />
+        </RadzenStack>
+
+        @* Bio *@
+        <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem">
+            <RadzenLabel Text="Bio" Component="Bio" />
+            <RadzenTextArea Name="Bio" @bind-Value="@Model.Bio" Rows="4" Style="width: 100%;" />
+            <RadzenRequiredValidator Component="Bio" Text="Bio is required" />
+        </RadzenStack>
+
+        @* Email & Phone *@
+        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.75rem" Wrap="FlexWrap.Wrap">
+            <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem" Style="flex: 1; min-width: 200px;">
+                <RadzenLabel Text="Email" Component="Email" />
+                <RadzenTextBox Name="Email" @bind-Value="@Model.Email" Style="width: 100%;" />
+                <RadzenRequiredValidator Component="Email" Text="Email is required" />
+            </RadzenStack>
+            <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem" Style="flex: 1; min-width: 200px;">
+                <RadzenLabel Text="Phone" Component="Phone" />
+                <RadzenTextBox Name="Phone" @bind-Value="@Model.Phone" Placeholder="Optional" Style="width: 100%;" />
+            </RadzenStack>
+        </RadzenStack>
+
+        @* Location *@
+        <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem">
+            <RadzenLabel Text="Location" Component="Location" />
+            <RadzenTextBox Name="Location" @bind-Value="@Model.Location" Placeholder="Optional" Style="width: 100%;" />
+        </RadzenStack>
+
+        @* URLs *@
+        <RadzenFieldset Text="Links" AllowCollapse="true">
+            <RadzenStack Orientation="Orientation.Vertical" Gap="0.75rem">
+                <RadzenStack Orientation="Orientation.Horizontal" Gap="0.75rem" Wrap="FlexWrap.Wrap">
+                    <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem" Style="flex: 1; min-width: 200px;">
+                        <RadzenLabel Text="GitHub URL" Component="GitHubUrl" />
+                        <RadzenTextBox Name="GitHubUrl" @bind-Value="@Model.GitHubUrl" Placeholder="https://github.com/…" Style="width: 100%;" />
+                    </RadzenStack>
+                    <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem" Style="flex: 1; min-width: 200px;">
+                        <RadzenLabel Text="LinkedIn URL" Component="LinkedInUrl" />
+                        <RadzenTextBox Name="LinkedInUrl" @bind-Value="@Model.LinkedInUrl" Placeholder="https://linkedin.com/in/…" Style="width: 100%;" />
+                    </RadzenStack>
+                </RadzenStack>
+                <RadzenStack Orientation="Orientation.Horizontal" Gap="0.75rem" Wrap="FlexWrap.Wrap">
+                    <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem" Style="flex: 1; min-width: 200px;">
+                        <RadzenLabel Text="Twitter URL" Component="TwitterUrl" />
+                        <RadzenTextBox Name="TwitterUrl" @bind-Value="@Model.TwitterUrl" Placeholder="https://twitter.com/…" Style="width: 100%;" />
+                    </RadzenStack>
+                    <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem" Style="flex: 1; min-width: 200px;">
+                        <RadzenLabel Text="Website URL" Component="WebsiteUrl" />
+                        <RadzenTextBox Name="WebsiteUrl" @bind-Value="@Model.WebsiteUrl" Placeholder="https://…" Style="width: 100%;" />
+                    </RadzenStack>
+                </RadzenStack>
+                <RadzenStack Orientation="Orientation.Horizontal" Gap="0.75rem" Wrap="FlexWrap.Wrap">
+                    <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem" Style="flex: 1; min-width: 200px;">
+                        <RadzenLabel Text="Avatar URL" Component="AvatarUrl" />
+                        <RadzenTextBox Name="AvatarUrl" @bind-Value="@Model.AvatarUrl" Placeholder="https://…" Style="width: 100%;" />
+                    </RadzenStack>
+                    <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem" Style="flex: 1; min-width: 200px;">
+                        <RadzenLabel Text="Resume URL" Component="ResumeUrl" />
+                        <RadzenTextBox Name="ResumeUrl" @bind-Value="@Model.ResumeUrl" Placeholder="https://…" Style="width: 100%;" />
+                    </RadzenStack>
+                </RadzenStack>
+            </RadzenStack>
+        </RadzenFieldset>
+
+        @* Active toggle *@
+        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+            <RadzenSwitch @bind-Value="@Model.IsActive" />
+            <RadzenLabel Text="Profile Active (visible on public portfolio)" Style="margin: 0;" />
+        </RadzenStack>
+
+        @* Footer *@
+        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End"
+                     Gap="0.5rem" class="rz-pt-4" Style="border-top: 1px solid var(--rz-base-200);">
+            <RadzenButton Text="Cancel" Variant="Variant.Flat" ButtonStyle="ButtonStyle.Light"
+                          Click="Cancel" ButtonType="ButtonType.Button" Disabled="@IsBusy" />
+            <RadzenButton Text="Save Changes" Icon="save" ButtonStyle="ButtonStyle.Primary"
+                          ButtonType="ButtonType.Submit" IsBusy="@IsBusy" />
+        </RadzenStack>
+    </RadzenStack>
+</RadzenTemplateForm>
