@@ -41,34 +41,71 @@
         content: "An error has occurred."
     }
 
+/* Container stays the same positioning */
 .loading-progress {
     position: absolute;
-    display: block;
-    width: 8rem;
-    height: 8rem;
+    width: 80px;
+    height: 80px;
     inset: 20vh 0 auto 0;
-    margin: 0 auto 0 auto;
+    margin: 0 auto;
+    display: block;
+    animation: loader-rotate 1.2s linear infinite;
 }
 
-    .loading-progress circle {
+    /* Base circle (track) */
+    .loading-progress circle:first-child {
         fill: none;
-        stroke: #e0e0e0;
-        stroke-width: 0.6rem;
-        transform-origin: 50% 50%;
-        transform: rotate(-90deg);
+        stroke: rgba(255, 255, 255, 0.08);
+        stroke-width: 6;
     }
 
-        .loading-progress circle:last-child {
-            stroke: #1b6ec2;
-            stroke-dasharray: calc(3.141 * var(--blazor-load-percentage, 0%) * 0.8), 500%;
-            transition: stroke-dasharray 0.05s ease-in-out;
-        }
+    /* Animated arc (modern spinner look) */
+    .loading-progress circle:last-child {
+        fill: none;
+        stroke: var(--p-accent, #3b82f6);
+        stroke-width: 6;
+        stroke-linecap: round;
+        stroke-dasharray: calc(3.141 * var(--blazor-load-percentage, 25%) * 0.8), 500%;
+        stroke-dashoffset: 0;
+        transform-origin: 50% 50%;
+        transform: rotate(-90deg);
+        animation: loader-dash 1.5s ease-in-out infinite;
+    }
 
+/* Rotation animation */
+@keyframes loader-rotate {
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+/* Dash animation (gives that modern sweeping effect) */
+@keyframes loader-dash {
+    0% {
+        stroke-dasharray: 1 200;
+        stroke-dashoffset: 0;
+    }
+
+    50% {
+        stroke-dasharray: 100 200;
+        stroke-dashoffset: -15;
+    }
+
+    100% {
+        stroke-dasharray: 100 200;
+        stroke-dashoffset: -125;
+    }
+}
+
+/* Optional: modern text styling */
 .loading-progress-text {
     position: absolute;
+    inset: calc(20vh + 90px) 0 auto 0;
     text-align: center;
-    font-weight: bold;
-    inset: calc(20vh + 3.25rem) 0 auto 0.2rem;
+    font-weight: 500;
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.7);
+    letter-spacing: 0.05em;
 }
 
     .loading-progress-text:after {

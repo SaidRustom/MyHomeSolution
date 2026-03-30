@@ -384,7 +384,7 @@
 .scroll-indicator {
     position: absolute;
     bottom: 2rem;
-    left: 50%;
+    left: auto;
     transform: translateX(-50%);
     display: flex;
     flex-direction: column;
@@ -650,6 +650,7 @@
     font-size: 0.95rem;
     line-height: 1.7;
     margin-bottom: 1rem;
+    white-space: pre-line;
 }
 
 .timeline-tech {
@@ -1094,10 +1095,6 @@
 
     .hero-section {
         padding: 0 1.25rem;
-    }
-
-    .scroll-indicator {
-        display: none;
     }
 }
 
