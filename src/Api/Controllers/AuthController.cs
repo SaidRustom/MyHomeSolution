@@ -304,7 +304,7 @@ public sealed class AuthEmailController(
         var token = await identityService.GenerateEmailConfirmationTokenAsync(
             user.Id, cancellationToken);
 
-        var blazorBaseUrl = "https://saidrustom.ca";
+        var blazorBaseUrl = "https://www.saidrustom.ca";
         var encodedToken = Uri.EscapeDataString(token);
         var encodedUserId = Uri.EscapeDataString(user.Id);
         var confirmUrl = $"{blazorBaseUrl}/confirm-email?userId={encodedUserId}&token={encodedToken}";
@@ -332,7 +332,7 @@ public sealed class AuthEmailController(
         {
             var (token, userId, userName) = tokenResult.Value;
 
-            var blazorBaseUrl = "https://saidrustom.ca";
+            var blazorBaseUrl = "https://www.saidrustom.ca";
             var encodedToken = Uri.EscapeDataString(token);
             var encodedUserId = Uri.EscapeDataString(userId);
             var resetUrl = $"{blazorBaseUrl}/reset-password?userId={encodedUserId}&token={encodedToken}";

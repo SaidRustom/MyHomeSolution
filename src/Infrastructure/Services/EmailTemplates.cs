@@ -229,7 +229,7 @@ public static class EmailTemplates
         <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto 24px;">
           <tr>
             <td style="border-radius:6px;background-color:#1a73e8;">
-              <a href="https://saidrustom.ca/register" target="_blank" style="display:inline-block;padding:14px 32px;color:#ffffff;font-size:15px;font-weight:600;text-decoration:none;border-radius:6px;">
+              <a href="https://www.saidrustom.ca/register" target="_blank" style="display:inline-block;padding:14px 32px;color:#ffffff;font-size:15px;font-weight:600;text-decoration:none;border-radius:6px;">
                 Create a Permanent Account
               </a>
             </td>
