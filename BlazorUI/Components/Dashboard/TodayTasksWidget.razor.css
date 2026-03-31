@@ -1,0 +1,190 @@
+/* ============================================================
+   Today Tasks Widget — Mobile-First
+   ============================================================ */
+
+::deep .tasks-widget {
+    border-radius: var(--rz-border-radius);
+    border: 1px solid var(--rz-base-200);
+    background: var(--rz-base-background-color);
+    overflow: hidden;
+}
+
+::deep .tasks-widget-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--rz-base-200);
+}
+
+::deep .tasks-widget-header-left {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+::deep .tasks-widget-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: color-mix(in srgb, var(--rz-primary) 12%, transparent);
+}
+
+::deep .tasks-widget-title {
+    font-weight: 700;
+    font-size: 0.9375rem;
+}
+
+::deep .tasks-progress-bar {
+    height: 3px;
+    background: var(--rz-base-200);
+}
+
+::deep .tasks-progress-fill {
+    height: 100%;
+    background: var(--rz-success);
+    transition: width 0.4s ease;
+    border-radius: 0 2px 2px 0;
+}
+
+::deep .tasks-widget-body {
+    padding: 0.25rem 0;
+    max-height: 320px;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+::deep .task-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    transition: background 0.12s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+
+::deep .task-item:active {
+    background: color-mix(in srgb, var(--rz-primary) 4%, transparent);
+}
+
+::deep .task-item.completed {
+    opacity: 0.6;
+}
+
+::deep .task-item.in-progress {
+    background: color-mix(in srgb, var(--rz-info) 4%, transparent);
+}
+
+::deep .task-item-priority {
+    width: 3px;
+    height: 24px;
+    border-radius: 2px;
+    flex-shrink: 0;
+}
+
+::deep .task-item-content {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.0625rem;
+    cursor: pointer;
+}
+
+::deep .task-item-title {
+    font-weight: 600;
+    font-size: 0.8125rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+::deep .task-item-title.done {
+    text-decoration: line-through;
+    color: var(--rz-text-secondary-color);
+}
+
+::deep .task-item-meta {
+    font-size: 0.6875rem;
+    color: var(--rz-text-secondary-color);
+}
+
+::deep .task-item-actions {
+    display: flex;
+    gap: 0.25rem;
+    flex-shrink: 0;
+}
+
+::deep .task-action-btn {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.1s ease, background 0.1s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+
+::deep .task-action-btn:active {
+    transform: scale(0.9);
+}
+
+::deep .task-action-btn:disabled {
+    opacity: 0.4;
+    pointer-events: none;
+}
+
+::deep .task-action-btn .rzi {
+    font-size: 1rem;
+}
+
+::deep .task-action-btn.start {
+    background: color-mix(in srgb, var(--rz-info) 12%, transparent);
+    color: var(--rz-info);
+}
+
+::deep .task-action-btn.complete {
+    background: color-mix(in srgb, var(--rz-success) 12%, transparent);
+    color: var(--rz-success);
+}
+
+::deep .task-action-btn.skip {
+    background: color-mix(in srgb, var(--rz-base-400) 12%, transparent);
+    color: var(--rz-text-secondary-color);
+}
+
+::deep .task-done-check {
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+::deep .tasks-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 1.5rem 1rem;
+    text-align: center;
+}
+
+::deep .tasks-empty-text {
+    font-weight: 600;
+    font-size: 0.8125rem;
+    color: var(--rz-text-secondary-color);
+}
+
+::deep .tasks-widget-footer {
+    display: flex;
+    justify-content: center;
+    padding: 0.375rem 0;
+    border-top: 1px solid var(--rz-base-200);
+}

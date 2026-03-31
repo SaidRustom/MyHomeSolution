@@ -1,0 +1,94 @@
+@using BlazorUI.Models.Dashboard
+
+<div class="customize-dialog">
+    <div class="customize-header">
+        <RadzenText TextStyle="TextStyle.H6" class="rz-mb-0"><strong>Customize Homepage</strong></RadzenText>
+        <RadzenText TextStyle="TextStyle.Caption" class="rz-mb-0 rz-color-secondary">Drag to reorder · Toggle visibility</RadzenText>
+    </div>
+
+    @* Active widgets *@
+    <div class="customize-section">
+        <span class="customize-section-label">Active Widgets</span>
+        <div class="customize-widget-list">
+            @foreach (var (widget, idx) in _widgets.Select((w, i) => (w, i)))
+            {
+                var def = WidgetTypes.Get(widget.WidgetType);
+                <div class="customize-widget-row @(widget.IsVisible ? "" : "hidden")">
+                    <div class="customize-reorder">
+                        <RadzenButton Icon="arrow_upward" Variant="Variant.Text" Size="ButtonSize.ExtraSmall"
+                                      ButtonStyle="ButtonStyle.Secondary" Disabled="@(idx == 0)"
+                                      Click="@(() => MoveUp(idx))" />
+                        <RadzenButton Icon="arrow_downward" Variant="Variant.Text" Size="ButtonSize.ExtraSmall"
+                                      ButtonStyle="ButtonStyle.Secondary" Disabled="@(idx == _widgets.Count - 1)"
+                                      Click="@(() => MoveDown(idx))" />
+                    </div>
+                    <div class="customize-widget-info">
+                        <RadzenIcon Icon="@(def?.Icon ?? "widgets")"
+                                    Style="font-size: 1.25rem; color: var(--rz-primary);" />
+                        <div class="customize-widget-text">
+                            <span class="customize-widget-name">@(def?.DisplayName ?? widget.WidgetType)</span>
+                            <span class="customize-widget-desc">@(def?.Description ?? "")</span>
+                        </div>
+                    </div>
+                    <RadzenToggleButton @bind-Value="@widget.IsVisible"
+                                        Icon="@(widget.IsVisible ? "visibility" : "visibility_off")"
+                                        Variant="Variant.Text" Size="ButtonSize.Small"
+                                        ButtonStyle="@(widget.IsVisible ? ButtonStyle.Primary : ButtonStyle.Secondary)"
+                                        title="@(widget.IsVisible ? "Hide" : "Show")" />
+                    <RadzenButton Icon="close" Variant="Variant.Text" Size="ButtonSize.ExtraSmall"
+                                  ButtonStyle="ButtonStyle.Danger" Click="@(() => RemoveWidget(idx))"
+                                  title="Remove" />
+                </div>
+            }
+        </div>
+    </div>
+
+    @* Add widget *@
+    @if (AvailableToAdd.Count > 0)
+    {
+        <div class="customize-section">
+            <span class="customize-section-label">Add Widget</span>
+            <div class="customize-add-list">
+                @foreach (var def in AvailableToAdd)
+                {
+                    <div class="customize-add-row" @onclick="@(() => AddWidget(def))">
+                        <RadzenIcon Icon="@def.Icon" Style="font-size: 1.25rem; color: var(--rz-primary);" />
+                        <div class="customize-widget-text">
+                            <span class="customize-widget-name">@def.DisplayName</span>
+                            <span class="customize-widget-desc">@def.Description</span>
+                        </div>
+                        <RadzenIcon Icon="add_circle" Style="font-size: 1.25rem; color: var(--rz-success);" />
+                    </div>
+                }
+            </div>
+        </div>
+    }
+
+    @* Column span *@
+    <div class="customize-section">
+        <span class="customize-section-label">Widget Sizes</span>
+        <div class="customize-size-list">
+            @foreach (var widget in _widgets)
+            {
+                var def = WidgetTypes.Get(widget.WidgetType);
+                <div class="customize-size-row">
+                    <span class="customize-size-name">@(def?.DisplayName ?? widget.WidgetType)</span>
+                    <RadzenSelectBar TValue="int" @bind-Value="@widget.ColumnSpan" Size="ButtonSize.ExtraSmall">
+                        <Items>
+                            <RadzenSelectBarItem Text="Half" Value="1" />
+                            <RadzenSelectBarItem Text="Full" Value="2" />
+                        </Items>
+                    </RadzenSelectBar>
+                </div>
+            }
+        </div>
+    </div>
+
+    @* Actions *@
+    <div class="customize-actions">
+        <RadzenButton Text="Cancel" Variant="Variant.Text" ButtonStyle="ButtonStyle.Secondary"
+                      Size="ButtonSize.Small" Click="@(() => DialogService.Close(null))" />
+        <RadzenButton Text="Save Layout" Icon="save" ButtonStyle="ButtonStyle.Primary"
+                      Size="ButtonSize.Small" Click="Save" IsBusy="@_isSaving" />
+    </div>
+</div>

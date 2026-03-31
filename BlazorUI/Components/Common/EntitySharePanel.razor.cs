@@ -206,6 +206,26 @@ public partial class EntitySharePanel : IDisposable
         _ => EntityType
     };
 
+    async Task OpenSharedHistoryAsync(string userId, string? displayName)
+    {
+        var currentUserId = (await AuthState).User.FindFirst("sub")?.Value;
+        if (userId == currentUserId) return;
+
+        await DialogService.OpenAsync<SharedHistoryDialog>(
+            $"Shared with {displayName ?? "User"}",
+            new Dictionary<string, object>
+            {
+                { nameof(SharedHistoryDialog.UserId), userId }
+            },
+            new DialogOptions
+            {
+                Width = "680px",
+                Height = "600px",
+                CloseDialogOnOverlayClick = true,
+                ShowClose = true
+            });
+    }
+
     public void Dispose()
     {
         _cts.Cancel();

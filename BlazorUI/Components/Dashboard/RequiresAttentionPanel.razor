@@ -1,6 +1,9 @@
 @if (IsLoading)
 {
-    <LoadingIndicator Text="Loading…" />
+    <div class="widget-loading">
+        <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate"
+                                   Size="ProgressBarCircularSize.Small" />
+    </div>
 }
 else if (Error is not null)
 {
@@ -8,100 +11,101 @@ else if (Error is not null)
 }
 else if (HasItems)
 {
-    <RadzenCard Variant="Variant.Outlined">
-        <RadzenStack Orientation="Orientation.Vertical" Gap="1rem" class="rz-p-2">
+    <div class="attention-widget">
+        @* Header *@
+        <div class="attention-header">
+            <div class="attention-header-left">
+                <div class="attention-icon-pulse">
+                    <RadzenIcon Icon="notifications_active" Style="font-size: 1.125rem; color: var(--rz-warning-darker);" />
+                </div>
+                <span class="attention-title">Requires Attention</span>
+            </div>
+            <RadzenBadge BadgeStyle="BadgeStyle.Warning" IsPill="true" Text="@TotalCount.ToString()"
+                         Style="font-size: 0.7rem; font-weight: 700;" />
+        </div>
 
-            @* Header *@
-            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
-                <RadzenIcon Icon="notifications_active" Style="color: var(--rz-warning); font-size: 1.5rem;" />
-                <RadzenText TextStyle="TextStyle.H6" class="rz-mb-0"><strong>Requires Your Attention</strong></RadzenText>
-                <RadzenBadge BadgeStyle="BadgeStyle.Warning" IsPill="true" Text="@TotalCount.ToString()" />
-            </RadzenStack>
-
+        @* Items list *@
+        <div class="attention-items">
             @* Unpaid Bills *@
             @if (Data!.UnpaidBills.Count > 0)
             {
-                <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
-                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.375rem">
-                        <RadzenIcon Icon="receipt_long" Style="font-size: 1rem; color: var(--rz-danger);" />
-                        <RadzenText TextStyle="TextStyle.Subtitle2" class="rz-mb-0"><strong>Unpaid Bills</strong></RadzenText>
-                        <RadzenBadge BadgeStyle="BadgeStyle.Danger" IsPill="true" Text="@Data.UnpaidBills.Count.ToString()" Style="font-size: 0.65rem;" />
-                    </RadzenStack>
+                <div class="attention-group-label">
+                    <RadzenIcon Icon="receipt_long" Style="font-size: 0.875rem; color: var(--rz-danger);" />
+                    <span>Unpaid Bills</span>
+                    <RadzenBadge BadgeStyle="BadgeStyle.Danger" IsPill="true" Variant="Variant.Flat"
+                                 Text="@Data.UnpaidBills.Count.ToString()" Style="font-size: 0.6rem;" />
+                </div>
 
-                    @foreach (var bill in Data.UnpaidBills.Take(RemainingBillSlots))
-                    {
-                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween"
-                                     Style="padding: 0.5rem 0.75rem; background-color: var(--rz-card-background-color); border-radius: var(--rz-border-radius); cursor: pointer;"
-                                     @onclick="@(() => NavigateToBill(bill.Id))">
-                            <RadzenStack Orientation="Orientation.Vertical" Gap="0.125rem">
-                                <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0"><strong>@bill.Title</strong></RadzenText>
-                                <RadzenText TextStyle="TextStyle.Caption" class="rz-mb-0 rz-color-secondary">
-                                    @bill.Category — @bill.BillDate.LocalDateTime.ToString("MMM dd, yyyy")
-                                </RadzenText>
-                            </RadzenStack>
-                            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
-                                <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0" Style="font-weight: 600; font-variant-numeric: tabular-nums;">
-                                    <CurrencyDisplay Amount="@bill.Amount" Currency="@bill.Currency" />
-                                </RadzenText>
-                                <RadzenIcon Icon="chevron_right" Style="font-size: 1rem; color: var(--rz-text-secondary-color);" />
-                            </RadzenStack>
-                        </RadzenStack>
-                    }
-                </RadzenStack>
+                @foreach (var bill in Data.UnpaidBills.Take(RemainingBillSlots))
+                {
+                    <div class="attention-item" @onclick="@(() => NavigateToBill(bill.Id))">
+                        <div class="attention-item-indicator danger"></div>
+                        <div class="attention-item-content">
+                            <span class="attention-item-title">@bill.Title</span>
+                            <span class="attention-item-meta">@bill.Category · @bill.BillDate.LocalDateTime.ToString("MMM dd")</span>
+                        </div>
+                        <div class="attention-item-value">
+                            <CurrencyDisplay Amount="@bill.Amount" Currency="@bill.Currency" />
+                        </div>
+                        <RadzenIcon Icon="chevron_right" Style="font-size: 1rem; color: var(--rz-text-tertiary-color);" />
+                    </div>
+                }
             }
 
             @* Urgent Tasks *@
             @if (Data!.UrgentTasks.Count > 0 && RemainingTaskSlots > 0)
             {
-                <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
-                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.375rem">
-                        <RadzenIcon Icon="priority_high" Style="font-size: 1rem; color: var(--rz-warning);" />
-                        <RadzenText TextStyle="TextStyle.Subtitle2" class="rz-mb-0"><strong>Urgent Tasks</strong></RadzenText>
-                        <RadzenBadge BadgeStyle="BadgeStyle.Warning" IsPill="true" Text="@Data.UrgentTasks.Count.ToString()" Style="font-size: 0.65rem;" />
-                    </RadzenStack>
+                <div class="attention-group-label">
+                    <RadzenIcon Icon="priority_high" Style="font-size: 0.875rem; color: var(--rz-warning-darker);" />
+                    <span>Urgent Tasks</span>
+                    <RadzenBadge BadgeStyle="BadgeStyle.Warning" IsPill="true" Variant="Variant.Flat"
+                                 Text="@Data.UrgentTasks.Count.ToString()" Style="font-size: 0.6rem;" />
+                </div>
 
-                    @foreach (var task in Data.UrgentTasks.Take(RemainingTaskSlots))
-                    {
-                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween"
-                                     Style="padding: 0.5rem 0.75rem; background-color: var(--rz-card-background-color); border-radius: var(--rz-border-radius); cursor: pointer;"
-                                     @onclick="@(() => NavigateToTask(task.TaskId, task.OccurrenceId))">
-                            <RadzenStack Orientation="Orientation.Vertical" Gap="0.125rem">
-                                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.375rem">
-                                    <RadzenIcon Icon="flag" Style="@($"font-size: 0.875rem; color: {GetPriorityColor(task.Priority)};")" />
-                                    <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0"><strong>@task.Title</strong></RadzenText>
-                                </RadzenStack>
-                                <RadzenText TextStyle="TextStyle.Caption" class="rz-mb-0 rz-color-secondary">
-                                    @task.Category
-                                    @if (!string.IsNullOrEmpty(task.AssignedToUserFullName))
-                                    {
-                                        <text> • Assigned to @task.AssignedToUserFullName</text>
-                                    }
-                                </RadzenText>
-                            </RadzenStack>
-                            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
-                                <RadzenBadge BadgeStyle="@(task.Status == Models.Enums.OccurrenceStatus.Overdue ? BadgeStyle.Danger : BadgeStyle.Warning)"
-                                             IsPill="true" Variant="Variant.Flat"
-                                             Text="@GetDueDateLabel(task.DueDate)" Style="font-size: 0.7rem;" />
-                                <RadzenBadge BadgeStyle="@(task.Priority == Models.Enums.TaskPriority.Critical ? BadgeStyle.Danger : BadgeStyle.Warning)"
-                                             IsPill="true" Variant="Variant.Flat"
-                                             Text="@task.Priority.ToString()" Style="font-size: 0.7rem;" />
-                                <RadzenIcon Icon="chevron_right" Style="font-size: 1rem; color: var(--rz-text-secondary-color);" />
-                            </RadzenStack>
-                        </RadzenStack>
-                    }
-                </RadzenStack>
+                @foreach (var task in Data.UrgentTasks.Take(RemainingTaskSlots))
+                {
+                    <div class="attention-item" @onclick="@(() => NavigateToTask(task.TaskId, task.OccurrenceId))">
+                        <div class="attention-item-indicator @(task.Priority == Models.Enums.TaskPriority.Critical ? "danger" : "warning")"></div>
+                        <div class="attention-item-content">
+                            <span class="attention-item-title">@task.Title</span>
+                            <span class="attention-item-meta">
+                                @task.Category
+                                @if (!string.IsNullOrEmpty(task.AssignedToUserFullName))
+                                {
+                                    <text> · @task.AssignedToUserFullName</text>
+                                }
+                            </span>
+                        </div>
+                        <div class="attention-item-badges">
+                            <RadzenBadge BadgeStyle="@(task.Status == Models.Enums.OccurrenceStatus.Overdue ? BadgeStyle.Danger : BadgeStyle.Warning)"
+                                         IsPill="true" Variant="Variant.Flat"
+                                         Text="@GetDueDateLabel(task.DueDate)" Style="font-size: 0.65rem;" />
+                        </div>
+                        <RadzenIcon Icon="chevron_right" Style="font-size: 1rem; color: var(--rz-text-tertiary-color);" />
+                    </div>
+                }
             }
+        </div>
 
-            @* Expand / Collapse *@
-            @if (HasMoreItems)
-            {
-                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Center">
-                    <RadzenButton Text="@(IsExpanded ? "Show Less" : $"Show All ({TotalCount})")"
-                                  Icon="@(IsExpanded ? "expand_less" : "expand_more")"
-                                  Variant="Variant.Text" ButtonStyle="ButtonStyle.Secondary" Size="ButtonSize.Small"
-                                  Click="ToggleExpanded" />
-                </RadzenStack>
-            }
-        </RadzenStack>
-    </RadzenCard>
+        @* Expand / Collapse *@
+        @if (HasMoreItems)
+        {
+            <div class="attention-footer">
+                <RadzenButton Text="@(IsExpanded ? "Show Less" : $"Show All ({TotalCount})")"
+                              Icon="@(IsExpanded ? "expand_less" : "expand_more")"
+                              Variant="Variant.Text" ButtonStyle="ButtonStyle.Secondary" Size="ButtonSize.ExtraSmall"
+                              Click="ToggleExpanded" />
+            </div>
+        }
+    </div>
+}
+else
+{
+    <div class="attention-widget attention-empty">
+        <div class="attention-empty-content">
+            <RadzenIcon Icon="check_circle" Style="font-size: 2rem; color: var(--rz-success);" />
+            <span class="attention-empty-text">All caught up!</span>
+            <span class="attention-empty-sub">Nothing needs your attention right now.</span>
+        </div>
+    </div>
 }

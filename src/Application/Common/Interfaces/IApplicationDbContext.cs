@@ -32,6 +32,7 @@ public interface IApplicationDbContext
     DbSet<PortfolioExperience> PortfolioExperiences { get; }
     DbSet<PortfolioSkill> PortfolioSkills { get; }
     DbSet<DemoUser> DemoUsers { get; }
+    DbSet<HomepageWidget> HomepageWidgets { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

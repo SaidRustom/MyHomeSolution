@@ -1,0 +1,86 @@
+@using BlazorUI.Models.Bills
+
+@if (_isLoading)
+{
+    <div class="widget-loading">
+        <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate"
+                                   Size="ProgressBarCircularSize.Small" />
+    </div>
+}
+else
+{
+    <div class="bills-widget">
+        <div class="bills-widget-header">
+            <div class="bills-widget-header-left">
+                <div class="bills-widget-icon">
+                    <RadzenIcon Icon="receipt_long" Style="font-size: 1.125rem; color: var(--rz-info);" />
+                </div>
+                <span class="bills-widget-title">Recent Bills</span>
+            </div>
+            @if (_totalSpent > 0)
+            {
+                <span class="bills-widget-total">$@_totalSpent.ToString("N0")</span>
+            }
+        </div>
+
+        @* Filter toggle *@
+        <div class="bills-filter-row">
+            <RadzenSelectBar TValue="BillFilter" Value="@_filter" Change="OnFilterChangedAsync"
+                             Size="ButtonSize.ExtraSmall">
+                <Items>
+                    <RadzenSelectBarItem Text="All" Value="BillFilter.All" />
+                    <RadzenSelectBarItem Text="Mine" Value="BillFilter.Mine" />
+                    <RadzenSelectBarItem Text="Shared" Value="BillFilter.Shared" />
+                </Items>
+            </RadzenSelectBar>
+        </div>
+
+        <div class="bills-widget-body">
+            @if (_bills.Count == 0)
+            {
+                <div class="bills-empty">
+                    <RadzenIcon Icon="receipt" Style="font-size: 1.75rem; color: var(--rz-base-400);" />
+                    <span>No recent bills</span>
+                </div>
+            }
+            else
+            {
+                @foreach (var bill in _bills.Take(5))
+                {
+                    <div class="bill-widget-item" @onclick="@(() => NavigationManager.NavigateTo($"/bills/{bill.Id}"))">
+                        <div class="bill-widget-cat">
+                            <CategoryIcon Category="@bill.Category.ToString()" Size="18" />
+                        </div>
+                        <div class="bill-widget-content">
+                            <span class="bill-widget-name">@bill.Title</span>
+                            <span class="bill-widget-meta">
+                                @bill.BillDate.LocalDateTime.ToString("MMM dd")
+                                @if (bill.SplitCount > 1)
+                                {
+                                    <text> · Split @bill.SplitCount ways</text>
+                                }
+                            </span>
+                        </div>
+                        <div class="bill-widget-amount">
+                            <span class="bill-widget-amount-value">$@bill.Amount.ToString("N2")</span>
+                            @if (bill.IsFullyPaid)
+                            {
+                                <span class="bill-widget-paid">Paid</span>
+                            }
+                            else
+                            {
+                                <span class="bill-widget-unpaid">Unpaid</span>
+                            }
+                        </div>
+                    </div>
+                }
+            }
+        </div>
+
+        <div class="bills-widget-footer">
+            <RadzenButton Text="All Bills" Icon="arrow_forward" Variant="Variant.Text"
+                          ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.ExtraSmall"
+                          Click="@(() => NavigationManager.NavigateTo("/bills"))" />
+        </div>
+    </div>
+}

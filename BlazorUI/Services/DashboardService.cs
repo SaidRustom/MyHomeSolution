@@ -15,4 +15,16 @@ public sealed class DashboardService(HttpClient httpClient)
     {
         return GetAsync<RequiresAttentionDto>($"{BasePath}/requires-attention", cancellationToken);
     }
+
+    public Task<ApiResult<HomepageLayoutDto>> GetHomepageLayoutAsync(
+        CancellationToken cancellationToken = default)
+    {
+        return GetAsync<HomepageLayoutDto>($"{BasePath}/homepage-layout", cancellationToken);
+    }
+
+    public Task<ApiResult<HomepageLayoutDto>> SaveHomepageLayoutAsync(
+        SaveHomepageLayoutRequest request, CancellationToken cancellationToken = default)
+    {
+        return PutWithResponseAsync<HomepageLayoutDto>($"{BasePath}/homepage-layout", request, cancellationToken);
+    }
 }

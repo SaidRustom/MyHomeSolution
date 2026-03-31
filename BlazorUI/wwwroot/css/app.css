@@ -124,3 +124,70 @@ code {
 .form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
     text-align: start;
 }
+
+/* global error message */
+#blazor-error-ui {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 10000;
+    background: var(--rz-base-background-color, #fff);
+    border-radius: 12px;
+    padding: 0;
+    max-width: 380px;
+    border: 1px solid var(--rz-border-color, #e5e7eb);
+    animation: slideIn 0.25s ease-out;
+}
+
+.error-container {
+    display: flex;
+    gap: 16px;
+    padding: 20px;
+    align-items: flex-start;
+}
+
+.error-icon {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+    border-radius: 50%;
+    padding: 10px;
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.error-content h3 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.error-content p {
+    margin: 6px 0 14px 0;
+    font-size: 13px;
+    color: var(--rz-text-secondary-color, #6b7280);
+}
+
+.error-actions {
+    display: flex;
+    gap: 8px;
+}
+
+    .error-actions .rz-button {
+        font-size: 13px;
+        padding: 6px 12px;
+    }
+
+/* Animation */
+@keyframes slideIn {
+    from {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}

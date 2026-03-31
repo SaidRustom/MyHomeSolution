@@ -1,5 +1,6 @@
 using BlazorUI.Models.Common;
 using BlazorUI.Models.Enums;
+using BlazorUI.Models.SharedHistory;
 using BlazorUI.Models.UserConnections;
 using BlazorUI.Models.Users;
 
@@ -41,5 +42,9 @@ public interface IUserConnectionService
 
     Task<ApiResult> RemoveConnectionAsync(
         Guid connectionId,
+        CancellationToken cancellationToken = default);
+
+    Task<ApiResult<SharedHistoryDto>> GetSharedHistoryAsync(
+        string userId,
         CancellationToken cancellationToken = default);
 }

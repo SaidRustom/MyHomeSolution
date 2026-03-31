@@ -1,5 +1,6 @@
 using BlazorUI.Models.Common;
 using BlazorUI.Models.Enums;
+using BlazorUI.Models.SharedHistory;
 using BlazorUI.Models.UserConnections;
 using BlazorUI.Models.Users;
 using BlazorUI.Services.Contracts;
@@ -83,5 +84,12 @@ public sealed class UserConnectionService(HttpClient httpClient)
         CancellationToken cancellationToken = default)
     {
         return DeleteAsync($"{BasePath}/{connectionId}", cancellationToken);
+    }
+
+    public Task<ApiResult<SharedHistoryDto>> GetSharedHistoryAsync(
+        string userId,
+        CancellationToken cancellationToken = default)
+    {
+        return GetAsync<SharedHistoryDto>($"{BasePath}/{userId}/shared-history", cancellationToken);
     }
 }

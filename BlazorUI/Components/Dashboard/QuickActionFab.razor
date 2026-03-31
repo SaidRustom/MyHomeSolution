@@ -1,0 +1,40 @@
+@if (_isOpen)
+{
+    <div class="fab-backdrop" @onclick="Close"></div>
+}
+
+<div class="fab-container @(_isOpen ? "open" : "")">
+    @if (_isOpen)
+    {
+        <div class="fab-menu">
+            <div class="fab-menu-item" @onclick="CreateBillFromReceipt">
+                <div class="fab-menu-icon" style="background: color-mix(in srgb, var(--rz-success) 15%, transparent);">
+                    <RadzenIcon Icon="document_scanner" Style="font-size: 1.125rem; color: var(--rz-success);" />
+                </div>
+                <span class="fab-menu-label">Bill from Receipt</span>
+            </div>
+            <div class="fab-menu-item" @onclick="CreateBillManual">
+                <div class="fab-menu-icon" style="background: color-mix(in srgb, var(--rz-info) 15%, transparent);">
+                    <RadzenIcon Icon="receipt_long" Style="font-size: 1.125rem; color: var(--rz-info);" />
+                </div>
+                <span class="fab-menu-label">New Bill</span>
+            </div>
+            <div class="fab-menu-item" @onclick="@(() => { Close(); NavigationManager.NavigateTo("/shopping-lists"); })">
+                <div class="fab-menu-icon" style="background: color-mix(in srgb, var(--rz-warning) 15%, transparent);">
+                    <RadzenIcon Icon="shopping_cart" Style="font-size: 1.125rem; color: var(--rz-warning-darker);" />
+                </div>
+                <span class="fab-menu-label">Shopping List</span>
+            </div>
+            <div class="fab-menu-item" @onclick="@(() => { Close(); NavigationManager.NavigateTo("/scheduler"); })">
+                <div class="fab-menu-icon" style="background: color-mix(in srgb, var(--rz-primary) 15%, transparent);">
+                    <RadzenIcon Icon="add_task" Style="font-size: 1.125rem; color: var(--rz-primary);" />
+                </div>
+                <span class="fab-menu-label">New Task</span>
+            </div>
+        </div>
+    }
+
+    <button class="fab-button @(_isOpen ? "active" : "")" @onclick="Toggle">
+        <RadzenIcon Icon="@(_isOpen ? "close" : "add")" Style="font-size: 1.5rem;" />
+    </button>
+</div>

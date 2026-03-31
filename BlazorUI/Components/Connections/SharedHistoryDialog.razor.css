@@ -1,0 +1,213 @@
+/* ============================================================
+   Shared History Dialog – Scoped Styles
+   ============================================================ */
+
+/* ── Header ── */
+::deep .shared-dialog-header {
+    display: flex;
+    align-items: center;
+    gap: 0.875rem;
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--rz-base-200);
+    background: var(--rz-base-100);
+}
+
+/* ── Connection banner ── */
+::deep .shared-connection-banner {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    padding: 0.75rem 1rem;
+    border-radius: var(--rz-border-radius);
+    background: color-mix(in srgb, var(--rz-primary) 6%, transparent);
+    border: 1px solid color-mix(in srgb, var(--rz-primary) 15%, transparent);
+    font-size: 0.875rem;
+    color: var(--rz-text-color);
+}
+
+/* ── Stat grid (overview) ── */
+::deep .shared-stat-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+}
+
+::deep .shared-stat-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 1rem 0.75rem;
+    border-radius: var(--rz-border-radius);
+    background: var(--rz-base-background-color);
+    border: 1px solid var(--rz-base-200);
+    text-align: center;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+::deep .shared-stat-card:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+::deep .shared-stat-card:active {
+    transform: scale(0.97);
+}
+
+::deep .shared-stat-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+::deep .shared-stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.2;
+}
+
+::deep .shared-stat-label {
+    font-size: 0.6875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-weight: 600;
+    color: var(--rz-text-secondary-color);
+}
+
+/* ── Tab content ── */
+::deep .shared-tab-content {
+    max-height: 420px;
+    overflow-y: auto;
+}
+
+/* ── Entity rows ── */
+::deep .shared-entity-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+    transition: background 0.15s ease;
+    border-bottom: 1px solid var(--rz-base-100);
+}
+
+::deep .shared-entity-row:last-child {
+    border-bottom: none;
+}
+
+::deep .shared-entity-row:hover {
+    background: var(--rz-header-background-color);
+}
+
+::deep .shared-entity-icon {
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+::deep .shared-entity-details {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+::deep .shared-entity-title {
+    font-size: 0.875rem;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+::deep .shared-entity-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    font-size: 0.75rem;
+    color: var(--rz-text-secondary-color);
+    flex-wrap: wrap;
+}
+
+::deep .shared-meta-dot {
+    font-size: 0.5rem;
+    color: var(--rz-text-disabled-color);
+}
+
+::deep .shared-entity-badges {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    flex-shrink: 0;
+}
+
+/* ── Budget progress bar (reused for shopping lists) ── */
+::deep .shared-budget-progress {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    min-width: 80px;
+}
+
+::deep .shared-budget-bar {
+    flex: 1;
+    height: 6px;
+    background: var(--rz-header-background-color);
+    border-radius: 3px;
+    overflow: hidden;
+    min-width: 50px;
+}
+
+::deep .shared-budget-bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.3s ease;
+}
+
+::deep .shared-budget-pct {
+    font-size: 0.6875rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    color: var(--rz-text-secondary-color);
+    min-width: 28px;
+    text-align: right;
+}
+
+/* ── Footer ── */
+::deep .shared-dialog-footer {
+    display: flex;
+    justify-content: flex-end;
+    padding: 0.75rem 1.25rem;
+    border-top: 1px solid var(--rz-base-200);
+}
+
+/* ── Responsive ── */
+@media (max-width: 480px) {
+    ::deep .shared-stat-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.5rem;
+    }
+
+    ::deep .shared-stat-card {
+        padding: 0.75rem 0.5rem;
+    }
+
+    ::deep .shared-stat-value {
+        font-size: 1.25rem;
+    }
+
+    ::deep .shared-entity-row {
+        gap: 0.5rem;
+        padding: 0.625rem 0.75rem;
+    }
+}

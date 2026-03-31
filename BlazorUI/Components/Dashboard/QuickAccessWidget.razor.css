@@ -1,0 +1,191 @@
+/* ============================================================
+   Quick Access Widget
+   ============================================================ */
+
+::deep .quick-widget {
+    border-radius: var(--rz-border-radius);
+    border: 1px solid var(--rz-base-200);
+    background: var(--rz-base-background-color);
+    overflow: hidden;
+}
+
+::deep .quick-widget-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--rz-base-200);
+}
+
+::deep .quick-widget-header-left {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+::deep .quick-widget-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: color-mix(in srgb, var(--rz-secondary) 12%, transparent);
+}
+
+::deep .quick-widget-title {
+    font-weight: 700;
+    font-size: 0.9375rem;
+}
+
+::deep .quick-widget-body {
+    padding: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+/* Navigation tiles grid */
+::deep .quick-tiles {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.5rem;
+}
+
+::deep .quick-tile {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.75rem 0.25rem;
+    border-radius: var(--rz-border-radius);
+    cursor: pointer;
+    transition: background 0.12s ease, transform 0.1s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+
+::deep .quick-tile:active {
+    transform: scale(0.95);
+    background: color-mix(in srgb, var(--rz-base-300) 40%, transparent);
+}
+
+::deep .quick-tile-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+::deep .quick-tile-label {
+    font-size: 0.6875rem;
+    font-weight: 600;
+    text-align: center;
+    color: var(--rz-text-secondary-color);
+}
+
+/* Entity sections */
+::deep .quick-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.375rem;
+}
+
+::deep .quick-section-label {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    font-size: 0.6875rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--rz-text-secondary-color);
+    padding: 0 0.25rem;
+}
+
+::deep .quick-entity-cards {
+    display: flex;
+    gap: 0.5rem;
+    overflow-x: auto;
+    padding-bottom: 0.25rem;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x mandatory;
+}
+
+::deep .quick-entity-cards::-webkit-scrollbar {
+    height: 3px;
+}
+
+::deep .quick-entity-cards::-webkit-scrollbar-thumb {
+    background: var(--rz-base-300);
+    border-radius: 2px;
+}
+
+::deep .quick-entity-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.375rem;
+    padding: 0.625rem;
+    min-width: 150px;
+    border-radius: var(--rz-border-radius);
+    border: 1px solid var(--rz-base-200);
+    cursor: pointer;
+    transition: border-color 0.12s ease, transform 0.1s ease;
+    scroll-snap-align: start;
+    flex-shrink: 0;
+    -webkit-tap-highlight-color: transparent;
+}
+
+::deep .quick-entity-card:active {
+    transform: scale(0.97);
+    border-color: var(--rz-primary);
+}
+
+::deep .quick-entity-card-header {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+}
+
+::deep .quick-entity-card-title {
+    font-weight: 600;
+    font-size: 0.8125rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+::deep .quick-entity-progress {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+}
+
+::deep .quick-entity-bar {
+    flex: 1;
+    height: 4px;
+    border-radius: 2px;
+    background: var(--rz-base-200);
+    overflow: hidden;
+}
+
+::deep .quick-entity-bar-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 0.3s ease;
+}
+
+::deep .quick-entity-bar-label {
+    font-size: 0.625rem;
+    font-weight: 700;
+    color: var(--rz-text-secondary-color);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+@media (min-width: 768px) {
+    ::deep .quick-tiles {
+        grid-template-columns: repeat(6, 1fr);
+    }
+}

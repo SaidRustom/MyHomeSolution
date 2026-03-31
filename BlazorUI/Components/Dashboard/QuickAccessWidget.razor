@@ -1,0 +1,125 @@
+@using BlazorUI.Models.ShoppingLists
+@using BlazorUI.Models.Budgets
+
+@if (_isLoading)
+{
+    <div class="widget-loading">
+        <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate"
+                                   Size="ProgressBarCircularSize.Small" />
+    </div>
+}
+else
+{
+    <div class="quick-widget">
+        <div class="quick-widget-header">
+            <div class="quick-widget-header-left">
+                <div class="quick-widget-icon">
+                    <RadzenIcon Icon="apps" Style="font-size: 1.125rem; color: var(--rz-secondary);" />
+                </div>
+                <span class="quick-widget-title">Quick Access</span>
+            </div>
+        </div>
+
+        <div class="quick-widget-body">
+            @* Navigation tiles *@
+            <div class="quick-tiles">
+                <div class="quick-tile" @onclick="@(() => NavigationManager.NavigateTo("/bills"))">
+                    <div class="quick-tile-icon" style="background: color-mix(in srgb, var(--rz-info) 12%, transparent);">
+                        <RadzenIcon Icon="receipt_long" Style="font-size: 1.25rem; color: var(--rz-info);" />
+                    </div>
+                    <span class="quick-tile-label">Bills</span>
+                </div>
+                <div class="quick-tile" @onclick="@(() => NavigationManager.NavigateTo("/scheduler"))">
+                    <div class="quick-tile-icon" style="background: color-mix(in srgb, var(--rz-primary) 12%, transparent);">
+                        <RadzenIcon Icon="calendar_month" Style="font-size: 1.25rem; color: var(--rz-primary);" />
+                    </div>
+                    <span class="quick-tile-label">Scheduler</span>
+                </div>
+                <div class="quick-tile" @onclick="@(() => NavigationManager.NavigateTo("/budgets/dashboard"))">
+                    <div class="quick-tile-icon" style="background: color-mix(in srgb, var(--rz-success) 12%, transparent);">
+                        <RadzenIcon Icon="account_balance" Style="font-size: 1.25rem; color: var(--rz-success);" />
+                    </div>
+                    <span class="quick-tile-label">Budgets</span>
+                </div>
+                <div class="quick-tile" @onclick="@(() => NavigationManager.NavigateTo("/shopping-lists"))">
+                    <div class="quick-tile-icon" style="background: color-mix(in srgb, var(--rz-warning) 12%, transparent);">
+                        <RadzenIcon Icon="shopping_cart" Style="font-size: 1.25rem; color: var(--rz-warning-darker);" />
+                    </div>
+                    <span class="quick-tile-label">Shopping</span>
+                </div>
+                <div class="quick-tile" @onclick="@(() => NavigationManager.NavigateTo("/bills/dashboard"))">
+                    <div class="quick-tile-icon" style="background: color-mix(in srgb, #9C27B0 12%, transparent);">
+                        <RadzenIcon Icon="dashboard" Style="font-size: 1.25rem; color: #9C27B0;" />
+                    </div>
+                    <span class="quick-tile-label">Bill Dash</span>
+                </div>
+                <div class="quick-tile" @onclick="@(() => NavigationManager.NavigateTo("/settings"))">
+                    <div class="quick-tile-icon" style="background: color-mix(in srgb, var(--rz-base-500) 12%, transparent);">
+                        <RadzenIcon Icon="settings" Style="font-size: 1.25rem; color: var(--rz-text-secondary-color);" />
+                    </div>
+                    <span class="quick-tile-label">Settings</span>
+                </div>
+            </div>
+
+            @* In-Store View — Shopping Lists *@
+            @if (_activeLists.Count > 0)
+            {
+                <div class="quick-section">
+                    <div class="quick-section-label">
+                        <RadzenIcon Icon="store" Style="font-size: 0.875rem; color: var(--rz-success);" />
+                        <span>In-Store View</span>
+                    </div>
+                    <div class="quick-entity-cards">
+                        @foreach (var list in _activeLists.Take(3))
+                        {
+                            var progress = list.TotalItems > 0
+                                ? (double)list.CheckedItems / list.TotalItems * 100
+                                : 0;
+                            <div class="quick-entity-card" @onclick="@(() => NavigationManager.NavigateTo($"/shopping-lists/{list.Id}/in-store"))">
+                                <div class="quick-entity-card-header">
+                                    <RadzenIcon Icon="shopping_cart" Style="font-size: 1rem; color: var(--rz-success);" />
+                                    <span class="quick-entity-card-title">@list.Title</span>
+                                </div>
+                                <div class="quick-entity-progress">
+                                    <div class="quick-entity-bar">
+                                        <div class="quick-entity-bar-fill" style="width: @progress.ToString("F0")%; background: var(--rz-success);"></div>
+                                    </div>
+                                    <span class="quick-entity-bar-label">@list.CheckedItems/@list.TotalItems</span>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+
+            @* Quick Budget Access *@
+            @if (_topBudgets.Count > 0)
+            {
+                <div class="quick-section">
+                    <div class="quick-section-label">
+                        <RadzenIcon Icon="account_balance" Style="font-size: 0.875rem; color: var(--rz-primary);" />
+                        <span>Active Budgets</span>
+                    </div>
+                    <div class="quick-entity-cards">
+                        @foreach (var budget in _topBudgets.Take(3))
+                        {
+                            var pct = budget.CurrentPeriodPercentUsed;
+                            <div class="quick-entity-card" @onclick="@(() => NavigationManager.NavigateTo($"/budgets/{budget.Id}"))">
+                                <div class="quick-entity-card-header">
+                                    <RadzenIcon Icon="account_balance" Style="@($"font-size: 1rem; color: {GetBudgetColor(pct)};")" />
+                                    <span class="quick-entity-card-title">@budget.Name</span>
+                                </div>
+                                <div class="quick-entity-progress">
+                                    <div class="quick-entity-bar">
+                                        <div class="quick-entity-bar-fill" style="width: @(Math.Min(pct, 100).ToString("F0"))%; background: @GetBudgetColor(pct);"></div>
+                                    </div>
+                                    <span class="quick-entity-bar-label">@pct.ToString("N0")%</span>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+}

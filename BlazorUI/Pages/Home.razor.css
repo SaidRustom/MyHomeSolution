@@ -1,0 +1,124 @@
+/* ============================================================
+   Home Page — Mobile-First Responsive Styles
+   ============================================================ */
+
+/* --- Page container --- */
+::deep .home-page {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 0 5rem;
+}
+
+/* --- Loading state --- */
+::deep .home-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 4rem 1rem;
+}
+
+/* --- Greeting header --- */
+::deep .home-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 0 1rem;
+}
+
+::deep .home-header-text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+}
+
+::deep .home-greeting {
+    font-size: 1.5rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+}
+
+::deep .home-date {
+    font-size: 0.8125rem;
+    color: var(--rz-text-secondary-color);
+    font-weight: 500;
+}
+
+::deep .home-customize-btn {
+    flex-shrink: 0;
+}
+
+/* --- Widget grid --- */
+::deep .home-widget-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.875rem;
+}
+
+::deep .home-widget-cell {
+    min-width: 0;
+}
+
+/* --- Empty state --- */
+::deep .home-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 4rem 1rem;
+    text-align: center;
+}
+
+/* --- Unknown widget fallback --- */
+::deep .home-widget-unknown {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1.5rem;
+    border-radius: var(--rz-border-radius);
+    border: 1px dashed var(--rz-base-300);
+    color: var(--rz-text-secondary-color);
+    font-size: 0.8125rem;
+}
+
+/* --- Shared widget loading --- */
+::deep .widget-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 1rem;
+    border-radius: var(--rz-border-radius);
+    border: 1px solid var(--rz-base-200);
+    background: var(--rz-base-background-color);
+}
+
+/* ============================================================
+   Tablet breakpoint (≥768px) — Two column grid
+   ============================================================ */
+@media (min-width: 768px) {
+    ::deep .home-widget-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    ::deep .home-widget-cell.full-width {
+        grid-column: 1 / -1;
+    }
+
+    ::deep .home-greeting {
+        font-size: 1.75rem;
+    }
+}
+
+/* ============================================================
+   Desktop breakpoint (≥1024px)
+   ============================================================ */
+@media (min-width: 1024px) {
+    ::deep .home-page {
+        padding: 0 1rem 5rem;
+    }
+
+    ::deep .home-greeting {
+        font-size: 2rem;
+    }
+}

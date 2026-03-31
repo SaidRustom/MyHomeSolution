@@ -1,0 +1,432 @@
+/* ============================================================
+   Bill Dashboard – Mobile-First Responsive Styles
+   ============================================================ */
+
+/* --- Page container --- */
+::deep .bill-dashboard {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0;
+}
+
+/* --- Quick stat strip --- */
+::deep .stat-strip {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+}
+
+::deep .stat-mini {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.875rem 0.5rem;
+    border-radius: var(--rz-border-radius);
+    background: var(--rz-base-background-color);
+    border: 1px solid var(--rz-base-200);
+    text-align: center;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+::deep .stat-mini:active {
+    transform: scale(0.97);
+}
+
+::deep .stat-mini-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+::deep .stat-mini-value {
+    font-size: 1.375rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+}
+
+::deep .stat-mini-label {
+    font-size: 0.6875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-weight: 600;
+    color: var(--rz-text-secondary-color);
+}
+
+::deep .stat-mini-sub {
+    font-size: 0.6875rem;
+    color: var(--rz-text-secondary-color);
+}
+
+/* --- Filter bar --- */
+::deep .filter-bar {
+    border-radius: var(--rz-border-radius);
+    border: 1px solid var(--rz-base-200);
+    background: var(--rz-base-background-color);
+    overflow: hidden;
+}
+
+::deep .filter-bar-primary {
+    padding: 0.75rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+::deep .filter-chip-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.375rem;
+    padding: 0 0.75rem 0.625rem;
+}
+
+::deep .filter-advanced {
+    padding: 0.75rem;
+    border-top: 1px solid var(--rz-base-200);
+    background: color-mix(in srgb, var(--rz-base-200) 30%, transparent);
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+}
+
+/* --- Tabs container --- */
+::deep .dashboard-tabs .rz-tabview-nav {
+    gap: 0;
+    border-bottom: 2px solid var(--rz-base-200);
+}
+
+::deep .dashboard-tabs .rz-tabview-nav li {
+    flex: 1;
+}
+
+::deep .dashboard-tabs .rz-tabview-nav li a {
+    justify-content: center;
+    font-weight: 600;
+    font-size: 0.8125rem;
+    padding: 0.75rem 0.5rem;
+}
+
+/* --- Bill list items (mobile) --- */
+::deep .bill-list-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.875rem 0;
+    border-bottom: 1px solid var(--rz-base-200);
+    cursor: pointer;
+    transition: background 0.1s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+
+::deep .bill-list-item:last-child {
+    border-bottom: none;
+}
+
+::deep .bill-list-item:active {
+    background: color-mix(in srgb, var(--rz-primary) 6%, transparent);
+}
+
+::deep .bill-list-cat-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+::deep .bill-list-content {
+    flex: 1;
+    min-width: 0;
+}
+
+::deep .bill-list-title {
+    font-weight: 600;
+    font-size: 0.9375rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+::deep .bill-list-meta {
+    font-size: 0.75rem;
+    color: var(--rz-text-secondary-color);
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    margin-top: 0.125rem;
+}
+
+::deep .bill-list-amount {
+    text-align: right;
+    flex-shrink: 0;
+}
+
+::deep .bill-list-amount-value {
+    font-weight: 700;
+    font-size: 1rem;
+    font-variant-numeric: tabular-nums;
+}
+
+::deep .bill-list-amount-status {
+    font-size: 0.6875rem;
+    margin-top: 0.125rem;
+    text-align: right;
+}
+
+/* --- Upcoming bill timeline --- */
+::deep .upcoming-section {
+    padding: 0;
+}
+
+::deep .upcoming-group-header {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    padding: 0.5rem 0;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--rz-text-secondary-color);
+    background: var(--rz-base-background-color);
+    border-bottom: 1px solid var(--rz-base-200);
+}
+
+::deep .upcoming-card {
+    border-radius: var(--rz-border-radius);
+    border: 1px solid var(--rz-base-200);
+    padding: 1rem;
+    margin-bottom: 0.75rem;
+    transition: box-shadow 0.15s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+::deep .upcoming-card::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+}
+
+::deep .upcoming-card.due-soon::before {
+    background: var(--rz-danger);
+}
+
+::deep .upcoming-card.due-week::before {
+    background: var(--rz-warning);
+}
+
+::deep .upcoming-card.due-later::before {
+    background: var(--rz-success);
+}
+
+::deep .upcoming-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
+::deep .upcoming-card-body {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-top: 0.75rem;
+}
+
+::deep .due-countdown {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.125rem 0.5rem;
+    border-radius: 999px;
+}
+
+::deep .due-countdown.urgent {
+    background: color-mix(in srgb, var(--rz-danger) 12%, transparent);
+    color: var(--rz-danger);
+}
+
+::deep .due-countdown.warning {
+    background: color-mix(in srgb, var(--rz-warning) 12%, transparent);
+    color: var(--rz-warning-darker);
+}
+
+::deep .due-countdown.safe {
+    background: color-mix(in srgb, var(--rz-success) 12%, transparent);
+    color: var(--rz-success);
+}
+
+/* --- Balance strip --- */
+::deep .balance-strip {
+    display: flex;
+    gap: 0.75rem;
+    overflow-x: auto;
+    padding-bottom: 0.25rem;
+    scrollbar-width: thin;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x mandatory;
+}
+
+::deep .balance-strip::-webkit-scrollbar {
+    height: 4px;
+}
+
+::deep .balance-strip::-webkit-scrollbar-thumb {
+    background: var(--rz-base-300);
+    border-radius: 2px;
+}
+
+::deep .balance-chip {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    padding: 0.75rem 1rem;
+    border-radius: var(--rz-border-radius);
+    border: 1px solid var(--rz-base-200);
+    flex-shrink: 0;
+    min-width: 200px;
+    scroll-snap-align: start;
+    background: var(--rz-base-background-color);
+}
+
+::deep .balance-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.875rem;
+    flex-shrink: 0;
+    color: #fff;
+}
+
+/* --- Charts section --- */
+::deep .chart-container {
+    border-radius: var(--rz-border-radius);
+    border: 1px solid var(--rz-base-200);
+    padding: 1rem;
+    background: var(--rz-base-background-color);
+}
+
+::deep .chart-container .rz-chart {
+    height: 220px !important;
+}
+
+/* --- Section headers --- */
+::deep .section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding-bottom: 0.5rem;
+}
+
+::deep .section-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 700;
+    font-size: 1rem;
+}
+
+/* --- Empty states --- */
+::deep .dashboard-empty {
+    padding: 2.5rem 1rem;
+    text-align: center;
+}
+
+/* --- Dashboard content area with loading overlay --- */
+::deep .dashboard-content-area {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    min-height: 200px;
+    transition: opacity 0.2s ease;
+}
+
+::deep .dashboard-content-area.is-loading > *:not(.dashboard-loading-overlay) {
+    opacity: 0.4;
+    pointer-events: none;
+    user-select: none;
+}
+
+::deep .dashboard-loading-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: color-mix(in srgb, var(--rz-base-background-color) 60%, transparent);
+    border-radius: var(--rz-border-radius);
+    backdrop-filter: blur(2px);
+}
+
+/* ============================================================
+   Tablet breakpoint (≥768px)
+   ============================================================ */
+@media (min-width: 768px) {
+    ::deep .stat-strip {
+        grid-template-columns: repeat(4, 1fr);
+    }
+
+    ::deep .filter-advanced {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    ::deep .dashboard-tabs .rz-tabview-nav li a {
+        font-size: 0.875rem;
+    }
+
+    ::deep .chart-container .rz-chart {
+        height: 280px !important;
+    }
+
+    ::deep .bill-list-cat-icon {
+        width: 48px;
+        height: 48px;
+    }
+}
+
+/* ============================================================
+   Desktop breakpoint (≥1024px)
+   ============================================================ */
+@media (min-width: 1024px) {
+    ::deep .filter-advanced {
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    ::deep .charts-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+    }
+
+    ::deep .chart-container .rz-chart {
+        height: 320px !important;
+    }
+
+    ::deep .balance-strip {
+        flex-wrap: wrap;
+        overflow-x: visible;
+    }
+}

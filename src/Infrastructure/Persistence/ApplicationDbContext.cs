@@ -42,6 +42,7 @@ public sealed class ApplicationDbContext(
     public DbSet<PortfolioExperience> PortfolioExperiences => Set<PortfolioExperience>();
     public DbSet<PortfolioSkill> PortfolioSkills => Set<PortfolioSkill>();
     public DbSet<DemoUser> DemoUsers => Set<DemoUser>();
+    public DbSet<HomepageWidget> HomepageWidgets => Set<HomepageWidget>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
 
     protected override void OnModelCreating(ModelBuilder builder)

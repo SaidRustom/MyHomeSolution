@@ -3,333 +3,507 @@
 
 <PageTitle>Bill Dashboard</PageTitle>
 
-<RadzenStack Orientation="Orientation.Vertical" Gap="1.25rem">
+<div class="bill-dashboard">
+<RadzenStack Orientation="Orientation.Vertical" Gap="1rem">
 
-    @* Page header *@
-    <PageHeader Title="Dashboard" Subtitle="Overview of your shared expenses" Icon="dashboard">
+    @* ─── Page header ─── *@
+    <PageHeader Title="Bills" Subtitle="Track spending, splits & balances" Icon="account_balance_wallet">
         <Actions>
-            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.375rem">
-                <RadzenButton Text="View All Bills" Icon="list" Variant="Variant.Outlined" ButtonStyle="ButtonStyle.Secondary" Click="NavigateToBills" />
+            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.375rem" AlignItems="AlignItems.Center">
+                <RadzenButton Text="All Bills" Icon="receipt_long" Variant="Variant.Outlined"
+                              ButtonStyle="ButtonStyle.Secondary" Size="ButtonSize.Small" Click="NavigateToBills" />
             </RadzenStack>
         </Actions>
     </PageHeader>
 
-    @if (IsLoading)
+    @if (IsLoading && !IsApplyingFilters)
     {
         <LoadingIndicator Text="Loading dashboard…" />
     }
-    else if (Error is not null)
+    else if (Error is not null && !IsApplyingFilters)
     {
         <ErrorAlert Problem="@Error" OnRetry="LoadDashboardDataAsync" />
     }
     else
     {
-        @* User scope filter bar *@
-        <RadzenCard Variant="Variant.Outlined" class="rz-p-3">
-            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.75rem" Wrap="FlexWrap.Wrap">
-                <RadzenIcon Icon="people" Style="color: var(--rz-primary);" />
-                <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0"><strong>View:</strong></RadzenText>
-                <RadzenSelectBar TValue="UserScopeFilter" @bind-Value="@_userScope" Change="OnUserScopeChangedAsync" Size="ButtonSize.Small">
+        @* ═══════════════════════════════════════════════════════════
+           UNIFIED FILTER BAR — always visible
+           ═══════════════════════════════════════════════════════════ *@
+        <div class="filter-bar">
+            @* Primary row: scope toggle + period + apply *@
+            <div class="filter-bar-primary">
+                <RadzenSelectBar TValue="UserScopeFilter" @bind-Value="@_userScope"
+                                 Change="OnFiltersChangedAsync" Size="ButtonSize.ExtraSmall">
                     <Items>
-                        <RadzenSelectBarItem Text="All Bills" Value="UserScopeFilter.All" Icon="groups" />
-                        <RadzenSelectBarItem Text="My Bills" Value="UserScopeFilter.MeOnly" Icon="person" />
+                        <RadzenSelectBarItem Text="All" Value="UserScopeFilter.All" Icon="groups" />
+                        <RadzenSelectBarItem Text="Mine" Value="UserScopeFilter.MeOnly" Icon="person" />
                     </Items>
                 </RadzenSelectBar>
-                @if (_userScope == UserScopeFilter.All && ScopeUserOptions.Count > 0)
+
+                <RadzenDatePicker TValue="DateTimeOffset?" @bind-Value="@FromDate"
+                                  Placeholder="From" DateFormat="MMM dd" Style="width: 130px;" />
+                <RadzenText TextStyle="TextStyle.Caption" class="rz-mb-0 rz-color-secondary">–</RadzenText>
+                <RadzenDatePicker TValue="DateTimeOffset?" @bind-Value="@ToDate"
+                                  Placeholder="To" DateFormat="MMM dd" Style="width: 130px;" />
+
+                <RadzenButton Icon="search" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small"
+                              Click="OnFiltersChangedAsync" title="Apply filters"
+                              Disabled="@IsApplyingFilters" />
+
+                <RadzenButton Icon="@(_showAdvanced ? "expand_less" : "tune")"
+                              Variant="Variant.Text" Size="ButtonSize.Small"
+                              ButtonStyle="@(HasAdvancedFilters ? ButtonStyle.Info : ButtonStyle.Secondary)"
+                              Click="@(() => _showAdvanced = !_showAdvanced)"
+                              title="Advanced filters" />
+
+                @if (HasAnyFilter)
                 {
-                    <RadzenDropDown TValue="string?"
-                                    Data="@ScopeUserOptions"
-                                    @bind-Value="@_selectedScopeUserId"
-                                    TextProperty="DisplayName"
-                                    ValueProperty="UserId"
-                                    AllowClear="true"
-                                    Placeholder="Filter by user…"
-                                    Style="min-width: 200px;"
-                                    Change="@(_ => OnScopeUserChangedAsync())" />
+                    <RadzenButton Icon="clear" Text="Clear" Variant="Variant.Text"
+                                  ButtonStyle="ButtonStyle.Light" Size="ButtonSize.ExtraSmall"
+                                  Click="ClearAllFiltersAsync" Disabled="@IsApplyingFilters" />
                 }
-            </RadzenStack>
-        </RadzenCard>
+            </div>
 
-        @* Date range selector *@
-        <RadzenCard Variant="Variant.Outlined" class="rz-p-3">
-            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.75rem" Wrap="FlexWrap.Wrap">
-                <RadzenIcon Icon="date_range" Style="color: var(--rz-primary);" />
-                <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0"><strong>Period:</strong></RadzenText>
-                <RadzenDatePicker TValue="DateTimeOffset?" @bind-Value="@FromDate" Placeholder="From" DateFormat="MMM dd, yyyy" Style="width: 170px;" />
-                <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0">to</RadzenText>
-                <RadzenDatePicker TValue="DateTimeOffset?" @bind-Value="@ToDate" Placeholder="To" DateFormat="MMM dd, yyyy" Style="width: 170px;" />
-                <RadzenButton Text="Apply" Icon="refresh" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small" Click="OnDateRangeChangedAsync" />
-            </RadzenStack>
-        </RadzenCard>
-
-        @* Analysis filters *@
-        @if (Summary is not null)
-        {
-            <RadzenCard Variant="Variant.Outlined" class="rz-p-3">
-                <RadzenStack Orientation="Orientation.Vertical" Gap="0.75rem">
-                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
-                        <RadzenIcon Icon="filter_list" Style="color: var(--rz-info);" />
-                        <RadzenText TextStyle="TextStyle.Subtitle2" class="rz-mb-0"><strong>Analysis Filters</strong></RadzenText>
-                        @if (HasAnalysisFilters)
+            @* Active filter chips *@
+            @if (HasAnyFilter)
+            {
+                <div class="filter-chip-row">
+                    @if (SelectedBillCategories.Any())
+                    {
+                        @foreach (var cat in SelectedBillCategories)
                         {
-                            <RadzenButton Text="Clear Filters" Icon="clear" Variant="Variant.Text" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.ExtraSmall" Click="ClearAnalysisFilters" />
+                            <RadzenBadge BadgeStyle="BadgeStyle.Primary" IsPill="true" Variant="Variant.Flat"
+                                         Text="@cat.ToString()" />
                         }
+                    }
+                    @if (AnalysisPaymentStatus == true)
+                    {
+                        <RadzenBadge BadgeStyle="BadgeStyle.Success" IsPill="true" Variant="Variant.Flat" Text="Paid" />
+                    }
+                    else if (AnalysisPaymentStatus == false)
+                    {
+                        <RadzenBadge BadgeStyle="BadgeStyle.Warning" IsPill="true" Variant="Variant.Flat" Text="Unpaid" />
+                    }
+                    @if (!string.IsNullOrEmpty(_selectedScopeUserId))
+                    {
+                        <RadzenBadge BadgeStyle="BadgeStyle.Info" IsPill="true" Variant="Variant.Flat"
+                                     Text="@($"User: {ScopeUserOptions.FirstOrDefault(u => u.UserId == _selectedScopeUserId)?.DisplayName ?? "Selected"}")" />
+                    }
+                    @if (_sharedWithAny)
+                    {
+                        <RadzenBadge BadgeStyle="BadgeStyle.Info" IsPill="true" Variant="Variant.Flat" Text="Shared only" />
+                    }
+                    @if (AnalysisHasLinkedTask == true)
+                    {
+                        <RadzenBadge BadgeStyle="BadgeStyle.Secondary" IsPill="true" Variant="Variant.Flat" Text="Linked to task" />
+                    }
+                    @if (AnalysisShoppingListId.HasValue)
+                    {
+                        <RadzenBadge BadgeStyle="BadgeStyle.Light" IsPill="true" Variant="Variant.Flat"
+                                     Text="@($"List: {ShoppingLists.FirstOrDefault(s => s.Id == AnalysisShoppingListId)?.Title ?? "Selected"}")"/>
+                    }
+                </div>
+            }
+
+            @* Advanced filters – expansion panel *@
+            @if (_showAdvanced)
+            {
+                <div class="filter-advanced">
+                    @if (_userScope == UserScopeFilter.All && ScopeUserOptions.Count > 0)
+                    {
+                        <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem">
+                            <RadzenLabel Text="Filter by user" />
+                            <RadzenDropDown TValue="string?"
+                                            Data="@ScopeUserOptions"
+                                            @bind-Value="@_selectedScopeUserId"
+                                            TextProperty="DisplayName"
+                                            ValueProperty="UserId"
+                                            AllowClear="true"
+                                            Placeholder="Any user…"
+                                            Style="width: 100%;"
+                                            Change="@(_ => OnFiltersChangedAsync())" />
+                        </RadzenStack>
+                    }
+
+                    <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem">
+                        <RadzenLabel Text="Category" />
+                        <RadzenDropDown TValue="IEnumerable<BillCategory>"
+                                        Data="@AllBillCategories"
+                                        Value="@SelectedBillCategories"
+                                        Change="@(args => SelectedBillCategories = args is IEnumerable<BillCategory> cats ? cats.ToList() : [])"
+                                        Multiple="true" Chips="true" AllowClear="true"
+                                        Placeholder="All categories"
+                                        Style="width: 100%;" />
                     </RadzenStack>
-                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.End" Gap="0.75rem" Wrap="FlexWrap.Wrap">
-                        <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem" Style="min-width: 220px; flex: 1;">
-                            <RadzenLabel Text="Users" />
+
+                    <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem">
+                        <RadzenLabel Text="Payment status" />
+                        <RadzenDropDown TValue="bool?"
+                                        Data="@(new[] { new { Value = (bool?)true, Label = "Paid" }, new { Value = (bool?)false, Label = "Unpaid" } })"
+                                        @bind-Value="@AnalysisPaymentStatus"
+                                        TextProperty="Label" ValueProperty="Value"
+                                        AllowClear="true" Placeholder="All"
+                                        Style="width: 100%;" />
+                    </RadzenStack>
+
+                    <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem">
+                        <RadzenLabel Text="Shared bills only" />
+                        <RadzenSwitch @bind-Value="@_sharedWithAny" />
+                    </RadzenStack>
+
+                    <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem">
+                        <RadzenLabel Text="Linked to task" />
+                        <RadzenDropDown TValue="bool?"
+                                        Data="@(new[] { new { Value = (bool?)true, Label = "Yes" }, new { Value = (bool?)false, Label = "No" } })"
+                                        @bind-Value="@AnalysisHasLinkedTask"
+                                        TextProperty="Label" ValueProperty="Value"
+                                        AllowClear="true" Placeholder="Any"
+                                        Style="width: 100%;" />
+                    </RadzenStack>
+
+                    @if (ShoppingLists.Count > 0)
+                    {
+                        <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem">
+                            <RadzenLabel Text="Shopping list" />
+                            <RadzenDropDown TValue="Guid?"
+                                            Data="@ShoppingLists"
+                                            @bind-Value="@AnalysisShoppingListId"
+                                            TextProperty="Title" ValueProperty="Id"
+                                            AllowClear="true" Placeholder="Any list"
+                                            Style="width: 100%;"
+                                            Change="@(_ => OnFiltersChangedAsync())" />
+                        </RadzenStack>
+                    }
+
+                    @if (AvailableUsers.Count > 0)
+                    {
+                        <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem">
+                            <RadzenLabel Text="Spending users" />
                             <RadzenDropDown TValue="IEnumerable<string>"
-                                           Data="@AvailableUsers"
-                                           @bind-Value="@SelectedUserIds"
-                                           TextProperty="UserFullName"
-                                           ValueProperty="UserId"
-                                           Multiple="true"
-                                           Chips="true"
-                                           AllowClear="true"
-                                           Placeholder="All users"
-                                           Style="width: 100%;" />
+                                            Data="@AvailableUsers"
+                                            @bind-Value="@SelectedUserIds"
+                                            TextProperty="UserFullName" ValueProperty="UserId"
+                                            Multiple="true" Chips="true" AllowClear="true"
+                                            Placeholder="All users"
+                                            Style="width: 100%;" />
                         </RadzenStack>
-                        <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem" Style="min-width: 220px; flex: 1;">
-                            <RadzenLabel Text="Bill Categories" />
-                            <RadzenDropDown TValue="IEnumerable<BillCategory>"
-                                           Data="@AllBillCategories"
-                                           @bind-Value="@SelectedBillCategories"
-                                           Multiple="true"
-                                           Chips="true"
-                                           AllowClear="true"
-                                           Placeholder="All categories"
-                                           Style="width: 100%;" />
-                        </RadzenStack>
-                        <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem" Style="min-width: 170px;">
-                            <RadzenLabel Text="Payment Status" />
-                            <RadzenDropDown TValue="bool?"
-                                           Data="@(new[] { new { Value = (bool?)true, Label = "Paid" }, new { Value = (bool?)false, Label = "Unpaid" } })"
-                                           @bind-Value="@AnalysisPaymentStatus"
-                                           TextProperty="Label"
-                                           ValueProperty="Value"
-                                           AllowClear="true"
-                                           Placeholder="All"
-                                           Style="width: 100%;" />
-                        </RadzenStack>
-                        <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem" Style="min-width: 170px;">
-                            <RadzenLabel Text="Linked to Task" />
-                            <RadzenDropDown TValue="bool?"
-                                           Data="@(new[] { new { Value = (bool?)true, Label = "Yes" }, new { Value = (bool?)false, Label = "No" } })"
-                                           @bind-Value="@AnalysisHasLinkedTask"
-                                           TextProperty="Label"
-                                           ValueProperty="Value"
-                                           AllowClear="true"
-                                           Placeholder="Any"
-                                           Style="width: 100%;" />
-                        </RadzenStack>
-                        @if (ShoppingLists.Count > 0)
-                        {
-                            <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem" Style="min-width: 220px; flex: 1;">
-                                <RadzenLabel Text="Shopping List" />
-                                <RadzenDropDown TValue="Guid?"
-                                               Data="@ShoppingLists"
-                                               @bind-Value="@AnalysisShoppingListId"
-                                               TextProperty="Title"
-                                               ValueProperty="Id"
-                                               AllowClear="true"
-                                               Placeholder="Any list"
-                                               Style="width: 100%;" />
-                            </RadzenStack>
-                        }
-                    </RadzenStack>
-                </RadzenStack>
-            </RadzenCard>
-        }
-
-        @* Spending summary metrics & charts *@
-        @if (Summary is not null)
-        {
-            @* Top-level stat cards *@
-            <RadzenRow Gap="1rem" RowGap="1rem">
-                <RadzenColumn Size="12" SizeSM="6" SizeLG="3">
-                    <StatCard Title="Total Spent" Value="@($"${Summary.TotalSpent:N2}")" Icon="payments" IconColor="var(--rz-primary)" />
-                </RadzenColumn>
-                <RadzenColumn Size="12" SizeSM="6" SizeLG="3">
-                    <StatCard Title="Owed to You" Value="@($"${Summary.TotalOwed:N2}")" Icon="arrow_downward" IconColor="var(--rz-success)" />
-                </RadzenColumn>
-                <RadzenColumn Size="12" SizeSM="6" SizeLG="3">
-                    <StatCard Title="You Owe" Value="@($"${Summary.TotalOwing:N2}")" Icon="arrow_upward" IconColor="var(--rz-danger)" />
-                </RadzenColumn>
-                <RadzenColumn Size="12" SizeSM="6" SizeLG="3">
-                    <StatCard Title="Net Balance"
-                              Value="@($"${Math.Abs(Summary.NetBalance):N2}")"
-                              Icon="@(Summary.NetBalance >= 0 ? "trending_up" : "trending_down")"
-                              IconColor="@(Summary.NetBalance >= 0 ? "var(--rz-success)" : "var(--rz-danger)")"
-                              Subtitle="@GetNetBalanceDescription()" />
-                </RadzenColumn>
-            </RadzenRow>
-
-            @* Charts row *@
-            <RadzenRow Gap="1rem" RowGap="1rem">
-                <RadzenColumn Size="12" SizeLG="6">
-                    <RadzenCard Variant="Variant.Outlined" class="rz-p-4">
-                        <CategoryBreakdownChart Data="@FilteredByCategory" />
-                    </RadzenCard>
-                </RadzenColumn>
-                <RadzenColumn Size="12" SizeLG="6">
-                    <RadzenCard Variant="Variant.Outlined" class="rz-p-4">
-                        <UserSpendingChart Data="@FilteredByUser" />
-                    </RadzenCard>
-                </RadzenColumn>
-            </RadzenRow>
-        }
-
-        @* Balances section *@
-        @if (_userScope != UserScopeFilter.MeOnly)
-        {
-            <RadzenCard Variant="Variant.Outlined" class="rz-p-4">
-                <RadzenStack Orientation="Orientation.Vertical" Gap="1rem">
-                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
-                        <RadzenIcon Icon="account_balance" Style="color: var(--rz-primary);" />
-                        <RadzenText TextStyle="TextStyle.Subtitle1" class="rz-mb-0"><strong>Balances</strong></RadzenText>
-                        @if (!string.IsNullOrEmpty(_selectedScopeUserId))
-                        {
-                            <RadzenBadge BadgeStyle="BadgeStyle.Info" IsPill="true" Variant="Variant.Flat"
-                                         Text="@($"Filtered: {ScopeUserOptions.FirstOrDefault(u => u.UserId == _selectedScopeUserId)?.DisplayName ?? _selectedScopeUserId}")" />
-                        }
-                    </RadzenStack>
-
-                    @if (FilteredBalances.Count == 0)
-                    {
-                        <EmptyState Icon="account_balance" Title="No balances" Description="You don't have any outstanding balances." />
                     }
-                    else
-                    {
-                        <RadzenRow Gap="1rem" RowGap="1rem">
-                            @foreach (var balance in FilteredBalances)
-                            {
-                                <RadzenColumn Size="12" SizeSM="6" SizeLG="4">
-                                    <BalanceCard Balance="@balance" />
-                                </RadzenColumn>
-                            }
-                        </RadzenRow>
-                    }
+                </div>
+            }
+        </div>
+
+        @* ═══════════════════════════════════════════════════════════
+           DASHBOARD CONTENT — wrapped in a loading overlay container
+           ═══════════════════════════════════════════════════════════ *@
+        <div class="dashboard-content-area @(IsApplyingFilters ? "is-loading" : "")">
+
+            @* Loading overlay — shown during filter changes / tab switches *@
+            @if (IsApplyingFilters)
+            {
+                <div class="dashboard-loading-overlay">
+                    <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate"
+                                               Size="ProgressBarCircularSize.Medium" />
+                    <RadzenText TextStyle="TextStyle.Body2" class="rz-color-secondary rz-mt-2">Updating…</RadzenText>
+                </div>
+            }
+
+            @* ═══════════════════════════════════════════════════════
+               STAT CARDS – derived from FilteredBills
+               ═══════════════════════════════════════════════════════ *@
+            <div class="stat-strip">
+                <div class="stat-mini">
+                    <div class="stat-mini-icon" style="background: color-mix(in srgb, var(--rz-primary) 12%, transparent);">
+                        <RadzenIcon Icon="payments" Style="font-size: 1.125rem; color: var(--rz-primary);" />
+                    </div>
+                    <span class="stat-mini-value">$@ComputedTotalSpent.ToString("N2")</span>
+                    <span class="stat-mini-label">Total Spent</span>
+                    <span class="stat-mini-sub">@ComputedBillCount bills</span>
+                </div>
+                <div class="stat-mini">
+                    <div class="stat-mini-icon" style="background: color-mix(in srgb, var(--rz-success) 12%, transparent);">
+                        <RadzenIcon Icon="arrow_downward" Style="font-size: 1.125rem; color: var(--rz-success);" />
+                    </div>
+                    <span class="stat-mini-value" style="color: var(--rz-success);">$@FilteredBills.Where(b => IsCurrentUser(b.PaidByUserId)).Sum(b => b.Amount).ToString("N2")</span>
+                    <span class="stat-mini-label">Paid by You</span>
+                </div>
+                <div class="stat-mini">
+                    <div class="stat-mini-icon" style="background: color-mix(in srgb, var(--rz-danger) 12%, transparent);">
+                        <RadzenIcon Icon="arrow_upward" Style="font-size: 1.125rem; color: var(--rz-danger);" />
+                    </div>
+                    <span class="stat-mini-value" style="color: var(--rz-danger);">$@FilteredBills.Where(b => !IsCurrentUser(b.PaidByUserId)).Sum(b => b.Amount).ToString("N2")</span>
+                    <span class="stat-mini-label">Paid by Others</span>
+                </div>
+                <div class="stat-mini">
+                    @{ var netBal = ComputedNetBalance; }
+                    <div class="stat-mini-icon" style="background: color-mix(in srgb, @(netBal >= 0 ? "var(--rz-success)" : "var(--rz-danger)") 12%, transparent);">
+                        <RadzenIcon Icon="@(netBal >= 0 ? "trending_up" : "trending_down")"
+                                    Style="@($"font-size: 1.125rem; color: {(netBal >= 0 ? "var(--rz-success)" : "var(--rz-danger)")};")" />
+                    </div>
+                    <span class="stat-mini-value" style="color: @(netBal >= 0 ? "var(--rz-success)" : "var(--rz-danger)");">$@Math.Abs(netBal).ToString("N2")</span>
+                    <span class="stat-mini-label">Net Balance</span>
+                    <span class="stat-mini-sub">@GetNetBalanceDescription()</span>
+                </div>
+            </div>
+
+            @* ═══════════════════════════════════════════════════════
+               BALANCE STRIP – horizontally scrollable on mobile
+               ═══════════════════════════════════════════════════════ *@
+            @if (_userScope != UserScopeFilter.MeOnly && FilteredBalances.Count > 0)
+            {
+                <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
+                    <div class="section-header">
+                        <span class="section-title">
+                            <RadzenIcon Icon="account_balance" Style="color: var(--rz-primary);" />
+                            Balances
+                        </span>
+                    </div>
+                    <div class="balance-strip">
+                        @foreach (var balance in FilteredBalances)
+                        {
+                            var isPositive = balance.NetBalance > 0;
+                            var isSettled = balance.NetBalance == 0;
+                            var accentColor = isSettled ? "var(--rz-secondary)" : isPositive ? "var(--rz-success)" : "var(--rz-danger)";
+                            var initials = GetInitials(balance.CounterpartyFullName ?? balance.CounterpartyUserId);
+                            <div class="balance-chip">
+                                <div class="balance-avatar" style="background: @accentColor;">@initials</div>
+                                <RadzenStack Orientation="Orientation.Vertical" Gap="0">
+                                    <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0">
+                                        <strong>@(balance.CounterpartyFullName ?? balance.CounterpartyUserId)</strong>
+                                    </RadzenText>
+                                    <RadzenText TextStyle="TextStyle.Caption" class="rz-mb-0" Style="@($"color: {accentColor}; font-variant-numeric: tabular-nums;")">
+                                        @if (isSettled)
+                                        {
+                                            <RadzenIcon Icon="check_circle" Style="font-size: 0.75rem;" /> <span>Settled</span>
+                                        }
+                                        else if (isPositive)
+                                        {
+                                            <span>owes you <strong>$@balance.NetBalance.ToString("N2")</strong></span>
+                                        }
+                                        else
+                                        {
+                                            <span>you owe <strong>$@Math.Abs(balance.NetBalance).ToString("N2")</strong></span>
+                                        }
+                                    </RadzenText>
+                                </RadzenStack>
+                            </div>
+                        }
+                    </div>
                 </RadzenStack>
-            </RadzenCard>
-        }
+            }
 
-        @* Bills tabs — Recently Paid & Upcoming *@
-        <RadzenCard Variant="Variant.Outlined" class="rz-p-4">
-            <RadzenTabs>
-                <Tabs>
-                    @* Recently Paid Bills Tab *@
-                    <RadzenTabsItem Text="@($"Recently Paid ({PastBills.Count})")" Icon="paid">
-                        <RadzenStack Orientation="Orientation.Vertical" Gap="1rem" class="rz-pt-2">
-                            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween" Wrap="FlexWrap.Wrap" Gap="0.5rem">
-                                <RadzenDropDown TValue="RecentBillsFilter"
-                                                @bind-Value="@_recentFilter"
-                                                Data="@(Enum.GetValues<RecentBillsFilter>())"
-                                                Style="width: 180px;">
-                                    <Template Context="filter">
-                                        @(filter switch
+            @* ═══════════════════════════════════════════════════════
+               MAIN TABS – Overview & Upcoming
+               ═══════════════════════════════════════════════════════ *@
+            <div class="dashboard-tabs">
+                <RadzenTabs SelectedIndex="@_selectedTab" Change="OnTabChangedAsync">
+                    <Tabs>
+                        @* ──────────── OVERVIEW TAB ──────────── *@
+                        <RadzenTabsItem Text="@($"Overview ({FilteredBills.Count})")">
+                            <RadzenStack Orientation="Orientation.Vertical" Gap="1rem" class="rz-pt-3">
+
+                                @* Sub-filter: paid by *@
+                                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center"
+                                             JustifyContent="JustifyContent.SpaceBetween" Wrap="FlexWrap.Wrap" Gap="0.5rem">
+                                    <RadzenSelectBar TValue="RecentBillsFilter" @bind-Value="@_recentFilter" Size="ButtonSize.ExtraSmall">
+                                        <Items>
+                                            <RadzenSelectBarItem Text="All" Value="RecentBillsFilter.All" />
+                                            <RadzenSelectBarItem Text="Paid by me" Value="RecentBillsFilter.PaidByMe" />
+                                            <RadzenSelectBarItem Text="Others" Value="RecentBillsFilter.PaidByOthers" />
+                                        </Items>
+                                    </RadzenSelectBar>
+                                    <RadzenButton Text="View All" Icon="arrow_forward" Variant="Variant.Text"
+                                                  ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.ExtraSmall"
+                                                  Click="NavigateToBills" />
+                                </RadzenStack>
+
+                                @* Bill list – mobile-optimized *@
+                                @if (PastBills.Count == 0)
+                                {
+                                    <div class="dashboard-empty">
+                                        <EmptyState Icon="receipt_long" Title="No bills found"
+                                                    Description="No bills match the current filters." />
+                                    </div>
+                                }
+                                else
+                                {
+                                    <RadzenStack Orientation="Orientation.Vertical" Gap="0">
+                                        @foreach (var bill in PastBills)
                                         {
-                                            RecentBillsFilter.PaidByMe => "Paid by Me",
-                                            RecentBillsFilter.PaidByOthers => "Paid by Others",
-                                            _ => "All"
-                                        })
-                                    </Template>
-                                    <ValueTemplate Context="filter">
-                                        @(filter switch
+                                            <div class="bill-list-item" @onclick="() => NavigateToBill(bill)">
+                                                <div class="bill-list-cat-icon"
+                                                     style="background: color-mix(in srgb, var(--rz-primary) 10%, transparent);">
+                                                    <CategoryIcon Category="@bill.Category.ToString()" Size="24" />
+                                                </div>
+                                                <div class="bill-list-content">
+                                                    <div class="bill-list-title">@bill.Title</div>
+                                                    <div class="bill-list-meta">
+                                                        <span>@bill.BillDate.ToString("MMM dd")</span>
+                                                        <span>·</span>
+                                                        <span>@bill.Category</span>
+                                                        @if (bill.SplitCount > 1)
+                                                        {
+                                                            <span>·</span>
+                                                            <RadzenIcon Icon="people" Style="font-size: 0.75rem;" />
+                                                            <span>@bill.SplitCount</span>
+                                                        }
+                                                    </div>
+                                                </div>
+                                                <div class="bill-list-amount">
+                                                    <div class="bill-list-amount-value">
+                                                        <CurrencyDisplay Amount="@bill.Amount" Currency="@bill.Currency" />
+                                                    </div>
+                                                    <div class="bill-list-amount-status" style="color: @(bill.IsFullyPaid ? "var(--rz-success)" : "var(--rz-warning)");">
+                                                        @(bill.IsFullyPaid ? "Paid" : "Unpaid")
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        }
+                                    </RadzenStack>
+                                }
+
+                                @* Charts — derived from FilteredBills *@
+                                @if (FilteredByCategory.Count > 0 || FilteredByUser.Count > 0)
+                                {
+                                    <div class="charts-grid">
+                                        @if (FilteredByCategory.Count > 0)
                                         {
-                                            RecentBillsFilter.PaidByMe => "Paid by Me",
-                                            RecentBillsFilter.PaidByOthers => "Paid by Others",
-                                            _ => "All"
-                                        })
-                                    </ValueTemplate>
-                                </RadzenDropDown>
-                                <RadzenButton Text="View All" Icon="arrow_forward" Variant="Variant.Text" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small" Click="NavigateToBills" />
+                                            <div class="chart-container">
+                                                <CategoryBreakdownChart Data="@FilteredByCategory" />
+                                            </div>
+                                        }
+                                        @if (FilteredByUser.Count > 0)
+                                        {
+                                            <div class="chart-container">
+                                                <UserSpendingChart Data="@FilteredByUser" />
+                                            </div>
+                                        }
+                                    </div>
+                                }
                             </RadzenStack>
+                        </RadzenTabsItem>
 
-                            @if (PastBills.Count == 0)
-                            {
-                                <EmptyState Icon="paid" Title="No recently paid bills" Description="No bills match the selected filter." />
-                            }
-                            else
-                            {
-                                <RadzenRow Gap="1rem" RowGap="1rem">
-                                    @foreach (var bill in PastBills)
-                                    {
-                                        <RadzenColumn Size="12" SizeSM="6" SizeLG="4">
-                                            <BillCard Bill="@bill" OnView="NavigateToBill" />
-                                        </RadzenColumn>
-                                    }
-                                </RadzenRow>
-                            }
-                        </RadzenStack>
-                    </RadzenTabsItem>
+                        @* ──────────── UPCOMING TAB ──────────── *@
+                        <RadzenTabsItem Text="@($"Upcoming ({UpcomingBills.Count})")">
+                            <RadzenStack Orientation="Orientation.Vertical" Gap="1rem" class="rz-pt-3">
 
-                    @* Upcoming Bills Tab *@
-                    <RadzenTabsItem Text="@($"Upcoming ({UpcomingBills.Count})")" Icon="upcoming">
-                        <RadzenStack Orientation="Orientation.Vertical" Gap="1rem" class="rz-pt-2">
-                            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.75rem" Wrap="FlexWrap.Wrap">
-                                <RadzenDropDown TValue="UpcomingPaidByFilter"
-                                                @bind-Value="@_upcomingPaidByFilter"
-                                                Data="@(Enum.GetValues<UpcomingPaidByFilter>())"
-                                                Style="width: 180px;">
-                                    <Template Context="filter">
-                                        @(filter switch
+                                @* Sub-filters *@
+                                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem" Wrap="FlexWrap.Wrap">
+                                    <RadzenSelectBar TValue="UpcomingPaidByFilter" @bind-Value="@_upcomingPaidByFilter" Size="ButtonSize.ExtraSmall">
+                                        <Items>
+                                            <RadzenSelectBarItem Text="All" Value="UpcomingPaidByFilter.All" />
+                                            <RadzenSelectBarItem Text="My bills" Value="UpcomingPaidByFilter.Me" />
+                                            <RadzenSelectBarItem Text="Others" Value="UpcomingPaidByFilter.Others" />
+                                        </Items>
+                                    </RadzenSelectBar>
+                                    <RadzenSelectBar TValue="UpcomingWithinFilter" @bind-Value="@_upcomingWithinFilter" Size="ButtonSize.ExtraSmall">
+                                        <Items>
+                                            <RadzenSelectBarItem Text="7d" Value="UpcomingWithinFilter.Week" />
+                                            <RadzenSelectBarItem Text="14d" Value="UpcomingWithinFilter.TwoWeeks" />
+                                            <RadzenSelectBarItem Text="30d" Value="UpcomingWithinFilter.Month" />
+                                        </Items>
+                                    </RadzenSelectBar>
+                                </RadzenStack>
+
+                                @* Upcoming total summary *@
+                                @if (UpcomingBills.Count > 0)
+                                {
+                                    <RadzenCard Variant="Variant.Flat" Style="background: color-mix(in srgb, var(--rz-warning) 8%, transparent); border: 1px solid color-mix(in srgb, var(--rz-warning) 25%, transparent);" class="rz-p-3">
+                                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
+                                            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                                                <RadzenIcon Icon="event_upcoming" Style="color: var(--rz-warning-darker);" />
+                                                <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0">
+                                                    <strong>@UpcomingBills.Count</strong> upcoming · <strong>$@UpcomingTotal.ToString("N2")</strong> total
+                                                </RadzenText>
+                                            </RadzenStack>
+                                            @if (OverdueBills.Count > 0)
+                                            {
+                                                <RadzenBadge BadgeStyle="BadgeStyle.Danger" IsPill="true"
+                                                             Text="@($"{OverdueBills.Count} overdue")" />
+                                            }
+                                        </RadzenStack>
+                                    </RadzenCard>
+                                }
+
+                                @* Upcoming bills grouped by timeline *@
+                                @if (UpcomingBills.Count == 0)
+                                {
+                                    <div class="dashboard-empty">
+                                        <EmptyState Icon="event_available" Title="All caught up!"
+                                                    Description="No upcoming bills within the selected timeframe." />
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="upcoming-section">
+                                        @foreach (var group in UpcomingBillsGrouped)
                                         {
-                                            UpcomingPaidByFilter.Me => "To be paid by: Me",
-                                            UpcomingPaidByFilter.Others => "To be paid by: Others",
-                                            _ => "To be paid by: All"
-                                        })
-                                    </Template>
-                                    <ValueTemplate Context="filter">
-                                        @(filter switch
-                                        {
-                                            UpcomingPaidByFilter.Me => "To be paid by: Me",
-                                            UpcomingPaidByFilter.Others => "To be paid by: Others",
-                                            _ => "To be paid by: All"
-                                        })
-                                    </ValueTemplate>
-                                </RadzenDropDown>
-                                <RadzenDropDown TValue="UpcomingWithinFilter"
-                                                @bind-Value="@_upcomingWithinFilter"
-                                                Data="@(Enum.GetValues<UpcomingWithinFilter>())"
-                                                Style="width: 180px;">
-                                    <Template Context="filter">
-                                        @(filter switch
-                                        {
-                                            UpcomingWithinFilter.Week => "Within: 1 Week",
-                                            UpcomingWithinFilter.TwoWeeks => "Within: 2 Weeks",
-                                            _ => "Within: 1 Month"
-                                        })
-                                    </Template>
-                                    <ValueTemplate Context="filter">
-                                        @(filter switch
-                                        {
-                                            UpcomingWithinFilter.Week => "Within: 1 Week",
-                                            UpcomingWithinFilter.TwoWeeks => "Within: 2 Weeks",
-                                            _ => "Within: 1 Month"
-                                        })
-                                    </ValueTemplate>
-                                </RadzenDropDown>
+                                            <div class="upcoming-group-header">@group.Key</div>
+                                            @foreach (var bill in group.Value)
+                                            {
+                                                var daysUntil = (bill.BillDate.Date - DateTimeOffset.Now.Date).Days;
+                                                var urgencyClass = daysUntil <= 0 ? "due-soon" : daysUntil <= 3 ? "due-soon" : daysUntil <= 7 ? "due-week" : "due-later";
+                                                var countdownClass = daysUntil <= 0 ? "urgent" : daysUntil <= 3 ? "urgent" : daysUntil <= 7 ? "warning" : "safe";
+
+                                                <div class="upcoming-card @urgencyClass" @onclick="() => NavigateToBill(bill)">
+                                                    <div class="upcoming-card-header">
+                                                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                                                            <CategoryIcon Category="@bill.Category.ToString()" Size="20" />
+                                                            <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0"><strong>@bill.Title</strong></RadzenText>
+                                                        </RadzenStack>
+                                                        <span class="due-countdown @countdownClass">
+                                                            <RadzenIcon Icon="@(daysUntil <= 0 ? "error" : "schedule")" Style="font-size: 0.75rem;" />
+                                                            @if (daysUntil < 0)
+                                                            {
+                                                                @($"{Math.Abs(daysUntil)}d overdue")
+                                                            }
+                                                            else if (daysUntil == 0)
+                                                            {
+                                                                <span>Due today</span>
+                                                            }
+                                                            else if (daysUntil == 1)
+                                                            {
+                                                                <span>Tomorrow</span>
+                                                            }
+                                                            else
+                                                            {
+                                                                @($"in {daysUntil}d")
+                                                            }
+                                                        </span>
+                                                    </div>
+                                                    <div class="upcoming-card-body">
+                                                        <RadzenStack Orientation="Orientation.Vertical" Gap="0" Style="flex: 1; min-width: 0;">
+                                                            <RadzenText TextStyle="TextStyle.Caption" class="rz-mb-0 rz-color-secondary">
+                                                                @bill.BillDate.ToString("ddd, MMM dd yyyy")
+                                                                @if (!string.IsNullOrEmpty(bill.PaidByUserFullName))
+                                                                {
+                                                                    <span> · @bill.PaidByUserFullName</span>
+                                                                }
+                                                            </RadzenText>
+                                                            <RadzenText TextStyle="TextStyle.Caption" class="rz-mb-0 rz-color-secondary">
+                                                                @bill.Category
+                                                                @if (bill.SplitCount > 1)
+                                                                {
+                                                                    <span> · @bill.SplitCount splits</span>
+                                                                }
+                                                            </RadzenText>
+                                                        </RadzenStack>
+                                                        <RadzenText TextStyle="TextStyle.H6" class="rz-mb-0" Style="font-variant-numeric: tabular-nums; flex-shrink: 0;">
+                                                            <strong><CurrencyDisplay Amount="@bill.Amount" Currency="@bill.Currency" /></strong>
+                                                        </RadzenText>
+                                                    </div>
+                                                </div>
+                                            }
+                                        }
+                                    </div>
+                                }
                             </RadzenStack>
+                        </RadzenTabsItem>
+                    </Tabs>
+                </RadzenTabs>
+            </div>
 
-                            @if (UpcomingBills.Count == 0)
-                            {
-                                <EmptyState Icon="upcoming" Title="No upcoming bills" Description="No unpaid bills within the selected timeframe." />
-                            }
-                            else
-                            {
-                                <RadzenRow Gap="1rem" RowGap="1rem">
-                                    @foreach (var bill in UpcomingBills)
-                                    {
-                                        <RadzenColumn Size="12" SizeSM="6" SizeLG="4">
-                                            <BillCard Bill="@bill" OnView="NavigateToBill" />
-                                        </RadzenColumn>
-                                    }
-                                </RadzenRow>
-                            }
-                        </RadzenStack>
-                    </RadzenTabsItem>
-                </Tabs>
-            </RadzenTabs>
-        </RadzenCard>
+        </div>
     }
+
 </RadzenStack>
+</div>

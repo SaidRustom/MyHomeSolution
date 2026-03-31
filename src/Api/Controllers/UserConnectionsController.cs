@@ -10,6 +10,7 @@ using MyHomeSolution.Application.Features.UserConnections.Commands.SendConnectio
 using MyHomeSolution.Application.Features.UserConnections.Common;
 using MyHomeSolution.Application.Features.UserConnections.Queries.GetConnections;
 using MyHomeSolution.Application.Features.UserConnections.Queries.GetPendingRequests;
+using MyHomeSolution.Application.Features.UserConnections.Queries.GetSharedHistory;
 using MyHomeSolution.Application.Features.UserConnections.Queries.SearchConnectedUsers;
 using MyHomeSolution.Application.Features.Users.Common;
 using MyHomeSolution.Domain.Enums;
@@ -119,5 +120,15 @@ public sealed class UserConnectionsController(ISender sender) : ControllerBase
     {
         await sender.Send(new RemoveConnectionCommand(id), cancellationToken);
         return NoContent();
+    }
+
+    [HttpGet("{userId}/shared-history")]
+    [ProducesResponseType(typeof(SharedHistoryDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetSharedHistory(
+        string userId, CancellationToken cancellationToken)
+    {
+        var result = await sender.Send(new GetSharedHistoryQuery(userId), cancellationToken);
+        return Ok(result);
     }
 }

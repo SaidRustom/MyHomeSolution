@@ -1,0 +1,200 @@
+@page "/notifications"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize]
+
+<PageTitle>Notifications</PageTitle>
+
+<div class="notifications-page">
+<RadzenStack Orientation="Orientation.Vertical" Gap="1rem">
+
+    @* ─── Page header ─── *@
+    <PageHeader Title="Notifications" Subtitle="All your alerts in one place" Icon="notifications">
+        <Actions>
+            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.375rem" AlignItems="AlignItems.Center">
+                @if (_unreadCount > 0)
+                {
+                    <RadzenButton Text="Mark All Read" Icon="done_all"
+                                  Variant="Variant.Outlined" ButtonStyle="ButtonStyle.Primary"
+                                  Size="ButtonSize.Small" Click="MarkAllAsReadAsync"
+                                  Disabled="_isBusy" />
+                }
+            </RadzenStack>
+        </Actions>
+    </PageHeader>
+
+    @if (_isLoading && !_isFiltering)
+    {
+        <LoadingIndicator Text="Loading notifications…" />
+    }
+    else if (_error is not null && !_isFiltering)
+    {
+        <ErrorAlert Problem="@_error" OnRetry="LoadNotificationsAsync" />
+    }
+    else
+    {
+        @* ═══════════════════════════════════════════════════════════
+           FILTER BAR
+           ═══════════════════════════════════════════════════════════ *@
+        <div class="filter-bar">
+            <div class="filter-bar-primary">
+                @* Read / Unread toggle *@
+                <RadzenSelectBar TValue="ReadFilter" @bind-Value="_readFilter"
+                                 Size="ButtonSize.ExtraSmall">
+                    <Items>
+                        <RadzenSelectBarItem Text="All" Value="ReadFilter.All" Icon="list" />
+                        <RadzenSelectBarItem Text="Unread" Value="ReadFilter.Unread" Icon="mark_email_unread" />
+                        <RadzenSelectBarItem Text="Read" Value="ReadFilter.Read" Icon="drafts" />
+                    </Items>
+                </RadzenSelectBar>
+
+                @* Category group filter *@
+                <RadzenDropDown TValue="NotificationCategory?" @bind-Value="_categoryFilter"
+                                Data="_categoryOptions" TextProperty="Text" ValueProperty="Value"
+                                Placeholder="All Categories" AllowClear="true"
+                                Style="min-width: 160px;" />
+
+                @* Date range *@
+                <RadzenDatePicker TValue="DateTimeOffset?" @bind-Value="_dateFrom"
+                                  Placeholder="From" DateFormat="MMM dd" Style="width: 130px;" />
+                <RadzenText TextStyle="TextStyle.Caption" class="rz-mb-0 rz-color-secondary">–</RadzenText>
+                <RadzenDatePicker TValue="DateTimeOffset?" @bind-Value="_dateTo"
+                                  Placeholder="To" DateFormat="MMM dd" Style="width: 130px;" />
+
+                <RadzenButton Icon="search" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small"
+                              Click="ApplyFiltersAsync" title="Apply filters" Disabled="_isFiltering" />
+
+                @if (HasAnyFilter)
+                {
+                    <RadzenButton Icon="clear" Variant="Variant.Text" Size="ButtonSize.Small"
+                                  ButtonStyle="ButtonStyle.Danger" Click="ClearFiltersAsync"
+                                  title="Clear all filters" />
+                }
+            </div>
+        </div>
+
+        @* ═══════════════════════════════════════════════════════════
+           SUMMARY STRIP
+           ═══════════════════════════════════════════════════════════ *@
+        <div class="stat-strip">
+            <div class="stat-mini">
+                <div class="stat-mini-icon" style="background: color-mix(in srgb, var(--rz-primary) 12%, transparent);">
+                    <RadzenIcon Icon="notifications" Style="font-size: 1.125rem; color: var(--rz-primary);" />
+                </div>
+                <span class="stat-mini-value">@_totalCount</span>
+                <span class="stat-mini-label">Total</span>
+            </div>
+            <div class="stat-mini">
+                <div class="stat-mini-icon" style="background: color-mix(in srgb, var(--rz-info) 12%, transparent);">
+                    <RadzenIcon Icon="mark_email_unread" Style="font-size: 1.125rem; color: var(--rz-info);" />
+                </div>
+                <span class="stat-mini-value">@_unreadCount</span>
+                <span class="stat-mini-label">Unread</span>
+            </div>
+            <div class="stat-mini">
+                <div class="stat-mini-icon" style="background: color-mix(in srgb, var(--rz-success) 12%, transparent);">
+                    <RadzenIcon Icon="drafts" Style="font-size: 1.125rem; color: var(--rz-success);" />
+                </div>
+                <span class="stat-mini-value">@(_totalCount - _unreadCount)</span>
+                <span class="stat-mini-label">Read</span>
+            </div>
+        </div>
+
+        @* ═══════════════════════════════════════════════════════════
+           NOTIFICATION LIST
+           ═══════════════════════════════════════════════════════════ *@
+        @if (_isFiltering)
+        {
+            <LoadingIndicator Text="Filtering…" />
+        }
+        else if (FilteredNotifications.Count == 0)
+        {
+            <RadzenStack AlignItems="AlignItems.Center" class="rz-p-8" Gap="0.75rem">
+                <RadzenIcon Icon="notifications_none" Style="font-size: 3rem; color: var(--rz-text-disabled-color);" />
+                <RadzenText TextStyle="TextStyle.Subtitle1" class="rz-color-secondary rz-mb-0">
+                    @(HasAnyFilter ? "No notifications match your filters" : "You have no notifications yet")
+                </RadzenText>
+                @if (HasAnyFilter)
+                {
+                    <RadzenButton Text="Clear Filters" Variant="Variant.Text" ButtonStyle="ButtonStyle.Primary"
+                                  Size="ButtonSize.Small" Click="ClearFiltersAsync" />
+                }
+            </RadzenStack>
+        }
+        else
+        {
+            @* Group header by date *@
+            @foreach (var group in GroupedNotifications)
+            {
+                <div class="notification-group">
+                    <div class="notification-group-header">
+                        <RadzenText TextStyle="TextStyle.Overline" class="rz-mb-0">@group.Key</RadzenText>
+                        <span class="notification-group-count">@group.Count()</span>
+                    </div>
+
+                    @foreach (var notification in group)
+                    {
+                        <div class="notification-row @(notification.IsRead ? "" : "notification-unread")"
+                             @onclick="() => OnNotificationClickedAsync(notification)">
+
+                            <div class="notification-icon-wrapper" style="background: @GetIconBackground(notification);">
+                                <RadzenIcon Icon="@GetNotificationIcon(notification)"
+                                            Style="@($"font-size: 1.125rem; color: {GetIconColor(notification)};")" />
+                            </div>
+
+                            <div class="notification-content">
+                                <div class="notification-title-row">
+                                    <span class="notification-title">@notification.Title</span>
+                                    @if (!notification.IsRead)
+                                    {
+                                        <div class="notification-unread-dot" />
+                                    }
+                                </div>
+                                <div class="notification-meta">
+                                    @if (!string.IsNullOrEmpty(notification.FromUserFullName))
+                                    {
+                                        <span>@notification.FromUserFullName</span>
+                                        <span class="notification-meta-dot">&bull;</span>
+                                    }
+                                    <span>@GetTimeAgo(notification.CreatedAt)</span>
+                                    <span class="notification-meta-dot">&bull;</span>
+                                    <span class="notification-type-badge">@GetCategoryLabel(notification.Type)</span>
+                                </div>
+                            </div>
+
+                            <div class="notification-actions" @onclick:stopPropagation="true">
+                                @if (!notification.IsRead)
+                                {
+                                    <RadzenButton Icon="done" Variant="Variant.Text" Size="ButtonSize.ExtraSmall"
+                                                  ButtonStyle="ButtonStyle.Primary"
+                                                  Click="() => MarkAsReadAsync(notification)"
+                                                  title="Mark as read" />
+                                }
+                                <RadzenButton Icon="delete_outline" Variant="Variant.Text" Size="ButtonSize.ExtraSmall"
+                                              ButtonStyle="ButtonStyle.Danger"
+                                              Click="() => DeleteNotificationAsync(notification)"
+                                              title="Delete" />
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+
+            @* Pagination *@
+            @if (_paginatedResult is not null && _paginatedResult.TotalPages > 1)
+            {
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center"
+                             JustifyContent="JustifyContent.Center" Gap="0.5rem" class="rz-mt-2">
+                    <RadzenButton Icon="chevron_left" Variant="Variant.Text" Size="ButtonSize.Small"
+                                  Disabled="!_paginatedResult.HasPreviousPage"
+                                  Click="() => GoToPageAsync(_pageNumber - 1)" />
+                    <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0">
+                        Page @_pageNumber of @_paginatedResult.TotalPages
+                    </RadzenText>
+                    <RadzenButton Icon="chevron_right" Variant="Variant.Text" Size="ButtonSize.Small"
+                                  Disabled="!_paginatedResult.HasNextPage"
+                                  Click="() => GoToPageAsync(_pageNumber + 1)" />
+                </RadzenStack>
+            }
+        }
+    }
+</RadzenStack>
+</div>

@@ -16,59 +16,116 @@ public enum UserScopeFilter { All, MeOnly }
 
 public partial class BillDashboard : IDisposable
 {
-    [Inject]
-    IBillService BillService { get; set; } = default!;
-
-    [Inject]
-    IShoppingListService ShoppingListService { get; set; } = default!;
-
-    [Inject]
-    NavigationManager NavigationManager { get; set; } = default!;
+    [Inject] IBillService BillService { get; set; } = default!;
+    [Inject] IShoppingListService ShoppingListService { get; set; } = default!;
+    [Inject] NavigationManager NavigationManager { get; set; } = default!;
 
     [CascadingParameter]
     private Task<AuthenticationState> AuthState { get; set; } = default!;
 
+    // ── Raw server data ──
     SpendingSummaryDto? Summary { get; set; }
-
     IReadOnlyList<UserBalanceDto> Balances { get; set; } = [];
-
     PaginatedList<BillBriefDto> RecentBills { get; set; } = new();
+    IReadOnlyList<ShoppingListBriefDto> ShoppingLists { get; set; } = [];
 
-    // Tab filter state
+    // ── UI state ──
+    bool IsLoading { get; set; }
+    bool IsApplyingFilters { get; set; }
+    ApiProblemDetails? Error { get; set; }
+    int _selectedTab;
+    int _previousTab;
+    bool _showAdvanced;
+    string? _currentUserId;
+    CancellationTokenSource _cts = new();
+
+    // ── Primary filters ──
+    UserScopeFilter _userScope = UserScopeFilter.All;
+    string? _selectedScopeUserId;
+    DateTimeOffset? FromDate { get; set; }
+    DateTimeOffset? ToDate { get; set; }
+
+    // ── Tab-level sub-filters ──
     RecentBillsFilter _recentFilter = RecentBillsFilter.All;
     UpcomingPaidByFilter _upcomingPaidByFilter = UpcomingPaidByFilter.All;
     UpcomingWithinFilter _upcomingWithinFilter = UpcomingWithinFilter.Month;
 
-    // User scope filter
-    UserScopeFilter _userScope = UserScopeFilter.All;
-    string? _selectedScopeUserId;
+    // ── Advanced filters ──
+    IEnumerable<string> SelectedUserIds { get; set; } = [];
+    IEnumerable<BillCategory> SelectedBillCategories { get; set; } = [];
+    bool? AnalysisPaymentStatus { get; set; }
+    bool? AnalysisHasLinkedTask { get; set; }
+    Guid? AnalysisShoppingListId { get; set; }
+    bool _sharedWithAny;
 
-    /// <summary>Recently paid bills — sorted by date descending.</summary>
+    // ══════════════════════════════════════════════════════════════
+    // DERIVED DATA — every property below flows from FilteredBills
+    // so that ALL filters apply to ALL components uniformly.
+    // ══════════════════════════════════════════════════════════════
+
+    IEnumerable<BillCategory> AllBillCategories => Enum.GetValues<BillCategory>();
+
+    IReadOnlyList<UserSpendingDto> AvailableUsers => Summary?.ByUser ?? [];
+
+    List<ScopeUserOption> ScopeUserOptions
+    {
+        get
+        {
+            if (Summary?.ByUser is null) return [];
+            return Summary.ByUser
+                .Select(u => new ScopeUserOption
+                {
+                    UserId = u.UserId,
+                    DisplayName = u.UserFullName ?? u.UserId
+                })
+                .ToList();
+        }
+    }
+
+    bool HasAdvancedFilters =>
+        !string.IsNullOrEmpty(_selectedScopeUserId)
+        || SelectedBillCategories.Any()
+        || AnalysisPaymentStatus.HasValue
+        || AnalysisHasLinkedTask.HasValue
+        || AnalysisShoppingListId.HasValue
+        || SelectedUserIds.Any()
+        || _sharedWithAny;
+
+    bool HasAnyFilter =>
+        HasAdvancedFilters
+        || _userScope == UserScopeFilter.MeOnly;
+
+    // ── Central filtered list — single source of truth ──
+    List<BillBriefDto> FilteredBills =>
+        RecentBills.Items
+            .Where(PassesAllFilters)
+            .OrderByDescending(b => b.BillDate)
+            .ToList();
+
+    // ── Stat cards — computed from FilteredBills so filters apply ──
+    decimal ComputedTotalSpent => FilteredBills.Sum(b => b.Amount);
+    int ComputedBillCount => FilteredBills.Count;
+
+    // ── Bill lists ──
     List<BillBriefDto> PastBills
     {
         get
         {
-            var bills = RecentBills.Items
-                .Where(b => b.IsFullyPaid)
-                .Where(b => PassesUserScopeFilter(b))
-                .Where(b => PassesAnalysisFilters(b))
-                .OrderByDescending(b => b.BillDate);
-
+            var bills = FilteredBills.Where(b => b.IsFullyPaid);
             return _recentFilter switch
             {
-                RecentBillsFilter.PaidByMe => bills.Where(b => string.Equals(b.PaidByUserId, _currentUserId, StringComparison.OrdinalIgnoreCase)).ToList(),
-                RecentBillsFilter.PaidByOthers => bills.Where(b => !string.Equals(b.PaidByUserId, _currentUserId, StringComparison.OrdinalIgnoreCase)).ToList(),
+                RecentBillsFilter.PaidByMe => bills.Where(b => IsCurrentUser(b.PaidByUserId)).ToList(),
+                RecentBillsFilter.PaidByOthers => bills.Where(b => !IsCurrentUser(b.PaidByUserId)).ToList(),
                 _ => bills.ToList()
             };
         }
     }
 
-    /// <summary>Upcoming unpaid bills within the selected timeframe.</summary>
     List<BillBriefDto> UpcomingBills
     {
         get
         {
-            var cutoffDate = _upcomingWithinFilter switch
+            var cutoff = _upcomingWithinFilter switch
             {
                 UpcomingWithinFilter.Week => DateTimeOffset.Now.AddDays(7),
                 UpcomingWithinFilter.TwoWeeks => DateTimeOffset.Now.AddDays(14),
@@ -76,144 +133,127 @@ public partial class BillDashboard : IDisposable
             };
 
             var bills = RecentBills.Items
-                .Where(b => !b.IsFullyPaid && b.BillDate <= cutoffDate)
-                .Where(b => PassesUserScopeFilter(b))
-                .Where(b => PassesAnalysisFilters(b))
+                .Where(b => !b.IsFullyPaid && b.BillDate <= cutoff)
+                .Where(PassesAllFilters)
                 .OrderBy(b => b.BillDate);
 
             return _upcomingPaidByFilter switch
             {
-                UpcomingPaidByFilter.Me => bills.Where(b => string.Equals(b.PaidByUserId, _currentUserId, StringComparison.OrdinalIgnoreCase)).ToList(),
-                UpcomingPaidByFilter.Others => bills.Where(b => !string.Equals(b.PaidByUserId, _currentUserId, StringComparison.OrdinalIgnoreCase)).ToList(),
+                UpcomingPaidByFilter.Me => bills.Where(b => IsCurrentUser(b.PaidByUserId)).ToList(),
+                UpcomingPaidByFilter.Others => bills.Where(b => !IsCurrentUser(b.PaidByUserId)).ToList(),
                 _ => bills.ToList()
             };
         }
     }
 
-    /// <summary>Balances filtered by selected scope user.</summary>
+    List<BillBriefDto> OverdueBills =>
+        UpcomingBills.Where(b => b.BillDate.Date < DateTimeOffset.Now.Date).ToList();
+
+    decimal UpcomingTotal => UpcomingBills.Sum(b => b.Amount);
+
+    Dictionary<string, List<BillBriefDto>> UpcomingBillsGrouped
+    {
+        get
+        {
+            var today = DateTimeOffset.Now.Date;
+            var groups = new Dictionary<string, List<BillBriefDto>>();
+
+            foreach (var bill in UpcomingBills)
+            {
+                var days = (bill.BillDate.Date - today).Days;
+                var key = days switch
+                {
+                    < 0 => "Overdue",
+                    0 => "Today",
+                    1 => "Tomorrow",
+                    <= 7 => "This Week",
+                    <= 14 => "Next Week",
+                    _ => "Later"
+                };
+
+                if (!groups.ContainsKey(key))
+                    groups[key] = [];
+                groups[key].Add(bill);
+            }
+
+            return groups;
+        }
+    }
+
+    // ── Balances — filtered by user scope ──
     IReadOnlyList<UserBalanceDto> FilteredBalances
     {
         get
         {
-            if (_userScope == UserScopeFilter.MeOnly)
-                return [];
-
+            if (_userScope == UserScopeFilter.MeOnly) return [];
+            if (_sharedWithAny)
+                return Balances; // shared-with implies all counterparties
             if (!string.IsNullOrEmpty(_selectedScopeUserId))
-                return Balances.Where(b =>
-                    string.Equals(b.CounterpartyUserId, _selectedScopeUserId, StringComparison.OrdinalIgnoreCase))
+                return Balances
+                    .Where(b => string.Equals(b.CounterpartyUserId, _selectedScopeUserId, StringComparison.OrdinalIgnoreCase))
                     .ToList();
-
             return Balances;
         }
     }
 
-    string? _currentUserId;
-
-    bool IsLoading { get; set; }
-
-    ApiProblemDetails? Error { get; set; }
-
-    // Date range for summary
-    DateTimeOffset? FromDate { get; set; }
-    DateTimeOffset? ToDate { get; set; }
-
-    // Analysis filters
-    IEnumerable<string>? SelectedUserIds { get; set; }
-    IEnumerable<BillCategory>? SelectedBillCategories { get; set; }
-    bool? AnalysisPaymentStatus { get; set; }
-    bool? AnalysisHasLinkedTask { get; set; }
-    Guid? AnalysisShoppingListId { get; set; }
-
-    IReadOnlyList<ShoppingListBriefDto> ShoppingLists { get; set; } = [];
-
-    IEnumerable<BillCategory> AllBillCategories => Enum.GetValues<BillCategory>();
-
-    /// <summary>Users available in the summary data for filtering.</summary>
-    IReadOnlyList<UserSpendingDto> AvailableUsers =>
-        Summary?.ByUser ?? [];
-
-    /// <summary>Scope user options for the top-level filter.</summary>
-    List<ScopeUserOption> ScopeUserOptions
-    {
-        get
-        {
-            var options = new List<ScopeUserOption>();
-            if (Summary?.ByUser is not null)
-            {
-                foreach (var u in Summary.ByUser)
-                {
-                    options.Add(new ScopeUserOption
-                    {
-                        UserId = u.UserId,
-                        DisplayName = u.UserFullName ?? u.UserId
-                    });
-                }
-            }
-            return options;
-        }
-    }
-
-    bool HasAnalysisFilters =>
-        (SelectedUserIds?.Any() == true)
-        || (SelectedBillCategories?.Any() == true)
-        || AnalysisPaymentStatus.HasValue
-        || AnalysisHasLinkedTask.HasValue
-        || AnalysisShoppingListId.HasValue;
-
-    /// <summary>Category spending data filtered by selected bill categories.</summary>
+    // ── Charts — derived from FilteredBills so all filters apply ──
     IReadOnlyList<CategorySpendingDto> FilteredByCategory
     {
         get
         {
-            if (Summary is null) return [];
+            var bills = FilteredBills;
+            if (bills.Count == 0) return [];
 
-            var data = Summary.ByCategory.AsEnumerable();
-
-            if (SelectedBillCategories?.Any() == true)
-            {
-                var selected = SelectedBillCategories.ToHashSet();
-                data = data.Where(c => selected.Contains(c.Category));
-            }
-
-            return data.ToList();
+            return bills
+                .GroupBy(b => b.Category)
+                .Select(g => new CategorySpendingDto
+                {
+                    Category = g.Key,
+                    TotalAmount = g.Sum(b => b.Amount),
+                    BillCount = g.Count()
+                })
+                .OrderByDescending(c => c.TotalAmount)
+                .ToList();
         }
     }
 
-    /// <summary>User spending data filtered by selected users.</summary>
     IReadOnlyList<UserSpendingDto> FilteredByUser
     {
         get
         {
-            if (Summary is null) return [];
+            if (Summary?.ByUser is null || Summary.ByUser.Count == 0) return [];
+
+            var filtered = FilteredBills;
+            if (filtered.Count == 0) return [];
+
+            // Collect payer user IDs that appear in the filtered bills
+            var activePayers = filtered
+                .Select(b => b.PaidByUserId)
+                .Where(id => id is not null)
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
             var data = Summary.ByUser.AsEnumerable();
 
-            if (SelectedUserIds?.Any() == true)
+            // Only show users who appear in filtered bills
+            data = data.Where(u => activePayers.Contains(u.UserId));
+
+            // Apply spending users filter
+            if (SelectedUserIds.Any())
             {
                 var selected = SelectedUserIds.ToHashSet();
                 data = data.Where(u => selected.Contains(u.UserId));
             }
 
-            // Also apply scope filter
             if (!string.IsNullOrEmpty(_selectedScopeUserId))
-            {
                 data = data.Where(u => string.Equals(u.UserId, _selectedScopeUserId, StringComparison.OrdinalIgnoreCase));
-            }
 
             return data.ToList();
         }
     }
 
-    void ClearAnalysisFilters()
-    {
-        SelectedUserIds = null;
-        SelectedBillCategories = null;
-        AnalysisPaymentStatus = null;
-        AnalysisHasLinkedTask = null;
-        AnalysisShoppingListId = null;
-    }
-
-    CancellationTokenSource _cts = new();
+    // ══════════════════════════════════════════════════════════════
+    // LIFECYCLE
+    // ══════════════════════════════════════════════════════════════
 
     protected override async Task OnInitializedAsync()
     {
@@ -221,7 +261,6 @@ public partial class BillDashboard : IDisposable
         _currentUserId = state.User.FindFirst(ClaimTypes.NameIdentifier)?.Value
             ?? state.User.FindFirst("sub")?.Value;
 
-        // Default to current month
         var now = DateTimeOffset.Now;
         FromDate = new DateTimeOffset(now.Year, now.Month, 1, 0, 0, 0, now.Offset);
         ToDate = now;
@@ -230,11 +269,14 @@ public partial class BillDashboard : IDisposable
         await LoadDashboardDataAsync();
     }
 
+    // ══════════════════════════════════════════════════════════════
+    // DATA LOADING
+    // ══════════════════════════════════════════════════════════════
+
     async Task LoadShoppingListsAsync()
     {
         var result = await ShoppingListService.GetShoppingListsAsync(
             pageNumber: 1, pageSize: 100, cancellationToken: _cts.Token);
-
         if (result.IsSuccess)
             ShoppingLists = result.Value.Items.ToList();
     }
@@ -246,12 +288,13 @@ public partial class BillDashboard : IDisposable
 
         var summaryTask = BillService.GetSpendingSummaryAsync(FromDate, ToDate, _cts.Token);
         var balancesTask = BillService.GetBalancesAsync(
-            counterpartyUserId: _selectedScopeUserId,
-            cancellationToken: _cts.Token);
+            counterpartyUserId: _selectedScopeUserId, cancellationToken: _cts.Token);
         var recentTask = BillService.GetBillsAsync(
-            pageNumber: 1,
-            pageSize: 50,
+            pageNumber: 1, pageSize: 50,
             splitWithUserId: _selectedScopeUserId,
+            shoppingListId: AnalysisShoppingListId,
+            fromDate: FromDate,
+            toDate: ToDate,
             cancellationToken: _cts.Token);
 
         await Task.WhenAll(summaryTask, balancesTask, recentTask);
@@ -274,94 +317,152 @@ public partial class BillDashboard : IDisposable
         IsLoading = false;
     }
 
-    async Task OnDateRangeChangedAsync()
-    {
-        await LoadDashboardDataAsync();
-    }
+    // ══════════════════════════════════════════════════════════════
+    // FILTER HANDLERS
+    // ══════════════════════════════════════════════════════════════
 
-    async Task OnUserScopeChangedAsync()
-    {
-        // When scope changes, clear the specific user if switching to All or Me Only
-        if (_userScope != UserScopeFilter.All || string.IsNullOrEmpty(_selectedScopeUserId))
-        {
-            _selectedScopeUserId = null;
-        }
-        await LoadDashboardDataAsync();
-    }
-
-    async Task OnScopeUserChangedAsync()
-    {
-        await LoadDashboardDataAsync();
-    }
-
-    /// <summary>Returns true if a bill passes the user scope filter.</summary>
-    bool PassesUserScopeFilter(BillBriefDto bill)
+    async Task OnFiltersChangedAsync()
     {
         if (_userScope == UserScopeFilter.MeOnly)
+            _selectedScopeUserId = null;
+
+        IsApplyingFilters = true;
+        StateHasChanged();
+        await Task.Yield();
+
+        await LoadDashboardDataAsync();
+
+        IsApplyingFilters = false;
+    }
+
+    async Task ClearAllFiltersAsync()
+    {
+        _userScope = UserScopeFilter.All;
+        _selectedScopeUserId = null;
+        SelectedUserIds = [];
+        SelectedBillCategories = [];
+        AnalysisPaymentStatus = null;
+        AnalysisHasLinkedTask = null;
+        AnalysisShoppingListId = null;
+        _sharedWithAny = false;
+        _recentFilter = RecentBillsFilter.All;
+        _upcomingPaidByFilter = UpcomingPaidByFilter.All;
+        _upcomingWithinFilter = UpcomingWithinFilter.Month;
+
+        IsApplyingFilters = true;
+        StateHasChanged();
+        await Task.Yield();
+
+        await LoadDashboardDataAsync();
+
+        IsApplyingFilters = false;
+    }
+
+    async Task OnTabChangedAsync(int index)
+    {
+        if (index == _selectedTab) return;
+        _previousTab = _selectedTab;
+        _selectedTab = index;
+
+        IsApplyingFilters = true;
+        StateHasChanged();
+        await Task.Yield();
+
+        // Tab switch is client-side — brief yield lets the spinner render
+        IsApplyingFilters = false;
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    // UNIFIED FILTER PREDICATE
+    // ══════════════════════════════════════════════════════════════
+
+    bool PassesAllFilters(BillBriefDto bill)
+    {
+        // User scope
+        if (_userScope == UserScopeFilter.MeOnly)
         {
-            // My Bills: only show bills that are personal (not split with others)
-            return bill.SplitCount <= 1
-                && string.Equals(bill.PaidByUserId, _currentUserId, StringComparison.OrdinalIgnoreCase);
+            if (bill.SplitCount > 1 || !IsCurrentUser(bill.PaidByUserId))
+                return false;
         }
 
-        // When a specific user is selected, show only bills that are split with that user
-        // Non-split bills are excluded since they cannot be "split with" anyone
-        if (!string.IsNullOrEmpty(_selectedScopeUserId))
+        if (!string.IsNullOrEmpty(_selectedScopeUserId) && bill.SplitCount <= 1)
+            return false;
+
+        // Shared-with filter
+        if (_sharedWithAny && bill.SplitCount <= 1)
+            return false;
+
+        // Category
+        if (SelectedBillCategories.Any())
         {
-            // We rely on the split participants; since BillBriefDto doesn't carry split user IDs,
-            // we use a server-side filter when loading. For client-side tabs, we approximate:
-            // bill must have splits and be between current user and selected user.
-            return bill.SplitCount > 1;
+            if (!SelectedBillCategories.Contains(bill.Category))
+                return false;
         }
+
+        // Payment status
+        if (AnalysisPaymentStatus.HasValue && bill.IsFullyPaid != AnalysisPaymentStatus.Value)
+            return false;
+
+        // Linked to task
+        if (AnalysisHasLinkedTask.HasValue && bill.HasLinkedTask != AnalysisHasLinkedTask.Value)
+            return false;
 
         return true;
     }
 
-    /// <summary>Returns true if a bill passes the analysis filters.</summary>
-    bool PassesAnalysisFilters(BillBriefDto bill)
-    {
-        if (SelectedBillCategories?.Any() == true)
-        {
-            var selected = SelectedBillCategories.ToHashSet();
-            if (!selected.Contains(bill.Category))
-                return false;
-        }
+    // ══════════════════════════════════════════════════════════════
+    // NAVIGATION
+    // ══════════════════════════════════════════════════════════════
 
-        if (AnalysisPaymentStatus.HasValue)
-        {
-            if (bill.IsFullyPaid != AnalysisPaymentStatus.Value)
-                return false;
-        }
+    void NavigateToBills() => NavigationManager.NavigateTo("/bills");
 
-        if (AnalysisHasLinkedTask.HasValue)
-        {
-            if (bill.HasLinkedTask != AnalysisHasLinkedTask.Value)
-                return false;
-        }
+    void NavigateToBill(BillBriefDto bill) => NavigationManager.NavigateTo($"/bills/{bill.Id}");
 
-        return true;
-    }
+    // ══════════════════════════════════════════════════════════════
+    // HELPERS
+    // ══════════════════════════════════════════════════════════════
 
-    void NavigateToBills()
-    {
-        NavigationManager.NavigateTo("/bills");
-    }
-
-    void NavigateToBill(BillBriefDto bill)
-    {
-        NavigationManager.NavigateTo($"/bills/{bill.Id}");
-    }
+    bool IsCurrentUser(string? userId) =>
+        string.Equals(userId, _currentUserId, StringComparison.OrdinalIgnoreCase);
 
     string GetNetBalanceDescription()
     {
-        if (Summary is null) return string.Empty;
-
-        return Summary.NetBalance switch
+        var filtered = FilteredBills;
+        if (filtered.Count == 0) return "No data";
+        var paid = filtered.Where(b => b.IsFullyPaid).Sum(b => b.Amount);
+        var unpaid = filtered.Where(b => !b.IsFullyPaid).Sum(b => b.Amount);
+        var diff = paid - unpaid;
+        return diff switch
         {
             > 0 => "You are owed overall",
             < 0 => "You owe overall",
             _ => "All settled up"
         };
+    }
+
+    /// <summary>Computes the net balance from the filtered bill set.</summary>
+    decimal ComputedNetBalance
+    {
+        get
+        {
+            if (Summary is null) return 0;
+            // When no client-side filters are active, use the server-provided balance
+            if (!HasAnyFilter) return Summary.NetBalance;
+            // Otherwise approximate from filtered bills
+            var filtered = FilteredBills;
+            var paidByMe = filtered.Where(b => IsCurrentUser(b.PaidByUserId)).Sum(b => b.Amount);
+            var paidByOthers = filtered.Where(b => !IsCurrentUser(b.PaidByUserId)).Sum(b => b.Amount);
+            return paidByMe - paidByOthers;
+        }
+    }
+
+    static string GetInitials(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name)) return "?";
+        var parts = name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        return parts.Length >= 2
+            ? $"{parts[0][0]}{parts[^1][0]}".ToUpperInvariant()
+            : name[..Math.Min(2, name.Length)].ToUpperInvariant();
     }
 
     public void Dispose()

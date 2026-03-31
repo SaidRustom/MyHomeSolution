@@ -40,10 +40,27 @@
         <div class="loading-progress-text"></div>
     </div>
 
-    <div id="blazor-error-ui">
-        An unhandled error has occurred.
-        <a href="." class="reload">Reload</a>
-        <span class="dismiss">🗙</span>
+    <div id="blazor-error-ui" class="rz-shadow-6">
+        <div class="error-container">
+            <div class="error-icon">
+                <i class="rz-icon rz-icon-warning"></i>
+            </div>
+
+            <div class="error-content">
+                <h3>Something went wrong</h3>
+                <p>We encountered an unexpected error. Please try reloading the application.</p>
+
+                <div class="error-actions">
+                    <a href="." class="rz-button rz-button-primary reload">
+                        <i class="rz-icon rz-icon-refresh"></i>
+                        Reload
+                    </a>
+                    <button class="rz-button rz-button-text dismiss">
+                        Dismiss
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
     <script src="_framework/blazor.webassembly#[.{fingerprint}].js"></script>
     <script>navigator.serviceWorker.register('service-worker.js'/*, { updateViaCache: 'none' }*/);</script>

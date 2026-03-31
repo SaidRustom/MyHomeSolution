@@ -1,0 +1,114 @@
+@using BlazorUI.Models.Budgets
+
+@if (_isLoading)
+{
+    <div class="widget-loading">
+        <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate"
+                                   Size="ProgressBarCircularSize.Small" />
+    </div>
+}
+else if (_summary is null)
+{
+    <div class="budget-widget">
+        <div class="budget-widget-header">
+            <div class="budget-widget-header-left">
+                <div class="budget-widget-icon">
+                    <RadzenIcon Icon="account_balance" Style="font-size: 1.125rem; color: var(--rz-primary);" />
+                </div>
+                <span class="budget-widget-title">Budget Overview</span>
+            </div>
+        </div>
+        <div class="budget-widget-empty">
+            <RadzenIcon Icon="account_balance_wallet" Style="font-size: 1.75rem; color: var(--rz-base-400);" />
+            <span>No budgets yet</span>
+            <RadzenButton Text="Create Budget" Icon="add" Variant="Variant.Text"
+                          ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.ExtraSmall"
+                          Click="@(() => NavigationManager.NavigateTo("/budgets"))" />
+        </div>
+    </div>
+}
+else
+{
+    <div class="budget-widget">
+        <div class="budget-widget-header">
+            <div class="budget-widget-header-left">
+                <div class="budget-widget-icon">
+                    <RadzenIcon Icon="account_balance" Style="font-size: 1.125rem; color: var(--rz-primary);" />
+                </div>
+                <span class="budget-widget-title">Budget Overview</span>
+            </div>
+            <span class="budget-widget-percent" style="color: @GetStatusColor(_summary.OverallPercentUsed);">
+                @_summary.OverallPercentUsed.ToString("N0")%
+            </span>
+        </div>
+
+        @* Utilization mini bar *@
+        <div class="budget-util-bar">
+            <div class="budget-util-fill" style="width: @(Math.Min(_summary.OverallPercentUsed, 100).ToString("F0"))%; background: @GetStatusColor(_summary.OverallPercentUsed);"></div>
+        </div>
+
+        <div class="budget-widget-body">
+            @* Summary row *@
+            <div class="budget-summary-row">
+                <div class="budget-summary-stat">
+                    <span class="budget-summary-value">$@_summary.TotalBudgeted.ToString("N0")</span>
+                    <span class="budget-summary-label">Budgeted</span>
+                </div>
+                <div class="budget-summary-stat">
+                    <span class="budget-summary-value" style="color: var(--rz-danger);">$@_summary.TotalSpent.ToString("N0")</span>
+                    <span class="budget-summary-label">Spent</span>
+                </div>
+                <div class="budget-summary-stat">
+                    <span class="budget-summary-value" style="color: @(_summary.TotalRemaining >= 0 ? "var(--rz-success)" : "var(--rz-danger)");">$@Math.Abs(_summary.TotalRemaining).ToString("N0")</span>
+                    <span class="budget-summary-label">@(_summary.TotalRemaining >= 0 ? "Left" : "Over")</span>
+                </div>
+            </div>
+
+            @* Status counts *@
+            <div class="budget-status-row">
+                @if (_summary.OverBudgetCount > 0)
+                {
+                    <div class="budget-status-chip danger">
+                        <RadzenIcon Icon="warning" Style="font-size: 0.875rem;" />
+                        <span>@_summary.OverBudgetCount over</span>
+                    </div>
+                }
+                @if (_summary.OnTrackCount > 0)
+                {
+                    <div class="budget-status-chip success">
+                        <RadzenIcon Icon="check_circle" Style="font-size: 0.875rem;" />
+                        <span>@_summary.OnTrackCount on track</span>
+                    </div>
+                }
+            </div>
+
+            @* Top 3 budgets *@
+            @if (_summary.BudgetStatuses.Count > 0)
+            {
+                <div class="budget-mini-list">
+                    @foreach (var budget in _summary.BudgetStatuses.OrderByDescending(b => b.PercentUsed).Take(3))
+                    {
+                        <div class="budget-mini-item" @onclick="@(() => NavigationManager.NavigateTo($"/budgets/{budget.BudgetId}"))">
+                            <div class="budget-mini-info">
+                                <span class="budget-mini-name">@budget.BudgetName</span>
+                                <span class="budget-mini-amount">$@budget.Spent.ToString("N0") / $@budget.Budgeted.ToString("N0")</span>
+                            </div>
+                            <div class="budget-mini-bar-container">
+                                <div class="budget-mini-bar">
+                                    <div class="budget-mini-bar-fill" style="width: @(Math.Min(budget.PercentUsed, 100).ToString("F0"))%; background: @GetStatusColor(budget.PercentUsed);"></div>
+                                </div>
+                                <span class="budget-mini-percent" style="color: @GetStatusColor(budget.PercentUsed);">@budget.PercentUsed.ToString("N0")%</span>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+
+        <div class="budget-widget-footer">
+            <RadzenButton Text="Dashboard" Icon="arrow_forward" Variant="Variant.Text"
+                          ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.ExtraSmall"
+                          Click="@(() => NavigationManager.NavigateTo("/budgets/dashboard"))" />
+        </div>
+    </div>
+}

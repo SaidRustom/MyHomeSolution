@@ -52,7 +52,8 @@
         @* Owner row *@
         <div style="padding: 0.625rem 0.75rem; background: var(--rz-base-background); border-radius: var(--rz-border-radius); border: 1px solid var(--rz-base-200);">
             <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween" Wrap="FlexWrap.Wrap" Gap="0.5rem">
-                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.625rem">
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.625rem" 
+                             @onclick="() => OpenSharedHistoryAsync(OwnerId!, OwnerName)">
                     <UserAvatar UserId="@OwnerId" AvatarUrl="@OwnerAvatarUrl" FallbackName="@OwnerName"
                                 Size="36px" FallbackIcon="shield_person" Background="var(--rz-warning-lighter)" IconColor="var(--rz-warning)" />
                     <RadzenStack Orientation="Orientation.Vertical" Gap="0">
@@ -74,7 +75,9 @@
                 <div style="padding: 0.5rem 0.75rem; border-radius: var(--rz-border-radius); border: 1px solid var(--rz-base-100); transition: background-color 0.15s ease;"
                      class="entity-share-row">
                     <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween" Wrap="FlexWrap.Wrap" Gap="0.5rem">
-                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.625rem" Style="min-width: 0; flex: 1;">
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.625rem"
+                                     Style="min-width: 0; flex: 1; cursor: pointer;"
+                                     @onclick="() => OpenSharedHistoryAsync(share.SharedWithUserId, share.DisplayName)">
                             <UserAvatar UserId="@share.SharedWithUserId" AvatarUrl="@share.AvatarUrl"
                                         FallbackName="@share.DisplayName" Size="36px" />
                             <RadzenStack Orientation="Orientation.Vertical" Gap="0" Style="min-width: 0;">

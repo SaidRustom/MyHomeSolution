@@ -1,0 +1,111 @@
+/* ============================================================
+   Quick Action FAB — Floating Action Button
+   ============================================================ */
+
+::deep .fab-container {
+    position: fixed;
+    bottom: 1.5rem;
+    right: 1.5rem;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column-reverse;
+    align-items: flex-end;
+    gap: 0.75rem;
+}
+
+::deep .fab-button {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    border: none;
+    background: var(--rz-primary);
+    color: #fff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    transition: transform 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+
+::deep .fab-button:active {
+    transform: scale(0.92);
+}
+
+::deep .fab-button.active {
+    background: var(--rz-danger);
+    transform: rotate(45deg);
+}
+
+::deep .fab-menu {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    animation: fab-slide-up 0.2s ease-out;
+}
+
+@keyframes fab-slide-up {
+    from {
+        opacity: 0;
+        transform: translateY(12px) scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+::deep .fab-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    padding: 0.625rem 1rem;
+    background: var(--rz-base-background-color);
+    border-radius: 999px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: transform 0.1s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+
+::deep .fab-menu-item:active {
+    transform: scale(0.97);
+}
+
+::deep .fab-menu-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+::deep .fab-menu-label {
+    font-weight: 600;
+    font-size: 0.8125rem;
+}
+
+::deep .fab-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 999;
+    background: rgba(0, 0, 0, 0.3);
+    animation: fab-fade-in 0.15s ease;
+}
+
+@keyframes fab-fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* On larger screens, position slightly inward */
+@media (min-width: 1024px) {
+    ::deep .fab-container {
+        bottom: 2rem;
+        right: 2rem;
+    }
+}

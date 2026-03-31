@@ -3,102 +3,81 @@
 
 <PageTitle>Home — MyHome</PageTitle>
 
-<PageHeader Title="Home" Subtitle="Welcome to MyHome" />
+<div class="home-page">
+    @if (_isLoading)
+    {
+        <div class="home-loading">
+            <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate"
+                                       Size="ProgressBarCircularSize.Medium" />
+            <RadzenText TextStyle="TextStyle.Body2" class="rz-color-secondary rz-mt-2">Loading your homepage…</RadzenText>
+        </div>
+    }
+    else
+    {
+        @* ═══════════════════════════════════════════════════════
+           GREETING HEADER
+           ═══════════════════════════════════════════════════════ *@
+        <div class="home-header">
+            <div class="home-header-text">
+                <span class="home-greeting">@Greeting</span>
+                <span class="home-date">@DateTime.Now.ToString("dddd, MMMM d")</span>
+            </div>
+            <RadzenButton Icon="tune" Variant="Variant.Text" ButtonStyle="ButtonStyle.Secondary"
+                          Size="ButtonSize.Small" Click="OpenCustomizeDialogAsync"
+                          title="Customize homepage" class="home-customize-btn" />
+        </div>
 
-<RadzenStack Orientation="Orientation.Vertical" Gap="1.25rem" class="rz-mt-4">
+        @* ═══════════════════════════════════════════════════════
+           WIDGET GRID
+           ═══════════════════════════════════════════════════════ *@
+        <div class="home-widget-grid">
+            @foreach (var widget in VisibleWidgets)
+            {
+                <div class="home-widget-cell @(widget.ColumnSpan >= 2 ? "full-width" : "")">
+                    <RadzenCard Variant="Variant.Outlined" Style="background-color: var(--rz-header-background-color);">
+                        @switch (widget.WidgetType)
+                        {
+                            case "RequiresAttention":
+                                <RequiresAttentionPanel />
+                                break;
+                            case "TodayTasks":
+                                <TodayTasksWidget />
+                                break;
+                            case "BudgetOverview":
+                                <BudgetOverviewWidget />
+                                break;
+                            case "RecentBills":
+                                <RecentBillsWidget />
+                                break;
+                            case "QuickAccess":
+                                <QuickAccessWidget />
+                                break;
+                            default:
+                                <div class="home-widget-unknown">
+                                    <RadzenIcon Icon="widgets" Style="font-size: 1.5rem; color: var(--rz-base-400);" />
+                                    <span>Unknown widget: @widget.WidgetType</span>
+                                </div>
+                                break;
+                        }
+                    </RadzenCard>
+                </div>
+            }
+        </div>
 
-    @* Requires Your Attention panel *@
-    <RequiresAttentionPanel />
+        @if (VisibleWidgets.Count == 0)
+        {
+            <div class="home-empty">
+                <RadzenIcon Icon="dashboard_customize" Style="font-size: 3rem; color: var(--rz-base-400);" />
+                <RadzenText TextStyle="TextStyle.Body1" class="rz-mb-0">Your homepage is empty</RadzenText>
+                <RadzenText TextStyle="TextStyle.Body2" class="rz-color-secondary rz-mb-0">Add widgets to customize your dashboard</RadzenText>
+                <RadzenButton Text="Customize" Icon="tune" ButtonStyle="ButtonStyle.Primary"
+                              Size="ButtonSize.Small" Click="OpenCustomizeDialogAsync" class="rz-mt-2" />
+            </div>
+        }
 
-    @* Quick links *@
-    <RadzenRow Gap="1rem" RowGap="1rem">
-        <RadzenColumn Size="12" SizeMD="6" SizeLG="4">
-            <RadzenCard>
-                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem">
-                    <RadzenIcon Icon="receipt_long" Style="font-size: 2rem; color: var(--rz-primary);" />
-                    <RadzenStack Gap="0">
-                        <RadzenText TextStyle="TextStyle.H6" Style="margin: 0;">Bills</RadzenText>
-                        <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-text-secondary-color);">
-                            Track and split household expenses
-                        </RadzenText>
-                    </RadzenStack>
-                </RadzenStack>
-                <RadzenButton Text="View Bills" Icon="arrow_forward" Variant="Variant.Text"
-                              ButtonStyle="ButtonStyle.Primary" class="rz-mt-2"
-                              Click="@(() => Navigation.NavigateTo("/bills"))" />
-            </RadzenCard>
-        </RadzenColumn>
-        <RadzenColumn Size="12" SizeMD="6" SizeLG="4">
-            <RadzenCard>
-                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem">
-                    <RadzenIcon Icon="store" Style="font-size: 2rem; color: var(--rz-success);" />
-                    <RadzenStack Gap="0">
-                        <RadzenText TextStyle="TextStyle.H6" Style="margin: 0;">In-Store View</RadzenText>
-                        <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-text-secondary-color);">
-                            Quick shopping mode with item grouping
-                        </RadzenText>
-                    </RadzenStack>
-                </RadzenStack>
-                <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem" class="rz-mt-2">
-                    @if (_isLoadingLists)
-                    {
-                        <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate"
-                                                   Size="ProgressBarCircularSize.ExtraSmall" />
-                    }
-                    else if (_activeLists.Count > 0)
-                    {
-                        <RadzenDropDown TValue="Guid?" Data="@_activeLists" TextProperty="Title" ValueProperty="Id"
-                                        @bind-Value="@_selectedListId" Placeholder="Select a list…" Style="width: 100%;"
-                                        AllowClear="true" />
-                        <RadzenButton Text="Open In-Store View" Icon="arrow_forward" Variant="Variant.Text"
-                                      ButtonStyle="ButtonStyle.Success"
-                                      Disabled="@(!_selectedListId.HasValue)"
-                                      Click="@(() => Navigation.NavigateTo($"/shopping-lists/{_selectedListId}/in-store"))" />
-                    }
-                    else
-                    {
-                        <RadzenText TextStyle="TextStyle.Caption" class="rz-color-secondary rz-mb-0">No active shopping lists</RadzenText>
-                        <RadzenButton Text="View Lists" Icon="arrow_forward" Variant="Variant.Text"
-                                      ButtonStyle="ButtonStyle.Primary"
-                                      Click="@(() => Navigation.NavigateTo("/shopping-lists"))" />
-                    }
-                </RadzenStack>
-            </RadzenCard>
-        </RadzenColumn>
-        <RadzenColumn Size="12" SizeMD="6" SizeLG="4">
-            <RadzenCard>
-                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem">
-                    <RadzenIcon Icon="dashboard" Style="font-size: 2rem; color: var(--rz-primary);" />
-                    <RadzenStack Gap="0">
-                        <RadzenText TextStyle="TextStyle.H6" Style="margin: 0;">Dashboard</RadzenText>
-                        <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-text-secondary-color);">
-                            Spending overview and balances
-                        </RadzenText>
-                    </RadzenStack>
-                </RadzenStack>
-                <RadzenButton Text="Open Dashboard" Icon="arrow_forward" Variant="Variant.Text"
-                              ButtonStyle="ButtonStyle.Primary" class="rz-mt-2"
-                              Click="@(() => Navigation.NavigateTo("/bills/dashboard"))" />
-            </RadzenCard>
-        </RadzenColumn>
-    </RadzenRow>
-
-    <RadzenRow Gap="1rem" RowGap="1rem">
-        <RadzenColumn Size="12" SizeMD="6" SizeLG="4">
-            <RadzenCard>
-                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem">
-                    <RadzenIcon Icon="settings" Style="font-size: 2rem; color: var(--rz-primary);" />
-                    <RadzenStack Gap="0">
-                        <RadzenText TextStyle="TextStyle.H6" Style="margin: 0;">Settings</RadzenText>
-                        <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-text-secondary-color);">
-                            Theme, profile, and preferences
-                        </RadzenText>
-                    </RadzenStack>
-                </RadzenStack>
-                <RadzenButton Text="Settings" Icon="arrow_forward" Variant="Variant.Text"
-                              ButtonStyle="ButtonStyle.Primary" class="rz-mt-2"
-                              Click="@(() => Navigation.NavigateTo("/settings"))" />
-            </RadzenCard>
-        </RadzenColumn>
-    </RadzenRow>
-</RadzenStack>
+        @* ═══════════════════════════════════════════════════════
+           FLOATING ACTION BUTTON
+           ═══════════════════════════════════════════════════════ *@
+        <QuickActionFab />
+    }
+</div>

@@ -1,0 +1,605 @@
+/* ============================================================
+   Budget Dashboard – Mobile-First Responsive Styles
+   Inspired by: Mint, YNAB, Copilot Money, Monarch
+   ============================================================ */
+
+/* --- Page container --- */
+::deep .budget-dashboard {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0;
+}
+
+/* --- Quick stat strip --- */
+::deep .stat-strip {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+}
+
+::deep .stat-mini {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.875rem 0.5rem;
+    border-radius: var(--rz-border-radius);
+    background: var(--rz-base-background-color);
+    border: 1px solid var(--rz-base-200);
+    text-align: center;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+::deep .stat-mini:active {
+    transform: scale(0.97);
+}
+
+::deep .stat-mini-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+::deep .stat-mini-value {
+    font-size: 1.375rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+}
+
+::deep .stat-mini-label {
+    font-size: 0.6875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-weight: 600;
+    color: var(--rz-text-secondary-color);
+}
+
+::deep .stat-mini-sub {
+    font-size: 0.6875rem;
+    color: var(--rz-text-secondary-color);
+}
+
+/* --- Filter bar --- */
+::deep .filter-bar {
+    border-radius: var(--rz-border-radius);
+    border: 1px solid var(--rz-base-200);
+    background: var(--rz-base-background-color);
+    overflow: hidden;
+}
+
+::deep .filter-bar-primary {
+    padding: 0.75rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+::deep .filter-chip-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.375rem;
+    padding: 0 0.75rem 0.625rem;
+}
+
+::deep .filter-advanced {
+    padding: 0.75rem;
+    border-top: 1px solid var(--rz-base-200);
+    background: color-mix(in srgb, var(--rz-base-200) 30%, transparent);
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+}
+
+/* --- Quick period selector chips --- */
+::deep .quick-period-bar {
+    display: flex;
+    gap: 0.375rem;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    padding: 0 0.125rem;
+}
+
+::deep .quick-period-bar::-webkit-scrollbar {
+    display: none;
+}
+
+/* --- Utilization ring --- */
+::deep .utilization-ring-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 1.25rem;
+    background: var(--rz-base-background-color);
+    border: 1px solid var(--rz-base-200);
+    border-radius: var(--rz-border-radius);
+}
+
+::deep .utilization-ring {
+    position: relative;
+    width: 140px;
+    height: 140px;
+}
+
+::deep .utilization-ring svg {
+    width: 100%;
+    height: 100%;
+    transform: rotate(-90deg);
+}
+
+::deep .utilization-ring-bg {
+    fill: none;
+    stroke: var(--rz-base-200);
+    stroke-width: 10;
+}
+
+::deep .utilization-ring-fill {
+    fill: none;
+    stroke-width: 10;
+    stroke-linecap: round;
+    transition: stroke-dashoffset 0.6s ease, stroke 0.3s ease;
+}
+
+::deep .utilization-ring-text {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+::deep .utilization-ring-percent {
+    font-size: 1.75rem;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+    letter-spacing: -0.03em;
+}
+
+::deep .utilization-ring-label {
+    font-size: 0.6875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-weight: 600;
+    color: var(--rz-text-secondary-color);
+    margin-top: 0.25rem;
+}
+
+/* --- Tabs container --- */
+::deep .dashboard-tabs .rz-tabview-nav {
+    gap: 0;
+    border-bottom: 2px solid var(--rz-base-200);
+}
+
+::deep .dashboard-tabs .rz-tabview-nav li {
+    flex: 1;
+}
+
+::deep .dashboard-tabs .rz-tabview-nav li a {
+    justify-content: center;
+    font-weight: 600;
+    font-size: 0.8125rem;
+    padding: 0.75rem 0.5rem;
+}
+
+/* --- Budget status list items --- */
+::deep .budget-status-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 1rem;
+    border-radius: var(--rz-border-radius);
+    border: 1px solid var(--rz-base-200);
+    background: var(--rz-base-background-color);
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    -webkit-tap-highlight-color: transparent;
+    position: relative;
+    overflow: hidden;
+}
+
+::deep .budget-status-item::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+}
+
+::deep .budget-status-item.status-over::before {
+    background: var(--rz-danger);
+}
+
+::deep .budget-status-item.status-warning::before {
+    background: var(--rz-warning);
+}
+
+::deep .budget-status-item.status-on-track::before {
+    background: var(--rz-success);
+}
+
+::deep .budget-status-item.status-under::before {
+    background: var(--rz-info);
+}
+
+::deep .budget-status-item:active {
+    transform: scale(0.98);
+}
+
+::deep .budget-status-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
+::deep .budget-status-name {
+    font-weight: 600;
+    font-size: 0.9375rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
+    flex: 1;
+}
+
+::deep .budget-status-amounts {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
+::deep .budget-status-spent {
+    font-size: 0.8125rem;
+    font-variant-numeric: tabular-nums;
+    color: var(--rz-text-secondary-color);
+}
+
+::deep .budget-status-remaining {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+}
+
+/* --- Chart containers --- */
+::deep .chart-card {
+    border-radius: var(--rz-border-radius);
+    border: 1px solid var(--rz-base-200);
+    padding: 1rem;
+    background: var(--rz-base-background-color);
+}
+
+::deep .chart-card .rz-chart {
+    height: 220px !important;
+}
+
+::deep .charts-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+/* --- Section headers --- */
+::deep .section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding-bottom: 0.5rem;
+}
+
+::deep .section-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 700;
+    font-size: 1rem;
+}
+
+/* --- Category breakdown list (mobile alternative to charts) --- */
+::deep .category-breakdown {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+::deep .category-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.625rem 0;
+    border-bottom: 1px solid var(--rz-base-200);
+}
+
+::deep .category-item:last-child {
+    border-bottom: none;
+}
+
+::deep .category-color-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+::deep .category-info {
+    flex: 1;
+    min-width: 0;
+}
+
+::deep .category-name {
+    font-weight: 600;
+    font-size: 0.875rem;
+}
+
+::deep .category-meta {
+    font-size: 0.75rem;
+    color: var(--rz-text-secondary-color);
+}
+
+::deep .category-amount {
+    font-weight: 700;
+    font-size: 0.9375rem;
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+    flex-shrink: 0;
+}
+
+/* --- Trend summary cards --- */
+::deep .trend-summary-strip {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.5rem;
+}
+
+::deep .trend-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.125rem;
+    padding: 0.625rem 0.25rem;
+    text-align: center;
+}
+
+::deep .trend-stat-value {
+    font-size: 1rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+::deep .trend-stat-label {
+    font-size: 0.625rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--rz-text-secondary-color);
+    font-weight: 600;
+}
+
+/* --- Alert cards (at-risk budgets) --- */
+::deep .alert-card {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.875rem;
+    border-radius: var(--rz-border-radius);
+    border: 1px solid;
+    cursor: pointer;
+    transition: transform 0.15s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+
+::deep .alert-card:active {
+    transform: scale(0.98);
+}
+
+::deep .alert-card.alert-danger {
+    border-color: color-mix(in srgb, var(--rz-danger) 30%, transparent);
+    background: color-mix(in srgb, var(--rz-danger) 6%, transparent);
+}
+
+::deep .alert-card.alert-warning {
+    border-color: color-mix(in srgb, var(--rz-warning) 30%, transparent);
+    background: color-mix(in srgb, var(--rz-warning) 6%, transparent);
+}
+
+::deep .alert-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+::deep .alert-content {
+    flex: 1;
+    min-width: 0;
+}
+
+::deep .alert-title {
+    font-weight: 600;
+    font-size: 0.875rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+::deep .alert-meta {
+    font-size: 0.75rem;
+    color: var(--rz-text-secondary-color);
+    margin-top: 0.125rem;
+}
+
+::deep .alert-percent {
+    font-weight: 700;
+    font-size: 1.125rem;
+    font-variant-numeric: tabular-nums;
+    flex-shrink: 0;
+}
+
+/* --- Empty states --- */
+::deep .dashboard-empty {
+    padding: 2.5rem 1rem;
+    text-align: center;
+}
+
+/* --- Dashboard content area with loading overlay --- */
+::deep .dashboard-content-area {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    min-height: 200px;
+    transition: opacity 0.2s ease;
+}
+
+::deep .dashboard-content-area.is-loading > *:not(.dashboard-loading-overlay) {
+    opacity: 0.4;
+    pointer-events: none;
+    user-select: none;
+}
+
+::deep .dashboard-loading-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: color-mix(in srgb, var(--rz-base-background-color) 60%, transparent);
+    border-radius: var(--rz-border-radius);
+    backdrop-filter: blur(2px);
+}
+
+/* --- Top spenders horizontal scroll --- */
+::deep .top-categories-strip {
+    display: flex;
+    gap: 0.75rem;
+    overflow-x: auto;
+    padding-bottom: 0.25rem;
+    scrollbar-width: thin;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x mandatory;
+}
+
+::deep .top-categories-strip::-webkit-scrollbar {
+    height: 4px;
+}
+
+::deep .top-categories-strip::-webkit-scrollbar-thumb {
+    background: var(--rz-base-300);
+    border-radius: 2px;
+}
+
+::deep .top-category-chip {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.75rem 1rem;
+    border-radius: var(--rz-border-radius);
+    border: 1px solid var(--rz-base-200);
+    flex-shrink: 0;
+    min-width: 120px;
+    scroll-snap-align: start;
+    background: var(--rz-base-background-color);
+    text-align: center;
+}
+
+::deep .top-category-amount {
+    font-weight: 700;
+    font-size: 1.0625rem;
+    font-variant-numeric: tabular-nums;
+}
+
+::deep .top-category-name {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--rz-text-secondary-color);
+}
+
+::deep .top-category-bar {
+    width: 100%;
+    height: 4px;
+    border-radius: 2px;
+    background: var(--rz-base-200);
+    overflow: hidden;
+}
+
+::deep .top-category-bar-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 0.4s ease;
+}
+
+/* ============================================================
+   Tablet breakpoint (≥768px)
+   ============================================================ */
+@media (min-width: 768px) {
+    ::deep .stat-strip {
+        grid-template-columns: repeat(4, 1fr);
+    }
+
+    ::deep .filter-advanced {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    ::deep .dashboard-tabs .rz-tabview-nav li a {
+        font-size: 0.875rem;
+    }
+
+    ::deep .chart-card .rz-chart {
+        height: 280px !important;
+    }
+
+    ::deep .utilization-ring {
+        width: 160px;
+        height: 160px;
+    }
+
+    ::deep .utilization-ring-percent {
+        font-size: 2rem;
+    }
+}
+
+/* ============================================================
+   Desktop breakpoint (≥1024px)
+   ============================================================ */
+@media (min-width: 1024px) {
+    ::deep .stat-strip {
+        grid-template-columns: repeat(6, 1fr);
+    }
+
+    ::deep .filter-advanced {
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    ::deep .charts-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+    }
+
+    ::deep .chart-card .rz-chart {
+        height: 320px !important;
+    }
+
+    ::deep .top-categories-strip {
+        flex-wrap: wrap;
+        overflow-x: visible;
+    }
+}

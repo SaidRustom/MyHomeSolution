@@ -1,0 +1,307 @@
+@using BlazorUI.Models.SharedHistory
+
+<RadzenStack Orientation="Orientation.Vertical" Gap="0" Style="min-height: 400px;">
+
+    @if (_isLoading)
+    {
+        <RadzenStack AlignItems="AlignItems.Center" JustifyContent="JustifyContent.Center" class="rz-p-8">
+            <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate"
+                                       Size="ProgressBarCircularSize.Medium" />
+            <RadzenText TextStyle="TextStyle.Body2" class="rz-color-secondary rz-mb-0">Loading shared history…</RadzenText>
+        </RadzenStack>
+    }
+    else if (_error is not null)
+    {
+        <RadzenStack class="rz-p-4">
+            <RadzenAlert AlertStyle="AlertStyle.Danger" Variant="Variant.Flat" Shade="Shade.Lighter">
+                Failed to load shared history. Please try again.
+            </RadzenAlert>
+        </RadzenStack>
+    }
+    else if (_data is not null)
+    {
+        @* ─── User header ─── *@
+        <div class="shared-dialog-header">
+            <UserAvatar UserId="@UserId" AvatarUrl="@_data.UserAvatarUrl" FallbackName="@_data.UserFullName" Size="48px" />
+            <RadzenStack Orientation="Orientation.Vertical" Gap="0" Style="min-width: 0;">
+                <RadzenText TextStyle="TextStyle.H6" class="rz-mb-0" Style="font-weight: 700;">
+                    @_data.UserFullName
+                </RadzenText>
+                @if (_data.ConnectedSince.HasValue)
+                {
+                    <RadzenText TextStyle="TextStyle.Caption" class="rz-color-secondary rz-mb-0">
+                        Connected since @_data.ConnectedSince.Value.ToString("MMMM d, yyyy")
+                    </RadzenText>
+                }
+            </RadzenStack>
+        </div>
+
+        @* ─── Tabs ─── *@
+        <RadzenTabs @bind-SelectedIndex="_selectedTab" Style="flex: 1;">
+            <Tabs>
+                @* ════════════ Overview Tab ════════════ *@
+                <RadzenTabsItem Text="Overview" Icon="dashboard">
+                    <RadzenStack Orientation="Orientation.Vertical" Gap="1rem" class="rz-p-4">
+
+                        @* Connection stat *@
+                        @if (_data.ConnectedSince.HasValue)
+                        {
+                            <div class="shared-connection-banner">
+                                <RadzenIcon Icon="handshake" Style="font-size: 1.25rem; color: var(--rz-primary);" />
+                                <span>
+                                    You've been connected for
+                                    <strong>@GetConnectionDuration()</strong>
+                                </span>
+                            </div>
+                        }
+
+                        @* Entity counts *@
+                        <div class="shared-stat-grid">
+                            <div class="shared-stat-card" @onclick="() => _selectedTab = 1" style="cursor: pointer;">
+                                <div class="shared-stat-icon" style="background: color-mix(in srgb, var(--rz-info) 12%, transparent);">
+                                    <RadzenIcon Icon="receipt_long" Style="font-size: 1.25rem; color: var(--rz-info);" />
+                                </div>
+                                <span class="shared-stat-value">@_data.SharedBillCount</span>
+                                <span class="shared-stat-label">Shared Bills</span>
+                            </div>
+                            <div class="shared-stat-card" @onclick="() => _selectedTab = 2" style="cursor: pointer;">
+                                <div class="shared-stat-icon" style="background: color-mix(in srgb, var(--rz-success) 12%, transparent);">
+                                    <RadzenIcon Icon="account_balance" Style="font-size: 1.25rem; color: var(--rz-success);" />
+                                </div>
+                                <span class="shared-stat-value">@_data.SharedBudgetCount</span>
+                                <span class="shared-stat-label">Shared Budgets</span>
+                            </div>
+                            <div class="shared-stat-card" @onclick="() => _selectedTab = 3" style="cursor: pointer;">
+                                <div class="shared-stat-icon" style="background: color-mix(in srgb, var(--rz-primary) 12%, transparent);">
+                                    <RadzenIcon Icon="task_alt" Style="font-size: 1.25rem; color: var(--rz-primary);" />
+                                </div>
+                                <span class="shared-stat-value">@_data.SharedTaskCount</span>
+                                <span class="shared-stat-label">Shared Tasks (@_data.SharedTaskOccurrenceCount)</span>
+                            </div>
+                            <div class="shared-stat-card" @onclick="() => _selectedTab = 4" style="cursor: pointer;">
+                                <div class="shared-stat-icon" style="background: color-mix(in srgb, var(--rz-warning) 12%, transparent);">
+                                    <RadzenIcon Icon="shopping_cart" Style="font-size: 1.25rem; color: var(--rz-warning-darker);" />
+                                </div>
+                                <span class="shared-stat-value">@_data.SharedShoppingListCount</span>
+                                <span class="shared-stat-label">Shopping Lists</span>
+                            </div>
+                        </div>
+
+                        @* Quick summary *@
+                        @if (TotalSharedEntities == 0)
+                        {
+                            <RadzenStack AlignItems="AlignItems.Center" class="rz-p-4" Gap="0.5rem">
+                                <RadzenIcon Icon="group_off" Style="font-size: 2.5rem; color: var(--rz-text-disabled-color);" />
+                                <RadzenText TextStyle="TextStyle.Body2" class="rz-color-secondary rz-mb-0">
+                                    No shared entities yet. Start sharing bills, tasks, or budgets!
+                                </RadzenText>
+                            </RadzenStack>
+                        }
+                    </RadzenStack>
+                </RadzenTabsItem>
+
+                @* ════════════ Bills Tab ════════════ *@
+                <RadzenTabsItem Text="@($"Bills ({_data.SharedBillCount})" )" Icon="receipt_long">
+                    <div class="shared-tab-content">
+                        @if (_data.SharedBills.Count == 0)
+                        {
+                            <RadzenStack AlignItems="AlignItems.Center" class="rz-p-6" Gap="0.5rem">
+                                <RadzenIcon Icon="receipt_long" Style="font-size: 2rem; color: var(--rz-text-disabled-color);" />
+                                <RadzenText TextStyle="TextStyle.Body2" class="rz-color-secondary rz-mb-0">No shared bills</RadzenText>
+                            </RadzenStack>
+                        }
+                        else
+                        {
+                            @foreach (var bill in _data.SharedBills)
+                            {
+                                string url = $"/bills/{bill.Id}";
+                                <div class="shared-entity-row" @onclick="() => NavigateToEntity(url)">
+                                    <div class="shared-entity-icon" style="background: color-mix(in srgb, var(--rz-info) 12%, transparent);">
+                                        <RadzenIcon Icon="receipt_long" Style="font-size: 1rem; color: var(--rz-info);" />
+                                    </div>
+                                    <div class="shared-entity-details">
+                                        <span class="shared-entity-title">@bill.Title</span>
+                                        <div class="shared-entity-meta">
+                                            <span>@bill.Amount.ToString("N2") @bill.Currency</span>
+                                            <span class="shared-meta-dot">&bull;</span>
+                                            <span>@bill.Category</span>
+                                            <span class="shared-meta-dot">&bull;</span>
+                                            <span>@bill.BillDate.ToString("MMM d, yyyy")</span>
+                                        </div>
+                                    </div>
+                                    <div class="shared-entity-badges">
+                                        @if (bill.IsFullyPaid)
+                                        {
+                                            <RadzenBadge BadgeStyle="BadgeStyle.Success" IsPill="true" Text="Paid" Variant="Variant.Flat" />
+                                        }
+                                        else
+                                        {
+                                            <RadzenBadge BadgeStyle="BadgeStyle.Warning" IsPill="true" Text="Pending" Variant="Variant.Flat" />
+                                        }
+                                    </div>
+                                </div>
+                            }
+                        }
+                    </div>
+                </RadzenTabsItem>
+
+                @* ════════════ Budgets Tab ════════════ *@
+                <RadzenTabsItem Text="@($"Budgets ({_data.SharedBudgetCount})" )" Icon="account_balance">
+                    <div class="shared-tab-content">
+                        @if (_data.SharedBudgets.Count == 0)
+                        {
+                            <RadzenStack AlignItems="AlignItems.Center" class="rz-p-6" Gap="0.5rem">
+                                <RadzenIcon Icon="account_balance" Style="font-size: 2rem; color: var(--rz-text-disabled-color);" />
+                                <RadzenText TextStyle="TextStyle.Body2" class="rz-color-secondary rz-mb-0">No shared budgets</RadzenText>
+                            </RadzenStack>
+                        }
+                        else
+                        {
+                            @foreach (var budget in _data.SharedBudgets)
+                            {
+                                var pct = budget.CurrentPeriodPercentUsed;
+                                string url = $"/budgets/{budget.Id}";
+                                <div class="shared-entity-row" @onclick="() => NavigateToEntity(url)">
+                                    <div class="shared-entity-icon" style="background: color-mix(in srgb, var(--rz-success) 12%, transparent);">
+                                        <RadzenIcon Icon="account_balance" Style="@($"font-size: 1rem; color: {GetBudgetColor(pct)};")" />
+                                    </div>
+                                    <div class="shared-entity-details">
+                                        <span class="shared-entity-title">@budget.Name</span>
+                                        <div class="shared-entity-meta">
+                                            <span>@budget.Amount.ToString("N2") @budget.Currency</span>
+                                            <span class="shared-meta-dot">&bull;</span>
+                                            <span>@budget.Period</span>
+                                            <span class="shared-meta-dot">&bull;</span>
+                                            <span>@budget.Category</span>
+                                        </div>
+                                    </div>
+                                    <div class="shared-entity-badges">
+                                        <div class="shared-budget-progress">
+                                            <div class="shared-budget-bar">
+                                                <div class="shared-budget-bar-fill" style="width: @(Math.Min(pct, 100).ToString("F0"))%; background: @GetBudgetColor(pct);"></div>
+                                            </div>
+                                            <span class="shared-budget-pct">@pct.ToString("N0")%</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        }
+                    </div>
+                </RadzenTabsItem>
+
+                @* ════════════ Tasks Tab ════════════ *@
+                <RadzenTabsItem Text="@($"Tasks ({_data.SharedTaskCount})" )" Icon="task_alt">
+                    <div class="shared-tab-content">
+                        @if (_data.SharedTasks.Count == 0)
+                        {
+                            <RadzenStack AlignItems="AlignItems.Center" class="rz-p-6" Gap="0.5rem">
+                                <RadzenIcon Icon="task_alt" Style="font-size: 2rem; color: var(--rz-text-disabled-color);" />
+                                <RadzenText TextStyle="TextStyle.Body2" class="rz-color-secondary rz-mb-0">No shared tasks</RadzenText>
+                            </RadzenStack>
+                        }
+                        else
+                        {
+                            @foreach (var task in _data.SharedTasks)
+                            {
+                                string url = $"/tasks/{task.Id}";
+                                <div class="shared-entity-row" @onclick="() => NavigateToEntity(url)">
+                                    <div class="shared-entity-icon" style="background: color-mix(in srgb, var(--rz-primary) 12%, transparent);">
+                                        <RadzenIcon Icon="task_alt" Style="font-size: 1rem; color: var(--rz-primary);" />
+                                    </div>
+                                    <div class="shared-entity-details">
+                                        <span class="shared-entity-title">@task.Title</span>
+                                        <div class="shared-entity-meta">
+                                            @if (task.Category is not null)
+                                            {
+                                                <span>@task.Category</span>
+                                                <span class="shared-meta-dot">&bull;</span>
+                                            }
+                                            @if (task.Priority is not null)
+                                            {
+                                                <span>@task.Priority</span>
+                                                <span class="shared-meta-dot">&bull;</span>
+                                            }
+                                            <span>@task.OccurrenceCount occurrences</span>
+                                        </div>
+                                    </div>
+                                    <div class="shared-entity-badges">
+                                        @if (task.IsRecurring)
+                                        {
+                                            <RadzenBadge BadgeStyle="BadgeStyle.Info" IsPill="true" Text="Recurring" Variant="Variant.Flat" />
+                                        }
+                                        @if (!task.IsActive)
+                                        {
+                                            <RadzenBadge BadgeStyle="BadgeStyle.Light" IsPill="true" Text="Inactive" Variant="Variant.Flat" />
+                                        }
+                                    </div>
+                                </div>
+                            }
+                        }
+                    </div>
+                </RadzenTabsItem>
+
+                @* ════════════ Shopping Lists Tab ════════════ *@
+                <RadzenTabsItem Text="@($"Shopping ({_data.SharedShoppingListCount})" )" Icon="shopping_cart">
+                    <div class="shared-tab-content">
+                        @if (_data.SharedShoppingLists.Count == 0)
+                        {
+                            <RadzenStack AlignItems="AlignItems.Center" class="rz-p-6" Gap="0.5rem">
+                                <RadzenIcon Icon="shopping_cart" Style="font-size: 2rem; color: var(--rz-text-disabled-color);" />
+                                <RadzenText TextStyle="TextStyle.Body2" class="rz-color-secondary rz-mb-0">No shared shopping lists</RadzenText>
+                            </RadzenStack>
+                        }
+                        else
+                        {
+                            @foreach (var list in _data.SharedShoppingLists)
+                            {
+                                string url = $"/shopping-lists/{list.Id}";
+                                var progress = list.TotalItems > 0
+                                    ? (double)list.CheckedItems / list.TotalItems * 100
+                                    : 0;
+                                <div class="shared-entity-row" @onclick="() => NavigateToEntity(url)">
+                                    <div class="shared-entity-icon" style="background: color-mix(in srgb, var(--rz-warning) 12%, transparent);">
+                                        <RadzenIcon Icon="shopping_cart" Style="font-size: 1rem; color: var(--rz-warning-darker);" />
+                                    </div>
+                                    <div class="shared-entity-details">
+                                        <span class="shared-entity-title">@list.Title</span>
+                                        <div class="shared-entity-meta">
+                                            <span>@list.Category</span>
+                                            <span class="shared-meta-dot">&bull;</span>
+                                            <span>@list.CheckedItems/@list.TotalItems items</span>
+                                            @if (list.DueDate.HasValue)
+                                            {
+                                                <span class="shared-meta-dot">&bull;</span>
+                                                <span>Due @list.DueDate.Value.ToString("MMM d")</span>
+                                            }
+                                        </div>
+                                    </div>
+                                    <div class="shared-entity-badges">
+                                        @if (list.IsCompleted)
+                                        {
+                                            <RadzenBadge BadgeStyle="BadgeStyle.Success" IsPill="true" Text="Done" Variant="Variant.Flat" />
+                                        }
+                                        else if (list.TotalItems > 0)
+                                        {
+                                            <div class="shared-budget-progress">
+                                                <div class="shared-budget-bar">
+                                                    <div class="shared-budget-bar-fill" style="width: @progress.ToString("F0")%; background: var(--rz-success);"></div>
+                                                </div>
+                                                <span class="shared-budget-pct">@progress.ToString("F0")%</span>
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            }
+                        }
+                    </div>
+                </RadzenTabsItem>
+            </Tabs>
+        </RadzenTabs>
+
+        @* ─── Footer ─── *@
+        <div class="shared-dialog-footer">
+            <RadzenButton Text="Close" Variant="Variant.Flat" ButtonStyle="ButtonStyle.Light"
+                          Click="Close" />
+        </div>
+    }
+</RadzenStack>

@@ -65,6 +65,7 @@
                         <Authorized Context="adminCtx">
                             <RadzenPanelMenuItem Text="Admin" Icon="admin_panel_settings">
                                 <RadzenPanelMenuItem Click="@(()=>NavigateTo("/admin/users"))" Text="Users" Icon="people" />
+                                <RadzenPanelMenuItem Click="@(() => NavigateTo("/admin/portfolio"))" Text="Portfolio" Icon="account_circle" />
                                 <RadzenPanelMenuItem Click="@(()=>NavigateTo("/admin/exceptions"))" Text="Exceptions" Icon="bug_report" />
                                 <RadzenPanelMenuItem Click="@(() => NavigateTo("/admin/background-services"))" Text="Background Services" Icon="home_repair_service" />
                             </RadzenPanelMenuItem>

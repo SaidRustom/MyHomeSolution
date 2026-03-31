@@ -3,269 +3,522 @@
 
 <PageTitle>Budget Dashboard</PageTitle>
 
-<RadzenStack Orientation="Orientation.Vertical" Gap="1.25rem">
+<div class="budget-dashboard">
+<RadzenStack Orientation="Orientation.Vertical" Gap="1rem">
 
-    @* Page header *@
-    <PageHeader Title="Budget Dashboard" Subtitle="Overview of your budget performance" Icon="dashboard">
+    @* ─── Page header ─── *@
+    <PageHeader Title="Budgets" Subtitle="Track spending, limits & performance" Icon="account_balance">
         <Actions>
-            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.375rem">
+            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.375rem" AlignItems="AlignItems.Center">
                 <RadzenButton Text="All Budgets" Icon="list" Variant="Variant.Outlined"
-                              ButtonStyle="ButtonStyle.Secondary" Click="NavigateToBudgets" Size="ButtonSize.Small" />
+                              ButtonStyle="ButtonStyle.Secondary" Size="ButtonSize.Small" Click="NavigateToBudgets" />
                 <RadzenButton Text="Tree View" Icon="account_tree" Variant="Variant.Outlined"
-                              ButtonStyle="ButtonStyle.Secondary"
-                              Click="@(() => NavigationManager.NavigateTo("/budgets/tree"))" Size="ButtonSize.Small" />
+                              ButtonStyle="ButtonStyle.Secondary" Size="ButtonSize.Small"
+                              Click="@(() => NavigationManager.NavigateTo("/budgets/tree"))" />
             </RadzenStack>
         </Actions>
     </PageHeader>
 
-    @if (IsLoading)
+    @if (IsLoading && !IsApplyingFilters)
     {
         <LoadingIndicator Text="Loading dashboard…" />
     }
-    else if (Error is not null)
+    else if (Error is not null && !IsApplyingFilters)
     {
         <ErrorAlert Problem="@Error" OnRetry="LoadDashboardDataAsync" />
     }
     else if (Summary is not null)
     {
-        @* Filter bar *@
-        <RadzenCard Variant="Variant.Outlined" class="rz-p-3">
-            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.End" Gap="0.75rem" Wrap="FlexWrap.Wrap">
-                <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem" Style="min-width: 160px;">
-                    <RadzenLabel Text="From" />
-                    <RadzenDatePicker TValue="DateTimeOffset?" @bind-Value="@FromDate"
-                                      Placeholder="From" DateFormat="MMM dd, yyyy" Style="width: 100%;" />
-                </RadzenStack>
-                <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem" Style="min-width: 160px;">
-                    <RadzenLabel Text="To" />
-                    <RadzenDatePicker TValue="DateTimeOffset?" @bind-Value="@ToDate"
-                                      Placeholder="To" DateFormat="MMM dd, yyyy" Style="width: 100%;" />
-                </RadzenStack>
-                <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem" Style="min-width: 160px;">
-                    <RadzenLabel Text="Category" />
-                    <RadzenDropDown TValue="BudgetCategory?" Data="@Categories" @bind-Value="@SelectedCategory"
-                                    AllowClear="true" Placeholder="All" Style="width: 100%;" />
-                </RadzenStack>
-                <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem" Style="min-width: 140px;">
-                    <RadzenLabel Text="Period" />
-                    <RadzenDropDown TValue="BudgetPeriod?" Data="@Periods" @bind-Value="@SelectedPeriod"
-                                    AllowClear="true" Placeholder="All" Style="width: 100%;" />
-                </RadzenStack>
-                <RadzenButton Text="Apply" Icon="refresh" ButtonStyle="ButtonStyle.Primary"
-                              Size="ButtonSize.Small" Click="OnApplyFiltersAsync" />
-            </RadzenStack>
-        </RadzenCard>
+        @* ═══════════════════════════════════════════════════════════
+           UNIFIED FILTER BAR — always visible
+           ═══════════════════════════════════════════════════════════ *@
+        <div class="filter-bar">
+            @* Primary row: quick period + category + apply *@
+            <div class="filter-bar-primary">
+                <div class="quick-period-bar">
+                    <RadzenSelectBar TValue="QuickPeriod" Value="@_quickPeriod"
+                                     Change="OnQuickPeriodChangedAsync" Size="ButtonSize.ExtraSmall">
+                        <Items>
+                            <RadzenSelectBarItem Text="Month" Value="QuickPeriod.ThisMonth" />
+                            <RadzenSelectBarItem Text="Last" Value="QuickPeriod.LastMonth" />
+                            <RadzenSelectBarItem Text="3M" Value="QuickPeriod.Last3Months" />
+                            <RadzenSelectBarItem Text="6M" Value="QuickPeriod.Last6Months" />
+                            <RadzenSelectBarItem Text="YTD" Value="QuickPeriod.ThisYear" />
+                        </Items>
+                    </RadzenSelectBar>
+                </div>
 
-        @* Summary stat cards *@
-        <RadzenRow Gap="1rem" RowGap="1rem">
-            <RadzenColumn Size="12" SizeSM="6" SizeLG="2">
-                <StatCard Title="Total Budgeted" Value="@($"${Summary.TotalBudgeted:N2}")"
-                          Icon="account_balance" IconColor="var(--rz-primary)" />
-            </RadzenColumn>
-            <RadzenColumn Size="12" SizeSM="6" SizeLG="2">
-                <StatCard Title="Total Spent" Value="@($"${Summary.TotalSpent:N2}")"
-                          Icon="payments" IconColor="var(--rz-danger)" />
-            </RadzenColumn>
-            <RadzenColumn Size="12" SizeSM="6" SizeLG="2">
-                <StatCard Title="Remaining" Value="@($"${Summary.TotalRemaining:N2}")"
-                          Icon="savings"
-                          IconColor="@(Summary.TotalRemaining >= 0 ? "var(--rz-success)" : "var(--rz-danger)")" />
-            </RadzenColumn>
-            <RadzenColumn Size="12" SizeSM="6" SizeLG="2">
-                <StatCard Title="% Used" Value="@($"{Summary.OverallPercentUsed:N1}%")"
-                          Icon="donut_large" IconColor="@GetStatusColor(Summary.OverallPercentUsed)" />
-            </RadzenColumn>
-            <RadzenColumn Size="12" SizeSM="6" SizeLG="2">
-                <StatCard Title="Over Budget" Value="@Summary.OverBudgetCount.ToString()"
-                          Icon="warning" IconColor="var(--rz-danger)" />
-            </RadzenColumn>
-            <RadzenColumn Size="12" SizeSM="6" SizeLG="2">
-                <StatCard Title="On Track" Value="@Summary.OnTrackCount.ToString()"
-                          Icon="check_circle" IconColor="var(--rz-success)" />
-            </RadzenColumn>
-        </RadzenRow>
+                <RadzenDropDown TValue="BudgetCategory?" Data="@AllCategories" @bind-Value="@SelectedCategory"
+                                AllowClear="true" Placeholder="Category" Style="width: 130px;"
+                                Change="@(_ => OnFiltersChangedAsync())" />
 
-        @* Charts row *@
-        <RadzenRow Gap="1rem" RowGap="1rem">
-            @* Spending by Category — Donut chart *@
-            <RadzenColumn Size="12" SizeLG="6">
-                <RadzenCard Variant="Variant.Outlined" class="rz-p-4">
-                    <RadzenStack Orientation="Orientation.Vertical" Gap="1rem">
-                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
-                            <RadzenIcon Icon="pie_chart" Style="color: var(--rz-primary);" />
-                            <RadzenText TextStyle="TextStyle.Subtitle1" class="rz-mb-0"><strong>Spending by Category</strong></RadzenText>
-                        </RadzenStack>
-                        @if (Summary.ByCategory.Count == 0)
-                        {
-                            <EmptyState Icon="pie_chart" Title="No data" Description="No category data available." />
-                        }
-                        else
-                        {
-                            <RadzenChart Style="height: 300px;">
-                                <RadzenDonutSeries Data="@Summary.ByCategory"
-                                                   CategoryProperty="Category"
-                                                   ValueProperty="Spent"
-                                                   Title="Spent">
-                                    <TooltipTemplate Context="item">
-                                        <RadzenText TextStyle="TextStyle.Caption" class="rz-mb-0">
-                                            @item.Category: $@item.Spent.ToString("N2") (@item.PercentUsed.ToString("N0")%)
-                                        </RadzenText>
-                                    </TooltipTemplate>
-                                </RadzenDonutSeries>
-                            </RadzenChart>
-                        }
-                    </RadzenStack>
-                </RadzenCard>
-            </RadzenColumn>
+                <RadzenButton Icon="@(_showAdvanced ? "expand_less" : "tune")"
+                              Variant="Variant.Text" Size="ButtonSize.Small"
+                              ButtonStyle="@(HasAdvancedFilters ? ButtonStyle.Info : ButtonStyle.Secondary)"
+                              Click="@(() => _showAdvanced = !_showAdvanced)"
+                              title="Advanced filters" />
 
-            @* Budget vs Actual bar chart *@
-            <RadzenColumn Size="12" SizeLG="6">
-                <RadzenCard Variant="Variant.Outlined" class="rz-p-4">
-                    <RadzenStack Orientation="Orientation.Vertical" Gap="1rem">
-                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
-                            <RadzenIcon Icon="bar_chart" Style="color: var(--rz-primary);" />
-                            <RadzenText TextStyle="TextStyle.Subtitle1" class="rz-mb-0"><strong>Budget vs Actual</strong></RadzenText>
-                        </RadzenStack>
-                        @if (Summary.ByPeriod.Count == 0)
-                        {
-                            <EmptyState Icon="bar_chart" Title="No data" Description="No period data available." />
-                        }
-                        else
-                        {
-                            <RadzenChart Style="height: 300px;">
-                                <RadzenColumnSeries Data="@Summary.ByPeriod"
-                                                    CategoryProperty="PeriodLabel"
-                                                    ValueProperty="Budgeted"
-                                                    Title="Budgeted" />
-                                <RadzenColumnSeries Data="@Summary.ByPeriod"
-                                                    CategoryProperty="PeriodLabel"
-                                                    ValueProperty="Spent"
-                                                    Title="Spent" />
-                                <RadzenCategoryAxis />
-                                <RadzenValueAxis>
-                                    <RadzenGridLines Visible="true" />
-                                </RadzenValueAxis>
-                                <RadzenLegend Position="LegendPosition.Bottom" />
-                            </RadzenChart>
-                        }
-                    </RadzenStack>
-                </RadzenCard>
-            </RadzenColumn>
-        </RadzenRow>
-
-        @* Trends chart *@
-        @if (Trends is not null && Trends.Periods.Count > 0)
-        {
-            <RadzenCard Variant="Variant.Outlined" class="rz-p-4">
-                <RadzenStack Orientation="Orientation.Vertical" Gap="1rem">
-                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center"
-                                 JustifyContent="JustifyContent.SpaceBetween" Wrap="FlexWrap.Wrap">
-                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
-                            <RadzenIcon Icon="show_chart" Style="color: var(--rz-primary);" />
-                            <RadzenText TextStyle="TextStyle.Subtitle1" class="rz-mb-0"><strong>Spending Trends</strong></RadzenText>
-                        </RadzenStack>
-                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.375rem">
-                            <RadzenIcon Icon="@TrendIcon" Style="@($"color: {TrendColor}; font-size: 1.25rem;")" />
-                            <RadzenBadge Text="@TrendLabel" IsPill="true" Variant="Variant.Flat"
-                                         BadgeStyle="@(Trends.TrendDirection == "increasing" ? BadgeStyle.Danger : Trends.TrendDirection == "decreasing" ? BadgeStyle.Success : BadgeStyle.Info)" />
-                        </RadzenStack>
-                    </RadzenStack>
-
-                    <RadzenChart Style="height: 300px;">
-                        <RadzenLineSeries Data="@Trends.Periods"
-                                          CategoryProperty="PeriodLabel"
-                                          ValueProperty="Budgeted"
-                                          Title="Budgeted"
-                                          Smooth="true"
-                                          StrokeWidth="2" />
-                        <RadzenLineSeries Data="@Trends.Periods"
-                                          CategoryProperty="PeriodLabel"
-                                          ValueProperty="Spent"
-                                          Title="Spent"
-                                          Smooth="true"
-                                          StrokeWidth="2" />
-                        <RadzenCategoryAxis />
-                        <RadzenValueAxis>
-                            <RadzenGridLines Visible="true" />
-                        </RadzenValueAxis>
-                        <RadzenLegend Position="LegendPosition.Bottom" />
-                    </RadzenChart>
-
-                    <RadzenRow Gap="0.75rem" RowGap="0.75rem">
-                        <RadzenColumn Size="12" SizeSM="4">
-                            <RadzenStack Orientation="Orientation.Vertical" AlignItems="AlignItems.Center" Gap="0.125rem">
-                                <RadzenText TextStyle="TextStyle.Caption" class="rz-mb-0 rz-color-secondary">Avg Budgeted/Period</RadzenText>
-                                <RadzenText TextStyle="TextStyle.Body1" class="rz-mb-0"><strong>$@Trends.AverageBudgetedPerPeriod.ToString("N2")</strong></RadzenText>
-                            </RadzenStack>
-                        </RadzenColumn>
-                        <RadzenColumn Size="12" SizeSM="4">
-                            <RadzenStack Orientation="Orientation.Vertical" AlignItems="AlignItems.Center" Gap="0.125rem">
-                                <RadzenText TextStyle="TextStyle.Caption" class="rz-mb-0 rz-color-secondary">Avg Spent/Period</RadzenText>
-                                <RadzenText TextStyle="TextStyle.Body1" class="rz-mb-0"><strong>$@Trends.AverageSpentPerPeriod.ToString("N2")</strong></RadzenText>
-                            </RadzenStack>
-                        </RadzenColumn>
-                        <RadzenColumn Size="12" SizeSM="4">
-                            <RadzenStack Orientation="Orientation.Vertical" AlignItems="AlignItems.Center" Gap="0.125rem">
-                                <RadzenText TextStyle="TextStyle.Caption" class="rz-mb-0 rz-color-secondary">Avg Utilization</RadzenText>
-                                <RadzenText TextStyle="TextStyle.Body1" class="rz-mb-0"><strong>@Trends.AverageUtilization.ToString("N1")%</strong></RadzenText>
-                            </RadzenStack>
-                        </RadzenColumn>
-                    </RadzenRow>
-                </RadzenStack>
-            </RadzenCard>
-        }
-
-        @* Budget Status list *@
-        <RadzenCard Variant="Variant.Outlined" class="rz-p-4">
-            <RadzenStack Orientation="Orientation.Vertical" Gap="1rem">
-                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
-                    <RadzenIcon Icon="assessment" Style="color: var(--rz-primary);" />
-                    <RadzenText TextStyle="TextStyle.Subtitle1" class="rz-mb-0"><strong>Budget Status</strong></RadzenText>
-                    <RadzenBadge Text="@Summary.BudgetStatuses.Count.ToString()" BadgeStyle="BadgeStyle.Light" IsPill="true" />
-                </RadzenStack>
-
-                @if (SortedStatuses.Count == 0)
+                @if (HasAnyFilter)
                 {
-                    <EmptyState Icon="assessment" Title="No budgets" Description="No budget status data available." />
+                    <RadzenButton Icon="clear" Text="Clear" Variant="Variant.Text"
+                                  ButtonStyle="ButtonStyle.Light" Size="ButtonSize.ExtraSmall"
+                                  Click="ClearAllFiltersAsync" Disabled="@IsApplyingFilters" />
                 }
-                else
-                {
-                    <RadzenStack Orientation="Orientation.Vertical" Gap="0.625rem">
-                        @foreach (var budget in SortedStatuses)
+            </div>
+
+            @* Active filter chips *@
+            @if (HasAnyFilter)
+            {
+                <div class="filter-chip-row">
+                    @if (_quickPeriod != QuickPeriod.ThisMonth)
+                    {
+                        <RadzenBadge BadgeStyle="BadgeStyle.Primary" IsPill="true" Variant="Variant.Flat"
+                                     Text="@GetQuickPeriodLabel()" />
+                    }
+                    @if (SelectedCategory.HasValue)
+                    {
+                        <RadzenBadge BadgeStyle="BadgeStyle.Info" IsPill="true" Variant="Variant.Flat"
+                                     Text="@SelectedCategory.Value.ToString()" />
+                    }
+                    @if (SelectedPeriod.HasValue)
+                    {
+                        <RadzenBadge BadgeStyle="BadgeStyle.Secondary" IsPill="true" Variant="Variant.Flat"
+                                     Text="@SelectedPeriod.Value.ToString()" />
+                    }
+                    @if (_statusFilter != BudgetStatusFilter.All)
+                    {
+                        <RadzenBadge BadgeStyle="@(_statusFilter == BudgetStatusFilter.OverBudget ? BadgeStyle.Danger : _statusFilter == BudgetStatusFilter.Warning ? BadgeStyle.Warning : BadgeStyle.Success)"
+                                     IsPill="true" Variant="Variant.Flat"
+                                     Text="@_statusFilter.ToString()" />
+                    }
+                    @if (_isRecurringFilter == true)
+                    {
+                        <RadzenBadge BadgeStyle="BadgeStyle.Light" IsPill="true" Variant="Variant.Flat" Text="Recurring" />
+                    }
+                    else if (_isRecurringFilter == false)
+                    {
+                        <RadzenBadge BadgeStyle="BadgeStyle.Light" IsPill="true" Variant="Variant.Flat" Text="One-time" />
+                    }
+                    @if (!string.IsNullOrWhiteSpace(_searchTerm))
+                    {
+                        <RadzenBadge BadgeStyle="BadgeStyle.Light" IsPill="true" Variant="Variant.Flat"
+                                     Text="@($"Search: {_searchTerm}")" />
+                    }
+                </div>
+            }
+
+            @* Advanced filters — expansion panel *@
+            @if (_showAdvanced)
+            {
+                <div class="filter-advanced">
+                    <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem">
+                        <RadzenLabel Text="Custom date range" />
+                        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center">
+                            <RadzenDatePicker TValue="DateTimeOffset?" @bind-Value="@FromDate"
+                                              Placeholder="From" DateFormat="MMM dd" Style="flex: 1;" />
+                            <RadzenText TextStyle="TextStyle.Caption" class="rz-mb-0 rz-color-secondary">–</RadzenText>
+                            <RadzenDatePicker TValue="DateTimeOffset?" @bind-Value="@ToDate"
+                                              Placeholder="To" DateFormat="MMM dd" Style="flex: 1;" />
+                        </RadzenStack>
+                    </RadzenStack>
+
+                    <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem">
+                        <RadzenLabel Text="Period type" />
+                        <RadzenDropDown TValue="BudgetPeriod?" Data="@AllPeriods" @bind-Value="@SelectedPeriod"
+                                        AllowClear="true" Placeholder="All periods" Style="width: 100%;" />
+                    </RadzenStack>
+
+                    <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem">
+                        <RadzenLabel Text="Status" />
+                        <RadzenDropDown TValue="BudgetStatusFilter"
+                                        Data="@(Enum.GetValues<BudgetStatusFilter>())"
+                                        @bind-Value="@_statusFilter"
+                                        Style="width: 100%;" />
+                    </RadzenStack>
+
+                    <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem">
+                        <RadzenLabel Text="Recurring" />
+                        <RadzenDropDown TValue="bool?"
+                                        Data="@(new[] { new { Value = (bool?)true, Label = "Yes" }, new { Value = (bool?)false, Label = "No" } })"
+                                        @bind-Value="@_isRecurringFilter"
+                                        TextProperty="Label" ValueProperty="Value"
+                                        AllowClear="true" Placeholder="Any"
+                                        Style="width: 100%;" />
+                    </RadzenStack>
+
+                    <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem">
+                        <RadzenLabel Text="Search budgets" />
+                        <RadzenTextBox @bind-Value="@_searchTerm" Placeholder="Budget name…" Style="width: 100%;" />
+                    </RadzenStack>
+
+                    <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem" JustifyContent="JustifyContent.End">
+                        <RadzenButton Text="Apply" Icon="search" ButtonStyle="ButtonStyle.Primary"
+                                      Size="ButtonSize.Small" Click="OnFiltersChangedAsync"
+                                      Disabled="@IsApplyingFilters" Style="width: 100%;" />
+                    </RadzenStack>
+                </div>
+            }
+        </div>
+
+        @* ═══════════════════════════════════════════════════════════
+           DASHBOARD CONTENT — wrapped in a loading overlay container
+           ═══════════════════════════════════════════════════════════ *@
+        <div class="dashboard-content-area @(IsApplyingFilters ? "is-loading" : "")">
+
+            @if (IsApplyingFilters)
+            {
+                <div class="dashboard-loading-overlay">
+                    <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate"
+                                               Size="ProgressBarCircularSize.Medium" />
+                    <RadzenText TextStyle="TextStyle.Body2" class="rz-color-secondary rz-mt-2">Updating…</RadzenText>
+                </div>
+            }
+
+            @* ═══════════════════════════════════════════════════════
+               STAT CARDS – derived from FilteredStatuses
+               ═══════════════════════════════════════════════════════ *@
+            <div class="stat-strip">
+                <div class="stat-mini">
+                    <div class="stat-mini-icon" style="background: color-mix(in srgb, var(--rz-primary) 12%, transparent);">
+                        <RadzenIcon Icon="account_balance" Style="font-size: 1.125rem; color: var(--rz-primary);" />
+                    </div>
+                    <span class="stat-mini-value">$@ComputedTotalBudgeted.ToString("N2")</span>
+                    <span class="stat-mini-label">Budgeted</span>
+                    <span class="stat-mini-sub">@ComputedBudgetCount budgets</span>
+                </div>
+                <div class="stat-mini">
+                    <div class="stat-mini-icon" style="background: color-mix(in srgb, var(--rz-danger) 12%, transparent);">
+                        <RadzenIcon Icon="payments" Style="font-size: 1.125rem; color: var(--rz-danger);" />
+                    </div>
+                    <span class="stat-mini-value" style="color: var(--rz-danger);">$@ComputedTotalSpent.ToString("N2")</span>
+                    <span class="stat-mini-label">Spent</span>
+                </div>
+                <div class="stat-mini">
+                    <div class="stat-mini-icon" style="background: color-mix(in srgb, @(ComputedTotalRemaining >= 0 ? "var(--rz-success)" : "var(--rz-danger)") 12%, transparent);">
+                        <RadzenIcon Icon="savings" Style="@($"font-size: 1.125rem; color: {(ComputedTotalRemaining >= 0 ? "var(--rz-success)" : "var(--rz-danger)")};")" />
+                    </div>
+                    <span class="stat-mini-value" style="color: @(ComputedTotalRemaining >= 0 ? "var(--rz-success)" : "var(--rz-danger)");">$@Math.Abs(ComputedTotalRemaining).ToString("N2")</span>
+                    <span class="stat-mini-label">Remaining</span>
+                    <span class="stat-mini-sub">@(ComputedTotalRemaining >= 0 ? "under budget" : "over budget")</span>
+                </div>
+                <div class="stat-mini">
+                    <div class="stat-mini-icon" style="background: color-mix(in srgb, @GetStatusColor(ComputedPercentUsed) 12%, transparent);">
+                        <RadzenIcon Icon="donut_large" Style="@($"font-size: 1.125rem; color: {GetStatusColor(ComputedPercentUsed)};")" />
+                    </div>
+                    <span class="stat-mini-value" style="color: @GetStatusColor(ComputedPercentUsed);">@ComputedPercentUsed.ToString("N1")%</span>
+                    <span class="stat-mini-label">Used</span>
+                </div>
+                <div class="stat-mini">
+                    <div class="stat-mini-icon" style="background: color-mix(in srgb, var(--rz-danger) 12%, transparent);">
+                        <RadzenIcon Icon="warning" Style="font-size: 1.125rem; color: var(--rz-danger);" />
+                    </div>
+                    <span class="stat-mini-value">@ComputedOverBudgetCount</span>
+                    <span class="stat-mini-label">Over Budget</span>
+                </div>
+                <div class="stat-mini">
+                    <div class="stat-mini-icon" style="background: color-mix(in srgb, var(--rz-success) 12%, transparent);">
+                        <RadzenIcon Icon="check_circle" Style="font-size: 1.125rem; color: var(--rz-success);" />
+                    </div>
+                    <span class="stat-mini-value">@ComputedOnTrackCount</span>
+                    <span class="stat-mini-label">On Track</span>
+                </div>
+            </div>
+
+            @* ═══════════════════════════════════════════════════════
+               TOP CATEGORIES – horizontal scroll strip (mobile)
+               ═══════════════════════════════════════════════════════ *@
+            @if (FilteredByCategory.Count > 0)
+            {
+                <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
+                    <div class="section-header">
+                        <span class="section-title">
+                            <RadzenIcon Icon="category" Style="color: var(--rz-primary);" />
+                            Top Categories
+                        </span>
+                    </div>
+                    <div class="top-categories-strip">
+                        @{ var maxCatSpent = FilteredByCategory.Max(c => c.Spent); }
+                        @foreach (var (cat, idx) in FilteredByCategory.Take(8).Select((c, i) => (c, i)))
                         {
-                            <RadzenCard Variant="Variant.Flat" class="rz-p-3"
-                                        Style="cursor: pointer;"
-                                        @onclick="@(() => NavigateToBudget(budget.BudgetId))">
-                                <RadzenStack Orientation="Orientation.Vertical" Gap="0.375rem">
-                                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center"
-                                                 JustifyContent="JustifyContent.SpaceBetween" Wrap="FlexWrap.Wrap">
-                                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
-                                            <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0"><strong>@budget.BudgetName</strong></RadzenText>
-                                            <RadzenBadge Text="@budget.Category.ToString()" BadgeStyle="BadgeStyle.Info"
-                                                         IsPill="true" Variant="Variant.Flat" Style="font-size: 0.65rem;" />
+                            var pct = maxCatSpent > 0 ? (double)(cat.Spent / maxCatSpent) * 100 : 0;
+                            var color = GetCategoryColor(idx);
+                            <div class="top-category-chip">
+                                <span class="top-category-amount" style="color: @color;">$@cat.Spent.ToString("N0")</span>
+                                <span class="top-category-name">@cat.Category</span>
+                                <div class="top-category-bar">
+                                    <div class="top-category-bar-fill" style="width: @pct.ToString("F0")%; background: @color;"></div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </RadzenStack>
+            }
+
+            @* ═══════════════════════════════════════════════════════
+               MAIN TABS – Overview & Alerts
+               ═══════════════════════════════════════════════════════ *@
+            <div class="dashboard-tabs">
+                <RadzenTabs SelectedIndex="@_selectedTab" Change="OnTabChangedAsync">
+                    <Tabs>
+                        @* ──────────── OVERVIEW TAB ──────────── *@
+                        <RadzenTabsItem Text="@($"Overview ({FilteredStatuses.Count})")">
+                            <RadzenStack Orientation="Orientation.Vertical" Gap="1rem" class="rz-pt-3">
+
+                                @* Utilization ring + charts *@
+                                <div class="charts-grid">
+                                    @* Utilization ring *@
+                                    <div class="utilization-ring-container">
+                                        <div class="utilization-ring">
+                                            <svg viewBox="0 0 120 120">
+                                                <circle class="utilization-ring-bg" cx="60" cy="60" r="54" />
+                                                <circle class="utilization-ring-fill" cx="60" cy="60" r="54"
+                                                        stroke="@RingColor"
+                                                        stroke-dasharray="@RingCircumference.ToString("F2")"
+                                                        stroke-dashoffset="@RingOffset.ToString("F2")" />
+                                            </svg>
+                                            <div class="utilization-ring-text">
+                                                <span class="utilization-ring-percent" style="color: @RingColor;">@ComputedPercentUsed.ToString("N0")%</span>
+                                                <span class="utilization-ring-label">Used</span>
+                                            </div>
+                                        </div>
+                                        <RadzenStack Orientation="Orientation.Horizontal" Gap="1.5rem" class="rz-mt-4" JustifyContent="JustifyContent.Center">
+                                            <RadzenStack Orientation="Orientation.Vertical" AlignItems="AlignItems.Center" Gap="0">
+                                                <RadzenText TextStyle="TextStyle.Caption" class="rz-mb-0 rz-color-secondary">Budgeted</RadzenText>
+                                                <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0"><strong>$@ComputedTotalBudgeted.ToString("N0")</strong></RadzenText>
+                                            </RadzenStack>
+                                            <RadzenStack Orientation="Orientation.Vertical" AlignItems="AlignItems.Center" Gap="0">
+                                                <RadzenText TextStyle="TextStyle.Caption" class="rz-mb-0 rz-color-secondary">Spent</RadzenText>
+                                                <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0"><strong>$@ComputedTotalSpent.ToString("N0")</strong></RadzenText>
+                                            </RadzenStack>
+                                            <RadzenStack Orientation="Orientation.Vertical" AlignItems="AlignItems.Center" Gap="0">
+                                                <RadzenText TextStyle="TextStyle.Caption" class="rz-mb-0 rz-color-secondary">Left</RadzenText>
+                                                <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0" Style="@($"color: {(ComputedTotalRemaining >= 0 ? "var(--rz-success)" : "var(--rz-danger)")};")">
+                                                    <strong>$@Math.Abs(ComputedTotalRemaining).ToString("N0")</strong>
+                                                </RadzenText>
+                                            </RadzenStack>
                                         </RadzenStack>
-                                        <RadzenBadge Text="@GetStatusDisplayLabel(budget.Status)"
-                                                     BadgeStyle="@GetStatusBadgeStyle(budget.Status)"
-                                                     IsPill="true" Variant="Variant.Flat" />
-                                    </RadzenStack>
-                                    <RadzenProgressBar Value="@((double)Math.Min(budget.PercentUsed, 100))"
-                                                       Max="100" ShowValue="false"
-                                                       Style="@($"height: 8px; --rz-progressbar-fill-background: {GetStatusColor(budget.PercentUsed)};")" />
-                                    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween">
-                                        <RadzenText TextStyle="TextStyle.Caption" class="rz-mb-0 rz-color-secondary">
-                                            $@budget.Spent.ToString("N2") / $@budget.Budgeted.ToString("N2") (@budget.PercentUsed.ToString("N0")%)
-                                        </RadzenText>
-                                        <RadzenText TextStyle="TextStyle.Caption" class="rz-mb-0"
-                                                    Style="@($"color: {(budget.Remaining >= 0 ? "var(--rz-success)" : "var(--rz-danger)")};")">
-                                            $@budget.Remaining.ToString("N2") remaining
-                                        </RadzenText>
-                                    </RadzenStack>
+                                    </div>
+
+                                    @* Spending by category donut *@
+                                    @if (FilteredByCategory.Count > 0)
+                                    {
+                                        <div class="chart-card">
+                                            <RadzenStack Orientation="Orientation.Vertical" Gap="0.75rem">
+                                                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                                                    <RadzenIcon Icon="pie_chart" Style="color: var(--rz-primary);" />
+                                                    <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0"><strong>Spending by Category</strong></RadzenText>
+                                                </RadzenStack>
+                                                <RadzenChart>
+                                                    <RadzenDonutSeries Data="@FilteredByCategory"
+                                                                       CategoryProperty="Category"
+                                                                       ValueProperty="Spent"
+                                                                       Title="Spent">
+                                                        <TooltipTemplate Context="item">
+                                                            <RadzenText TextStyle="TextStyle.Caption" class="rz-mb-0">
+                                                                @item.Category: $@item.Spent.ToString("N2") (@item.PercentUsed.ToString("N0")%)
+                                                            </RadzenText>
+                                                        </TooltipTemplate>
+                                                    </RadzenDonutSeries>
+                                                </RadzenChart>
+                                            </RadzenStack>
+                                        </div>
+                                    }
+                                </div>
+
+                                @* Budget vs Actual bar chart *@
+                                @if (Summary.ByPeriod.Count > 0)
+                                {
+                                    <div class="chart-card">
+                                        <RadzenStack Orientation="Orientation.Vertical" Gap="0.75rem">
+                                            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                                                <RadzenIcon Icon="bar_chart" Style="color: var(--rz-primary);" />
+                                                <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0"><strong>Budget vs Actual</strong></RadzenText>
+                                            </RadzenStack>
+                                            <RadzenChart>
+                                                <RadzenColumnSeries Data="@Summary.ByPeriod"
+                                                                    CategoryProperty="PeriodLabel"
+                                                                    ValueProperty="Budgeted"
+                                                                    Title="Budgeted" />
+                                                <RadzenColumnSeries Data="@Summary.ByPeriod"
+                                                                    CategoryProperty="PeriodLabel"
+                                                                    ValueProperty="Spent"
+                                                                    Title="Spent" />
+                                                <RadzenCategoryAxis />
+                                                <RadzenValueAxis>
+                                                    <RadzenGridLines Visible="true" />
+                                                </RadzenValueAxis>
+                                                <RadzenLegend Position="LegendPosition.Bottom" />
+                                            </RadzenChart>
+                                        </RadzenStack>
+                                    </div>
+                                }
+
+                                @* Trends chart *@
+                                @if (Trends is not null && Trends.Periods.Count > 0)
+                                {
+                                    <div class="chart-card">
+                                        <RadzenStack Orientation="Orientation.Vertical" Gap="0.75rem">
+                                            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center"
+                                                         JustifyContent="JustifyContent.SpaceBetween" Wrap="FlexWrap.Wrap">
+                                                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                                                    <RadzenIcon Icon="show_chart" Style="color: var(--rz-primary);" />
+                                                    <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0"><strong>Spending Trends</strong></RadzenText>
+                                                </RadzenStack>
+                                                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.375rem">
+                                                    <RadzenIcon Icon="@TrendIcon" Style="@($"color: {TrendColor}; font-size: 1.125rem;")" />
+                                                    <RadzenBadge Text="@TrendLabel" IsPill="true" Variant="Variant.Flat"
+                                                                 BadgeStyle="@(Trends.TrendDirection == "increasing" ? BadgeStyle.Danger : Trends.TrendDirection == "decreasing" ? BadgeStyle.Success : BadgeStyle.Info)" />
+                                                </RadzenStack>
+                                            </RadzenStack>
+
+                                            <RadzenChart>
+                                                <RadzenLineSeries Data="@Trends.Periods"
+                                                                  CategoryProperty="PeriodLabel"
+                                                                  ValueProperty="Budgeted"
+                                                                  Title="Budgeted"
+                                                                  Smooth="true"
+                                                                  StrokeWidth="2" />
+                                                <RadzenLineSeries Data="@Trends.Periods"
+                                                                  CategoryProperty="PeriodLabel"
+                                                                  ValueProperty="Spent"
+                                                                  Title="Spent"
+                                                                  Smooth="true"
+                                                                  StrokeWidth="2" />
+                                                <RadzenCategoryAxis />
+                                                <RadzenValueAxis>
+                                                    <RadzenGridLines Visible="true" />
+                                                </RadzenValueAxis>
+                                                <RadzenLegend Position="LegendPosition.Bottom" />
+                                            </RadzenChart>
+
+                                            <div class="trend-summary-strip">
+                                                <div class="trend-stat">
+                                                    <span class="trend-stat-value">$@Trends.AverageBudgetedPerPeriod.ToString("N0")</span>
+                                                    <span class="trend-stat-label">Avg Budgeted</span>
+                                                </div>
+                                                <div class="trend-stat">
+                                                    <span class="trend-stat-value">$@Trends.AverageSpentPerPeriod.ToString("N0")</span>
+                                                    <span class="trend-stat-label">Avg Spent</span>
+                                                </div>
+                                                <div class="trend-stat">
+                                                    <span class="trend-stat-value">@Trends.AverageUtilization.ToString("N0")%</span>
+                                                    <span class="trend-stat-label">Avg Usage</span>
+                                                </div>
+                                            </div>
+                                        </RadzenStack>
+                                    </div>
+                                }
+
+                                @* Budget status list *@
+                                <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
+                                    <div class="section-header">
+                                        <span class="section-title">
+                                            <RadzenIcon Icon="assessment" Style="color: var(--rz-primary);" />
+                                            All Budgets
+                                        </span>
+                                        <RadzenBadge Text="@FilteredStatuses.Count.ToString()" BadgeStyle="BadgeStyle.Light" IsPill="true" />
+                                    </div>
+
+                                    @if (FilteredStatuses.Count == 0)
+                                    {
+                                        <div class="dashboard-empty">
+                                            <EmptyState Icon="assessment" Title="No budgets found"
+                                                        Description="No budgets match the current filters." />
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <RadzenStack Orientation="Orientation.Vertical" Gap="0.625rem">
+                                            @foreach (var budget in FilteredStatuses)
+                                            {
+                                                <div class="budget-status-item @GetStatusCssClass(budget.Status)"
+                                                     @onclick="@(() => NavigateToBudget(budget.BudgetId))">
+                                                    <div class="budget-status-header">
+                                                        <span class="budget-status-name">@budget.BudgetName</span>
+                                                        <RadzenBadge Text="@GetStatusDisplayLabel(budget.Status)"
+                                                                     BadgeStyle="@GetStatusBadgeStyle(budget.Status)"
+                                                                     IsPill="true" Variant="Variant.Flat" />
+                                                    </div>
+                                                    <RadzenProgressBar Value="@((double)Math.Min(budget.PercentUsed, 100))"
+                                                                       Max="100" ShowValue="false"
+                                                                       Style="@($"height: 6px; --rz-progressbar-fill-background: {GetStatusColor(budget.PercentUsed)};")" />
+                                                    <div class="budget-status-amounts">
+                                                        <span class="budget-status-spent">
+                                                            $@budget.Spent.ToString("N2") / $@budget.Budgeted.ToString("N2")
+                                                            <span style="margin-left: 0.25rem;">(@budget.PercentUsed.ToString("N0")%)</span>
+                                                        </span>
+                                                        <span class="budget-status-remaining"
+                                                              style="color: @(budget.Remaining >= 0 ? "var(--rz-success)" : "var(--rz-danger)");">
+                                                            $@Math.Abs(budget.Remaining).ToString("N2") @(budget.Remaining >= 0 ? "left" : "over")
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            }
+                                        </RadzenStack>
+                                    }
                                 </RadzenStack>
-                            </RadzenCard>
-                        }
-                    </RadzenStack>
-                }
-            </RadzenStack>
-        </RadzenCard>
+                            </RadzenStack>
+                        </RadzenTabsItem>
+
+                        @* ──────────── ALERTS TAB ──────────── *@
+                        <RadzenTabsItem Text="@($"Alerts ({AtRiskBudgets.Count})")">
+                            <RadzenStack Orientation="Orientation.Vertical" Gap="1rem" class="rz-pt-3">
+
+                                @if (AtRiskBudgets.Count > 0)
+                                {
+                                    <RadzenCard Variant="Variant.Flat"
+                                                Style="background: color-mix(in srgb, var(--rz-danger) 8%, transparent); border: 1px solid color-mix(in srgb, var(--rz-danger) 25%, transparent);"
+                                                class="rz-p-3">
+                                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                                            <RadzenIcon Icon="error_outline" Style="color: var(--rz-danger);" />
+                                            <RadzenText TextStyle="TextStyle.Body2" class="rz-mb-0">
+                                                <strong>@AtRiskBudgets.Count</strong> budget(s) need attention ·
+                                                <strong>$@AtRiskBudgets.Sum(b => Math.Abs(b.Remaining)).ToString("N2")</strong> total overage
+                                            </RadzenText>
+                                        </RadzenStack>
+                                    </RadzenCard>
+                                }
+
+                                @if (AtRiskBudgets.Count == 0)
+                                {
+                                    <div class="dashboard-empty">
+                                        <EmptyState Icon="verified" Title="All budgets healthy!"
+                                                    Description="No budgets are over budget or in warning state." />
+                                    </div>
+                                }
+                                else
+                                {
+                                    <RadzenStack Orientation="Orientation.Vertical" Gap="0.625rem">
+                                        @foreach (var budget in AtRiskBudgets)
+                                        {
+                                            var isOver = budget.Status == "over";
+                                            <div class="alert-card @(isOver ? "alert-danger" : "alert-warning")"
+                                                 @onclick="@(() => NavigateToBudget(budget.BudgetId))">
+                                                <div class="alert-icon" style="background: color-mix(in srgb, @(isOver ? "var(--rz-danger)" : "var(--rz-warning)") 15%, transparent);">
+                                                    <RadzenIcon Icon="@(isOver ? "error" : "warning")"
+                                                                Style="@($"font-size: 1.25rem; color: {(isOver ? "var(--rz-danger)" : "var(--rz-warning-darker)")};")" />
+                                                </div>
+                                                <div class="alert-content">
+                                                    <div class="alert-title">@budget.BudgetName</div>
+                                                    <div class="alert-meta">
+                                                        @budget.Category · $@budget.Spent.ToString("N2") of $@budget.Budgeted.ToString("N2")
+                                                    </div>
+                                                </div>
+                                                <span class="alert-percent" style="color: @(isOver ? "var(--rz-danger)" : "var(--rz-warning-darker)");">
+                                                    @budget.PercentUsed.ToString("N0")%
+                                                </span>
+                                            </div>
+                                        }
+                                    </RadzenStack>
+                                }
+                            </RadzenStack>
+                        </RadzenTabsItem>
+                    </Tabs>
+                </RadzenTabs>
+            </div>
+
+        </div>
     }
+
 </RadzenStack>
+</div>

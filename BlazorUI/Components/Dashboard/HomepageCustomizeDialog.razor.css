@@ -1,0 +1,136 @@
+/* ============================================================
+   Homepage Customize Dialog
+   ============================================================ */
+
+::deep .customize-dialog {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 0.25rem;
+    max-height: 80vh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+::deep .customize-header {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+::deep .customize-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+::deep .customize-section-label {
+    font-size: 0.6875rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--rz-text-secondary-color);
+}
+
+::deep .customize-widget-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.375rem;
+}
+
+::deep .customize-widget-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: var(--rz-border-radius);
+    border: 1px solid var(--rz-base-200);
+    background: var(--rz-base-background-color);
+}
+
+::deep .customize-widget-row.hidden {
+    opacity: 0.5;
+}
+
+::deep .customize-reorder {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+::deep .customize-widget-info {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex: 1;
+    min-width: 0;
+}
+
+::deep .customize-widget-text {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+::deep .customize-widget-name {
+    font-weight: 600;
+    font-size: 0.8125rem;
+}
+
+::deep .customize-widget-desc {
+    font-size: 0.6875rem;
+    color: var(--rz-text-secondary-color);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+::deep .customize-add-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.375rem;
+}
+
+::deep .customize-add-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: var(--rz-border-radius);
+    border: 1px dashed var(--rz-base-300);
+    cursor: pointer;
+    transition: border-color 0.12s ease, background 0.12s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+
+::deep .customize-add-row:active {
+    background: color-mix(in srgb, var(--rz-success) 6%, transparent);
+    border-color: var(--rz-success);
+}
+
+::deep .customize-size-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+::deep .customize-size-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding: 0.25rem 0;
+}
+
+::deep .customize-size-name {
+    font-weight: 600;
+    font-size: 0.8125rem;
+}
+
+::deep .customize-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    padding-top: 0.5rem;
+    border-top: 1px solid var(--rz-base-200);
+}
