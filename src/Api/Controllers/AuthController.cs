@@ -225,7 +225,7 @@ public sealed class AuthController(
     {
         var token = await identityService.GenerateEmailConfirmationTokenAsync(userId, cancellationToken);
 
-        var blazorBaseUrl = "https://saidrustom.ca";
+        var blazorBaseUrl = "https://www.saidrustom.ca";
         var encodedToken = Uri.EscapeDataString(token);
         var encodedUserId = Uri.EscapeDataString(userId);
         var confirmUrl = $"{blazorBaseUrl}/confirm-email?userId={encodedUserId}&token={encodedToken}";
@@ -240,7 +240,7 @@ public sealed class AuthController(
     private async Task SendDemoEmailConfirmationAsync(
         string email, string firstName, CancellationToken cancellationToken)
     {
-        var blazorBaseUrl = "https://saidrustom.ca";
+        var blazorBaseUrl = "https://www.saidrustom.ca";
         var loginUrl = $"{blazorBaseUrl}/login";
 
         var html = EmailTemplates.DemoEmailConfirmation(firstName, loginUrl);
