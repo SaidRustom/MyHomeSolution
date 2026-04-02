@@ -101,6 +101,29 @@ public sealed class BudgetOccurrenceGeneratorService(
 
                     dbContext.BudgetOccurrences.Add(newOcc);
                     created++;
+
+                    if (budget.ParentBudget != null)
+                    {
+                        var parent = await dbContext.BudgetOccurrences
+                            .IgnoreQueryFilters()
+                            .Where(b => b.BudgetId == budget.ParentBudgetId && b.IsActive)
+                            .FirstOrDefaultAsync();
+
+                        if (parent == null)
+                        {
+                            newOcc.Notes += " (Note: Parent budget occurrence not found for transfer)";
+                        }
+                        else
+                        {
+                            await mediator.Send(new TransferBudgetFundsCommand
+                            {
+                                SourceOccurrenceId = parent.Id,
+                                DestinationOccurrenceId = newOcc.Id,
+                                Amount = budget.Amount,
+                                Reason = "Automatic transfer from parent budget"
+                            });
+                        }
+                    }
                     continue;
                 }
 
@@ -148,6 +171,7 @@ public sealed class BudgetOccurrenceGeneratorService(
                         };
 
                         dbContext.BudgetOccurrences.Add(newOcc);
+                        created++;
 
                         // Record a transfer from old to new occurrence
                         if (remaining > 0)
@@ -183,8 +207,6 @@ public sealed class BudgetOccurrenceGeneratorService(
                                 });
                             }
                         }
-
-                        created++;
                     }
                     else
                     {
@@ -197,6 +219,9 @@ public sealed class BudgetOccurrenceGeneratorService(
                             AllocatedAmount = budget.Amount,
                             CarryoverAmount = 0
                         };
+
+                        dbContext.BudgetOccurrences.Add(newOcc);
+                        created++;
 
                         if (budget.ParentBudget != null)
                         {
@@ -220,9 +245,6 @@ public sealed class BudgetOccurrenceGeneratorService(
                                 });
                             }
                         }
-
-                        dbContext.BudgetOccurrences.Add(newOcc);
-                        created++;
                     }
 
                     // Notify the budget owner that the occurrence expired

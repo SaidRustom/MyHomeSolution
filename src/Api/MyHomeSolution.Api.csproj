@@ -19,6 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="Pages\Portfolio\" />
     <Folder Include="uploads\avatars\" />
   </ItemGroup>
 

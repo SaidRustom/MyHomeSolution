@@ -26,7 +26,7 @@ try
     builder.Host.UseSerilog((context, services, configuration) => configuration
         .ReadFrom.Configuration(context.Configuration)
         .ReadFrom.Services(services)
-        .WriteTo.Console());
+        .WriteTo.File("logs/log.txt", Serilog.Events.LogEventLevel.Warning, rollingInterval: RollingInterval.Day));
 
     // ── Application & Infrastructure ────────────────────────────────────────
     builder.Services.AddApplication();

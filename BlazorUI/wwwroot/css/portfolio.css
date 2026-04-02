@@ -375,6 +375,30 @@
     background: var(--p-accent-glow);
 }
 
+.btn-resume {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.85rem 1.75rem;
+    background: transparent;
+    color: var(--p-accent-light);
+    font-weight: 600;
+    font-size: 0.95rem;
+    border-radius: 10px;
+    border: 1.5px solid var(--p-accent);
+    transition: all var(--p-transition);
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.btn-resume:hover {
+    background: var(--p-gradient);
+    color: white;
+    border-color: transparent;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(99, 102, 241, 0.4);
+}
+
 .btn-large {
     padding: 1.1rem 2.5rem;
     font-size: 1.1rem;
@@ -1106,7 +1130,8 @@
     }
 
     .btn-primary,
-    .btn-secondary {
+    .btn-secondary,
+    .btn-resume {
         width: 100%;
         justify-content: center;
     }

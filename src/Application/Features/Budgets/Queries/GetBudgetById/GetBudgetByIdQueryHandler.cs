@@ -5,9 +5,6 @@ using MyHomeSolution.Application.Common.Exceptions;
 using MyHomeSolution.Application.Common.Interfaces;
 using MyHomeSolution.Application.Features.Budgets.Common;
 using MyHomeSolution.Domain.Entities;
-using MyHomeSolution.Application;
-using MyHomeSolution.Domain.Enums;
-using MyHomeSolution.Infrastructure.Persistence;
 
 namespace MyHomeSolution.Application.Features.Budgets.Queries.GetBudgetById;
 

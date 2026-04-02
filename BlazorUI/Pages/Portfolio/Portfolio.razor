@@ -64,6 +64,16 @@ else if (_portfolio?.Profile is not null)
                         <path d="M7 17L17 7M17 7H7M17 7V17"/>
                     </svg>
                 </a>
+                <a href="Resume.pdf" target="_blank" rel="noopener" class="btn-resume">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                        <polyline points="14 2 14 8 20 8"/>
+                        <line x1="16" y1="13" x2="8" y2="13"/>
+                        <line x1="16" y1="17" x2="8" y2="17"/>
+                        <polyline points="10 9 9 9 8 9"/>
+                    </svg>
+                    <span>View Resume</span>
+                </a>
                 <a href="#contact" class="btn-secondary">
                     <span>Get in Touch</span>
                 </a>
@@ -138,12 +148,12 @@ else if (_portfolio?.Profile is not null)
                     <div class="stat-card">
                         <div class="stat-icon">🚀</div>
                         <div class="stat-label">Projects</div>
-                        <div class="stat-value">@(_portfolio.Projects.Count)+ built</div>
+                        <div class="stat-value">@(_portfolio.Projects.Count)+ Multiple end-to-end systems delivered</div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-icon">⚡</div>
                         <div class="stat-label">Technologies</div>
-                        <div class="stat-value">@(_portfolio.Skills.Count)+ mastered</div>
+                        <div class="stat-value">@(_portfolio.Skills.Count)+ technologies used in production and personal projects</div>
                     </div>
                 </div>
             </div>
